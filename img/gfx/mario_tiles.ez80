@@ -1,0 +1,13 @@
+; ZDS sillyness
+#define equ .equ
+#define db .db
+#define dw .dw
+#define dl .dl
+
+ dw _orig_tileset_gfx_pal_size
+ 
+; palette information
+#include "orig_tileset_gfx.asm"
+
+; all the graphix
+#include "orig_tileset.asm"
