@@ -13,20 +13,6 @@
 #include "tilemapdata.h"
 #include "defines.h"
 
-unsigned int goomba_data[] = {
-    10,       // number of goombas
-    16,
-    22,
-    30,
-    40,
-    45,
-    17,
-    24,
-    32,
-    34,
-    19,
-};
-
 unsigned int fire_flame_data[] = {
     0,       // number of fire flames
     13 + (50 * 6),
@@ -50,7 +36,7 @@ unsigned int boo_data[] = {
 };
 
 unsigned int koopa_data[] = {
-    5,       // number of koopas
+    0,       // number of koopas
     (10 + 11*50) | 1<<22,
     10,
     13,
@@ -301,6 +287,9 @@ enemy_t *add_simple_enemy(uint8_t *tile, uint8_t type) {
             enemy->y = y + 1;
             enemy->x = x - 4;
             break;
+        case FISH_TYPE:
+            enemy->vx = -1;
+            *tile = 0x1A;
         default:
             enemy->y = y;
             enemy->x = x;
@@ -327,17 +316,12 @@ void remove_simple_enemy(uint8_t i) {
 void get_enemies(void) {
     unsigned int j;
     uint8_t i;
-    uint8_t num_goombas = *goomba_data;
     uint8_t num_red_koopas = *koopa_data;
     uint8_t num_chomps = *chomper_data;
     uint8_t num_flamers = *fire_flame_data;
     uint8_t num_womps = *thwomp_data;
     uint8_t num_boooos = *boo_data;
     uint8_t num_simples = *simple_enemy_data;
-    
-    for(i = 1; i <= num_goombas; i++) {
-        add_goomba(tilemapdata + goomba_data[i]);
-    }
     
     for(i = 1; i <= num_red_koopas; i++) {
         unsigned int koop = koopa_data[i];
@@ -383,14 +367,36 @@ void get_enemies(void) {
     
     for(j = 0; j < sizeof(tilemapdata); j++) {
         uint8_t tile = tilemapdata[j];
+        uint8_t *this = tilemapdata + j;
         if (tile == 0x61) {
-            add_simple_enemy(tilemapdata + j, CANNONBALL_DOWN_CREATOR_TYPE);
+            add_simple_enemy(this, CANNONBALL_DOWN_CREATOR_TYPE);
         }
         if (tile == 0x53) {
-            add_simple_enemy(tilemapdata + j, CANNONBALL_UP_CREATOR_TYPE);
+            add_simple_enemy(this, CANNONBALL_UP_CREATOR_TYPE);
         }
         if (tile == 0x46) {
-            add_simple_enemy(tilemapdata + j, BULLET_CREATOR_TYPE);
+            add_simple_enemy(this, BULLET_CREATOR_TYPE);
+        }
+        
+        // f3 = fish
+        // f4 = goomba
+        // f5 = red koopa
+        // f6 = green koopa
+        // f7 = boo
+        // f8 = thwomp
+        // f9 = 
+        // fa = 
+        // fb = 
+        // fc = 
+        // fd =
+        // fe = 
+        // ff = 
+        if (tile == 0xf3) {
+            add_simple_enemy(this, FISH_TYPE);
+        }
+        if (tile == 0xf4) {
+            add_goomba(this);
+            *this = TILE_EMPTY;
         }
     }
     

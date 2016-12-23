@@ -39,19 +39,16 @@ const unsigned int shell_score_chain[] = { 500, 800, 1000, 2000, 4000, 5000, 800
 
 // only handle if somewhat within view; otherwise we can just ignore it
 bool in_viewport(int x, int y) {
-    int mx = x - mario.scrollx;
-    int my = y - mario.scrolly;
-    
-    if (mx - 360 >= mario.x) {
+    if (x - 360 >= mario.x) {
         return false;
     }
-    if (mx + 360 <= mario.x) {
+    if (x + 360 <= mario.x) {
         return false;
     }
-    if (my - 360 >= mario.y) {
+    if (y - 360 >= mario.y) {
         return false;
     }
-    if (my + 360 <= mario.y) {
+    if (y + 360 <= mario.y) {
         return false;
     }
     return true;
@@ -87,7 +84,7 @@ void handle_pending_events(void) {
             gfx_TransparentSprite(thwomp_0, rel_x, rel_y);
             
             if (y == cur->start_y) {
-                if (mario.x >= rel_x - 32 && mario.x <= rel_x + 32 + mario.hitbox.width) {
+                if (mario.x >= x - 32 && mario.x <= x + 32 + mario.hitbox.width) {
                     tmp_vy = 4;
                 } else {
                     tmp_vy = 0;
@@ -106,7 +103,7 @@ void handle_pending_events(void) {
                 if (tmp_vy < 9) { tmp_vy++; }
                 
                 // test against bottom
-                test_y = tmp_y = y + 31;
+                tmp_y = y + 31;
                 
                 // check bottom of tile
                 move_side = TILE_TOP;
@@ -125,9 +122,9 @@ void handle_pending_events(void) {
             
             y += tmp_vy;
             
-            if (gfx_CheckRectangleHotspot(mario.x, mario.y, mario.hitbox.width, mario.hitbox.height, rel_x, rel_y, 23, 31)) {
+            if (gfx_CheckRectangleHotspot(mario.x, mario.y, mario.hitbox.width, mario.hitbox.height, x, y, 23, 31)) {
                 if (!shrink_mario()) {
-                    add_rel_poof(mario.x, mario.y + 2);
+                    add_poof(mario.x, mario.y + 2);
                     remove_thwomp(i--);
                 }
             }
@@ -178,7 +175,7 @@ void handle_pending_events(void) {
                 }
             }
             
-            if (!gfx_CheckRectangleHotspot(mario.x, mario.y, mario.hitbox.width, mario.hitbox.height, rel_x, rel_y, cur->hitbox.width, cur->hitbox.height) || someone_died) {
+            if (!gfx_CheckRectangleHotspot(mario.x, mario.y, mario.hitbox.width, mario.hitbox.height, x, y, cur->hitbox.width, cur->hitbox.height) || someone_died) {
                 gfx_image_t *img;
 draw_sprite:
                 switch(cur->type) {
@@ -200,7 +197,6 @@ draw_flat_goomba_sprite:
                         img = goomba_flat;
                         break;
                     case KOOPA_BONES_TYPE:
-draw_koopa_bones_sprite:
                         img = (cur->vx < 0) ? koopa_bones_left_sprite : koopa_bones_right_sprite;
                         break;
                     case KOOPA_RED_FLY_TYPE:
@@ -214,7 +210,6 @@ draw_koopa_bones_sprite:
                         goto skip_draw;
                         break;
                     case KOOPA_RED_TYPE:
-draw_koopa_red_sprite:
                         img = (cur->vx < 0) ? koopa_red_left_sprite : koopa_red_right_sprite;
                         break;
                     case KOOPA_GREEN_FLY_TYPE:
@@ -228,7 +223,6 @@ draw_koopa_red_sprite:
                         goto skip_draw;
                         break;
                     case KOOPA_GREEN_TYPE:
-draw_koopa_green_sprite:
                         img = (cur->vx < 0) ? koopa_green_left_sprite : koopa_green_right_sprite;
                         break;
                     case KOOPA_BONES_DEAD_TYPE:
@@ -298,6 +292,10 @@ draw_koopa_shell:
                         eat_mushroom();
                         remove_simple_mover(i--);
                         break;
+                    case MUSHROOM_1UP_TYPE:
+                        eat_mushroom_1up();
+                        remove_simple_mover(i--);
+                        break;
                     case FIRE_FLOWER_TYPE:
                         eat_fire_flower();
                         remove_simple_mover(i--);
@@ -307,17 +305,17 @@ draw_koopa_shell:
                         remove_simple_mover(i--);
                         break;
                     case GOOMBA_TYPE:
-                        if ((y <= mario.y + mario.scrolly + mario.hitbox.height/2) || mario.flags & FLAG_MARIO_INVINCIBLE) {
+                        if ((mario.vy <= 0) || mario.flags & (FLAG_MARIO_INVINCIBLE | FLAG_MARIO_SLIDE)) {
                             if (!shrink_mario()) {
                                 add_next_chain_score();
-                                add_rel_poof(mario.x, mario.y + 2);
+                                add_poof(mario.x, mario.y + 2);
                                 remove_simple_mover(i--);
                             } else {
                                 goto draw_goomba_sprite;
                             }
-                        } else if (mario.flags & FLAG_MARIO_INVINCIBLE) {
+                        } else if (mario.flags & (FLAG_MARIO_INVINCIBLE | FLAG_MARIO_SLIDE)) {
                             add_next_chain_score();
-                            add_rel_poof(mario.x, mario.y + 2);
+                            add_poof(mario.x, mario.y + 2);
                             remove_simple_mover(i--);
                         } else {
                             add_next_chain_score();
@@ -334,10 +332,10 @@ draw_koopa_shell:
                         goto draw_flat_goomba_sprite;
                     case KOOPA_GREEN_FLY_TYPE:
                     case KOOPA_RED_FLY_TYPE:
-                        if ((y < mario.y + mario.scrolly + mario.hitbox.height/2) || mario.flags & FLAG_MARIO_INVINCIBLE) {
+                        if ((mario.vy <= 0) || mario.flags & (FLAG_MARIO_INVINCIBLE | FLAG_MARIO_SLIDE)) {
                             if (!shrink_mario()) {
                                 add_next_chain_score();
-                                add_rel_poof(mario.x, mario.y + 2);
+                                add_poof(mario.x, mario.y + 2);
                                 remove_simple_mover(i--);
                             } else {
                                 goto draw_sprite;
@@ -358,10 +356,10 @@ draw_koopa_shell:
                     case KOOPA_BONES_TYPE:
                     case KOOPA_RED_TYPE:
                     case KOOPA_GREEN_TYPE:
-                        if ((y < mario.y + mario.scrolly + mario.hitbox.height/2) || mario.flags & FLAG_MARIO_INVINCIBLE) {
+                        if ((mario.vy <= 0) || mario.flags & (FLAG_MARIO_INVINCIBLE | FLAG_MARIO_SLIDE)) {
                             if (!shrink_mario()) {
                                 add_next_chain_score();
-                                add_rel_poof(mario.x, mario.y + 2);
+                                add_poof(mario.x, mario.y + 2);
                                 remove_simple_mover(i--);
                             } else {
                                 goto draw_sprite;
@@ -396,9 +394,9 @@ create_koopa_shell:
                         }
                         break;
                     case KOOPA_RED_SHELL_TYPE: case KOOPA_GREEN_SHELL_TYPE:
-                        if ((mario.y + mario.hitbox.height + mario.scrolly) - 7 < y) {
+                        if (mario.y + mario.hitbox.height - 7 < y) {
                             mario.vy = -8;
-                            if (!cur->vx && ((mario.x + mario.scrollx) != x)) {
+                            if (!cur->vx && (mario.x != x)) {
                                 goto kick_shell;
                             }
                             cur->vx = 0;
@@ -406,10 +404,10 @@ create_koopa_shell:
                             cur->counter = 127;
                         } else {
                             if (cur->vx) {
-                                if (gfx_CheckRectangleHotspot(mario.x + 6, mario.y + 8, mario.hitbox.width - 12, mario.hitbox.height - 8, rel_x, rel_y, 15, 15) || mario.flags & FLAG_MARIO_INVINCIBLE) {
+                                if (mario.vy <= 0 || mario.flags & (FLAG_MARIO_INVINCIBLE | FLAG_MARIO_SLIDE)) {
                                     if (!shrink_mario()) {
                                         add_score(100);
-                                        add_rel_poof(mario.x, mario.y + 2);
+                                        add_poof(mario.x, mario.y + 2);
                                         remove_simple_mover(i--);
                                     } else {
                                         goto draw_sprite;
@@ -417,7 +415,7 @@ create_koopa_shell:
                                 }
                             } else {
 kick_shell:
-                                if ((mario.x + mario.scrollx + mario.hitbox.width/2) < x) {
+                                if ((mario.x + mario.hitbox.width/2) < x) {
                                     cur->vx = 4;
                                 } else {
                                     cur->vx = -4;
@@ -432,35 +430,31 @@ kick_shell:
                         break;
                 }
             }
-            
 skip_draw:
 
             if (cur->counter >= 0) {
                 if (!cur->counter--) {
+                    cur->smart = true;
+                    cur->y -= 11;
                     if (cur->type == KOOPA_GREEN_SHELL_TYPE) {
-                        cur->y -= 11;
                         cur->smart = false;
-                        cur->counter = -1;
-                        cur->vx = (mario.x < rel_x) ? -1 : 1;
-                        cur->hitbox.height = 26;
                         cur->type = KOOPA_GREEN_TYPE;
                     } else if (cur->type == KOOPA_RED_SHELL_TYPE) {
-                        cur->y -= 11;
-                        cur->smart = true;
-                        cur->counter = -1;
-                        cur->vx = (mario.x < rel_x) ? -1 : 1;
-                        cur->hitbox.height = 26;
                         cur->type = KOOPA_RED_TYPE;
                     } else if (cur->type == KOOPA_BONES_DEAD_TYPE) {
-                        cur->y -= 14;
-                        cur->smart = true;
-                        cur->counter = -1;
-                        cur->vx = (mario.x < rel_x) ? -1 : 1;
-                        cur->hitbox.height = 26;
+                        cur->y -= 3;
                         cur->type = KOOPA_BONES_TYPE;
                     } else {
                         remove_simple_mover(i--);
+                        goto continue_loop;
                     }
+                    cur->counter = -1;
+                    if (mario.x < rel_x) {
+                        cur->vx = -1;
+                    } else {
+                        cur->vx = 1;
+                    }
+                    cur->hitbox.height = 26;
                 }
             }
 continue_loop:
@@ -500,7 +494,7 @@ continue_loop:
             cur->y = y;
            
             // draw the tile
-            gfx_Sprite(tileset_tiles[cur->tile], x - mario.scrollx, y - mario.scrolly);
+            gfx_TransparentSprite(tileset_tiles[cur->tile], x - mario.scrollx, y - mario.scrolly);
             
             if (!(cur->count--)) {
                 remove_bumped_tile(i--);
@@ -532,8 +526,8 @@ continue_loop:
                 }
                 
                 if (cur->throws_fire) {
-                    if (rel_x > mario.x) {
-                        if (rel_y < mario.y) {
+                    if (x > mario.x) {
+                        if (y < mario.y) {
                             img = chomper_fire_down_left;
                             dir = DOWN_LEFT;
                         } else {
@@ -541,7 +535,7 @@ continue_loop:
                             dir = UP_LEFT;
                         }
                     } else {
-                        if (rel_y < mario.y) {
+                        if (y < mario.y) {
                             img = chomper_fire_down_right;
                             dir = DOWN_RIGHT;
                         } else {
@@ -575,10 +569,10 @@ continue_loop:
                 }
             }
             
-            if (gfx_CheckRectangleHotspot(mario.x, mario.y, mario.hitbox.width, mario.hitbox.height, rel_x, rel_y, 15, 30)) {
+            if (gfx_CheckRectangleHotspot(mario.x, mario.y, mario.hitbox.width, mario.hitbox.height, x, y, 15, 30)) {
                 if (!shrink_mario()) {
                     add_score(200);
-                    add_rel_poof(mario.x, mario.y + 2);
+                    add_poof(mario.x, mario.y + 2);
                     remove_chomper(i--);
                 } else {
                     if (mario.crouched) { mario.y -= 12; }
@@ -593,6 +587,7 @@ continue_loop:
         for(i = 0; i < num_simple_enemies; i++) {
             enemy_t *cur = simple_enemy[i];
             gfx_image_t *img;
+            int tmp_add;
             
             x = cur->x;
             y = cur->y;
@@ -601,6 +596,29 @@ continue_loop:
             rel_y = y - mario.scrolly;
             
             switch(cur->type) {
+                case FISH_TYPE:
+                    if (!in_viewport(x, y)) {
+                        continue;
+                    }
+                    if (cur->vx < 0) {
+                        img = fish_left_sprite;
+                        tmp_add = 0;
+                    } else {
+                        img = fish_right_sprite;
+                        tmp_add = 16;
+                    }
+                    gfx_TransparentSprite(img, rel_x, rel_y);
+                    if (!moveable_tile(x + cur->vx + tmp_add, y)) {
+                        cur->vx = -cur->vx;
+                    }
+                    cur->x += cur->vx;
+                    if (gfx_CheckRectangleHotspot(mario.x, mario.y, mario.hitbox.width, mario.hitbox.height, x, y, 16, 16)) {
+                        if (!shrink_mario()) {
+                            add_poof(x, y + 4);
+                            remove_simple_enemy(i--);
+                        }
+                    }
+                    break;
                 case BULLET_CREATOR_TYPE:
                     if (!in_viewport(x, y)) {
                         continue;
@@ -655,8 +673,8 @@ continue_loop:
                     gfx_TransparentSprite(cur->type == CANNONBALL_TYPE ? cannonball_sprite : bullet_left, rel_x, rel_y);
                     cur->x += cur->vx;
                     cur->y += cur->vy;
-                    if (gfx_CheckRectangleHotspot(mario.x, mario.y, mario.hitbox.width, mario.hitbox.height, rel_x, rel_y, 15, 13)) {
-                        if ((y < mario.y + mario.scrolly + mario.hitbox.height/2) || mario.flags & FLAG_MARIO_INVINCIBLE) {
+                    if (gfx_CheckRectangleHotspot(mario.x, mario.y, mario.hitbox.width, mario.hitbox.height, x, y, 15, 13)) {
+                        if ((y < mario.y + mario.hitbox.height/2) || mario.flags & (FLAG_MARIO_INVINCIBLE | FLAG_MARIO_SLIDE)) {
                             if (!shrink_mario()) {
                                 add_next_chain_score();
                                 cur->vy = 4;
@@ -691,7 +709,7 @@ continue_loop:
             rel_x = x - mario.scrollx;
             rel_y = y - mario.scrolly;
             
-            if (mario.x < rel_x) {
+            if (mario.x < x) {
                 if (mario.direction == FACE_RIGHT) {
                     img = boo_left_hide;
                 } else {
@@ -711,7 +729,7 @@ continue_loop:
                 if (cur->count < 6) {
                     cur->count++;
                 } else {
-                    if (mario.y < rel_y) {
+                    if (mario.y < y) {
                         cur->vy = -1;
                     } else {
                         cur->vy = 1;
@@ -730,10 +748,10 @@ continue_loop:
                     
             gfx_TransparentSprite(img, rel_x, rel_y);
             
-            if (gfx_CheckRectangleHotspot(mario.x, mario.y, mario.hitbox.width, mario.hitbox.height, rel_x, rel_y, 15, 15)) {
+            if (gfx_CheckRectangleHotspot(mario.x, mario.y, mario.hitbox.width, mario.hitbox.height, x, y, 15, 15)) {
                 if (!shrink_mario()) {
                     add_score(200);
-                    add_rel_poof(mario.x, mario.y + 2);
+                    add_poof(mario.x, mario.y + 2);
                     remove_boo(i--);
                 }
             }
@@ -757,12 +775,10 @@ continue_loop:
             }
             
             tmp_vy = cur->vy;
-            rel_x = x - mario.scrollx;
-            rel_y = y - mario.scrolly;
             
             if (y < cur->start_y) {
                 gfx_image_t *img = tmp_vy < 0 ? flame_sprite_up : flame_sprite_down;
-                gfx_TransparentSprite(img, rel_x, rel_y);
+                gfx_TransparentSprite(img, x - mario.scrollx, y - mario.scrolly);
             }
             
             if (cur->count) {
@@ -777,10 +793,10 @@ continue_loop:
                 }
             }
             
-            if (gfx_CheckRectangleHotspot(mario.x, mario.y, mario.hitbox.width, mario.hitbox.height, rel_x, rel_y, 14, 16)) {
+            if (gfx_CheckRectangleHotspot(mario.x, mario.y, mario.hitbox.width, mario.hitbox.height, x, y, 14, 16)) {
                 if (!shrink_mario()) {
                     add_score(200);
-                    add_rel_poof(mario.x, mario.y + 2);
+                    add_poof(mario.x, mario.y + 2);
                     remove_flame(i--);
                 }
             }
@@ -863,7 +879,7 @@ continue_loop:
                 
             // the type that can hit mario
             } else {
-                if (gfx_CheckRectangleHotspot(mario.x, mario.y, mario.hitbox.width, mario.hitbox.height, rel_x, rel_y, 8, 8)) {
+                if (gfx_CheckRectangleHotspot(mario.x, mario.y, mario.hitbox.width, mario.hitbox.height, x, y, 8, 8)) {
                     shrink_mario();
                     add_poof(x + 4, y + 4);
                     remove_fireball(i--);
@@ -875,17 +891,20 @@ done_checks_fireball:
     }
 
     // draw the mario sprite
-    if (mario.in_pipe) {
+    if (in_quicksand) {
+        gfx_SetClipRegion(0, 0, X_PXL_MAX, quicksand_clip_y - mario.scrolly);
+        goto draw_mario_clipped;
+    } else if (mario.in_pipe) {
         if (!mario.enter_pipe) {
             switch (mario.in_pipe) {
                 case PIPE_DOWN:
                     gfx_SetClipRegion(0, mario.pipe_clip_y, X_PXL_MAX, Y_PXL_MAX);
                     break;
                 case PIPE_LEFT:
-                    gfx_SetClipRegion(mario.x + mario.pipe_counter, 0, X_PXL_MAX, Y_PXL_MAX);
+                    gfx_SetClipRegion(mario.rel_x + mario.pipe_counter, 0, X_PXL_MAX, Y_PXL_MAX);
                     break;
                 case PIPE_RIGHT:
-                    gfx_SetClipRegion(mario.x, 0, mario.x + mario.hitbox.width - mario.pipe_counter + 1, Y_PXL_MAX);
+                    gfx_SetClipRegion(mario.rel_x, 0, mario.rel_x + mario.hitbox.width - mario.pipe_counter + 1, Y_PXL_MAX);
                     break;
                 case PIPE_UP:
                     gfx_SetClipRegion(0, 0, X_PXL_MAX, mario.pipe_clip_y);
@@ -894,20 +913,21 @@ done_checks_fireball:
         } else {
             switch (mario.in_pipe) {
                 case PIPE_DOWN:
-                    gfx_SetClipRegion(0, 0, X_PXL_MAX, mario.y + mario.pipe_counter + 1);
+                    gfx_SetClipRegion(0, 0, X_PXL_MAX, mario.rel_y + mario.pipe_counter + 1);
                     break;
                 case PIPE_LEFT:
-                    gfx_SetClipRegion(mario.x, 0, mario.x + mario.pipe_counter + 1, Y_PXL_MAX);
+                    gfx_SetClipRegion(mario.rel_x, 0, mario.x + mario.pipe_counter + 1, Y_PXL_MAX);
                     break;
                 case PIPE_RIGHT:
-                    gfx_SetClipRegion(mario.x + mario.hitbox.width - mario.pipe_counter - 1, 0, X_PXL_MAX, Y_PXL_MAX);
+                    gfx_SetClipRegion(mario.rel_x + mario.hitbox.width - mario.pipe_counter - 1, 0, X_PXL_MAX, Y_PXL_MAX);
                     break;
                 case PIPE_UP:
-                    gfx_SetClipRegion(0, mario.y + mario.hitbox.height - mario.pipe_counter - 1, X_PXL_MAX, Y_PXL_MAX);
+                    gfx_SetClipRegion(0, mario.rel_y + mario.hitbox.height - mario.pipe_counter - 1, X_PXL_MAX, Y_PXL_MAX);
                     break;
             }
         }
-        gfx_TransparentSprite(mario.curr_sprite, mario.x, mario.y);
+draw_mario_clipped:
+        gfx_TransparentSprite(mario.curr_sprite, mario.rel_x, mario.rel_y);
         gfx_SetClipRegion(0, 0, X_PXL_MAX, Y_PXL_MAX);
     } else if (mario.invincible) {
         if (mario.invincible-- & 1) {
@@ -920,11 +940,11 @@ done_checks_fireball:
         }
     } else {
 draw_mario:
-        gfx_TransparentSprite(mario.curr_sprite, mario.x, mario.y);
+        gfx_TransparentSprite(mario.curr_sprite, mario.rel_x, mario.rel_y);
     }
     
-    if (mario.has_shell) { 
-        gfx_TransparentSprite(mario.has_red_shell ? koopa_red_shell_0 : koopa_green_shell_0, (mario.direction == FACE_LEFT) ? mario.x - 10 : mario.x + mario.hitbox.width - 6, (mario.flags & FLAG_MARIO_BIG) ? mario.y + 26/2 - 4 : mario.y);
+    if (mario.has_shell) {
+        gfx_TransparentSprite(mario.has_red_shell ? koopa_red_shell_0 : koopa_green_shell_0, (mario.direction == FACE_LEFT) ? mario.rel_x - 10 : mario.rel_x + mario.hitbox.width - 6, (mario.flags & FLAG_MARIO_BIG) ? mario.rel_y + 26/2 - 4: mario.rel_y);
     }
     
     handling_events = false;
@@ -939,10 +959,6 @@ void remove_poof(uint8_t i) {
     }
     
     free(free_me);
-}
-
-void add_rel_poof(int x, int y) {
-    add_poof(x + mario.scrollx, y + mario.scrolly);
 }
 
 void add_poof(int x, int y) {

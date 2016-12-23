@@ -13,19 +13,19 @@ extern bool force_align;
 extern gfx_image_t *tileset_tiles[224];
 
 typedef struct {
-	uint8_t animation_counter;
-	uint8_t animation_3_counter;
-	uint8_t animation_4_counter;
-	uint8_t current_tile;
-	uint8_t current_tile_sel;
-	gfx_image_t *current_image_ptr;
+    uint8_t animation_counter;
+    uint8_t animation_3_counter;
+    uint8_t animation_4_counter;
+    uint8_t current_tile;
+    uint8_t current_tile_sel;
+    gfx_image_t *current_image_ptr;
 } tiles_struct_t;
 extern tiles_struct_t tiles;
 
 typedef struct map {
-	uint8_t width, height;
-	uint8_t *data;
-	unsigned int max_x_offset, max_y_offset;
+    uint8_t width, height;
+    uint8_t *data;
+    unsigned int max_x_offset, max_y_offset;
     int max_y, max_x;
 } map_t;
 extern map_t level_map;
@@ -50,16 +50,18 @@ enum power_ups {
 #define FLAG_MARIO_BIG        1
 #define FLAG_MARIO_FIRE       2
 #define FLAG_MARIO_INVINCIBLE 4
+#define FLAG_MARIO_SLIDE      8
 
 #define ONE_UP_SCORE          0x10000
 
 typedef struct {
-	int x, y;
+    int x, y;
     int vy;
     uint8_t vx;
-	unsigned int scrollx, scrolly;
-	gfx_image_t *curr_sprite;
-	hitbox_t hitbox;
+    unsigned int scrollx, scrolly;
+    int rel_x, rel_y;
+    gfx_image_t *curr_sprite;
+    hitbox_t hitbox;
     uint8_t hitbox_height_half;
     bool direction;
     uint8_t flags;
@@ -84,6 +86,7 @@ typedef struct {
     unsigned int exit_pipe_loc;
     int pipe_clip_x;
     int pipe_clip_y;
+    bool on_slope;
 } mario_t;
 extern mario_t mario;
 
@@ -97,7 +100,14 @@ enum pipe_types {
 extern gfx_image_t *mario_left[];
 extern gfx_image_t *mario_right[];
 
-extern bool exit_game;
+typedef struct {
+    bool exit;
+    bool fastexit;
+    uint8_t end_counter;
+    bool entered_end_pipe;
+} game_t;
+
+extern game_t game;
 
 // -----------------------------
 // Tilemap defines
@@ -122,4 +132,6 @@ extern bool exit_game;
 #define WHITE_INDEX   254
 #define PURPLE_INDEX  253
 
+#define MARIO_BIG_SPRITE_SIZE   ((27*16) + 2)
+#define MARIO_SMALL_SPRITE_SIZE ((16*16) + 2)
 #endif

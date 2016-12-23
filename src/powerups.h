@@ -7,6 +7,9 @@
 
 extern uint8_t shrink_counter;
 
+bool add_mushroom_1up(uint8_t*);
+void eat_mushroom_1up(void);
+
 bool add_mushroom(uint8_t*);
 void eat_mushroom(void);
 

@@ -76,3 +76,8 @@
 #include "mario_up_big_1.asm" ; 402 bytes
 #include "mario_up_fire_0.asm" ; 402 bytes
 #include "mario_up_fire_1.asm" ; 402 bytes
+#include "fish_left_0.asm" ; 258 bytes
+#include "fish_left_1.asm" ; 258 bytes
+#include "fish_right_0.asm" ; 258 bytes
+#include "fish_right_1.asm" ; 258 bytes
+#include "mushroom_1up.asm" ; 258 bytes

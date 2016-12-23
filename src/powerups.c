@@ -23,6 +23,17 @@
 #include "images.h"
 #include "simple_mover.h"
 
+bool add_mushroom_1up(uint8_t *spawing_tile) {
+    // add a normal mushroom
+    if(add_mushroom(spawing_tile)) {
+        // change the type
+        simple_mover[num_simple_movers-1]->type = MUSHROOM_1UP_TYPE;
+    } else {
+        return false;
+    }
+    return true;
+}
+
 bool add_mushroom(uint8_t *spawing_tile) {
     simple_move_t *shroom = add_simple_mover(spawing_tile);
     
@@ -33,7 +44,11 @@ bool add_mushroom(uint8_t *spawing_tile) {
     shroom->hitbox.width = 15;
     shroom->hitbox.height = 15;
     shroom->y -= TILE_HEIGHT;
-    shroom->vx = ((mario.x + mario.scrollx < shroom->x) ? 1 : -1) << 1;
+    if (mario.x + mario.scrollx < shroom->x) {
+        shroom->vx = 2;
+    } else {
+        shroom->vx = -2;
+    }
     shroom->type = MUSHROOM_TYPE;
     return true;
 }
@@ -48,7 +63,11 @@ bool add_star(uint8_t *spawing_tile) {
     star->hitbox.width = 15;
     star->hitbox.height = 15;
     star->y -= TILE_HEIGHT;
-    star->vx = ((mario.x + mario.scrollx < star->x) ? 1 : -1) << 1;
+    if (mario.x + mario.scrollx < star->x) {
+        star->vx = 2;
+    } else {
+        star->vx = -2;
+    }
     star->type = STAR_TYPE;
     star->is_bouncer = true;
     return true;
@@ -71,6 +90,10 @@ bool add_fire_flower(uint8_t *spawing_tile) {
 void set_left_mario_sprites(void) {
     gfx_FlipSpriteY(mario_0_buffer_right, mario_0_buffer_left);
     gfx_FlipSpriteY(mario_1_buffer_right, mario_1_buffer_left);
+}
+
+void eat_mushroom_1up(void) {
+    add_score(ONE_UP_SCORE);
 }
 
 void eat_mushroom(void) {
@@ -111,7 +134,7 @@ uint8_t shrink_counter = 0;
 
 bool shrink_mario(void) {
     
-    if (mario.flags & FLAG_MARIO_INVINCIBLE) {
+    if (mario.flags & (FLAG_MARIO_INVINCIBLE | FLAG_MARIO_SLIDE)) {
         return false;
     }
     
@@ -142,7 +165,7 @@ bool shrink_mario(void) {
             }
         }
     }
-    mario.hitbox_height_half = mario.hitbox.height/2;
+    mario.hitbox_height_half = mario.hitbox.height >> 1;
     
     return true;
 }

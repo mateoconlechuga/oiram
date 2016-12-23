@@ -30,6 +30,7 @@ typedef struct simple_move {
 enum simple_move_type {
     NO_TYPE=0,
     MUSHROOM_TYPE,
+    MUSHROOM_1UP_TYPE,
     FIRE_FLOWER_TYPE,
     FLAT_GOOMBA_TYPE,
     FIREBALL_TYPE,

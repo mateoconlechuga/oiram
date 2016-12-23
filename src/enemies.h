@@ -75,7 +75,8 @@ enum simple_enemy_type {
     CANNONBALL_DOWN_CREATOR_TYPE,
     CANNONBALL_UP_CREATOR_TYPE,
     BULLET_TYPE,
-    CANNONBALL_TYPE
+    CANNONBALL_TYPE,
+    FISH_TYPE
 };
 
 extern enemy_t *simple_enemy[MAX_SIMPLE_ENEMY];

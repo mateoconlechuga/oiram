@@ -4,6 +4,6 @@
 #define tilemapdata_H
 #include <stdint.h>
 
-extern uint8_t tilemapdata[800];
+extern uint8_t tilemapdata[1250];
 
 #endif

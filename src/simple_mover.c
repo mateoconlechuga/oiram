@@ -45,14 +45,14 @@ simple_move_t *add_simple_mover(uint8_t *spawing_tile) {
 }
 
 bool remove_simple_mover(uint8_t i) {
-    simple_move_t *free_me = simple_mover[i];
+    simple_move_t *mover = simple_mover[i];
     uint8_t num_simple_movers_less = num_simple_movers--;
     
     for(; i < num_simple_movers_less; i++) {
         simple_mover[i] = simple_mover[i+1];
     }
     
-    free(free_me);
+    free(mover);
     
     return true;
 }
@@ -71,17 +71,20 @@ void simple_move_handler(simple_move_t *this) {
     bool test_right_bottom, test_left_bottom;
     
     tmp_x = new_x;
-    test_y = tmp_y = new_y + add_bottom + 1;
+    tmp_y = new_y + add_bottom + 1;
     
     // don't care side
-    move_side = TILE_TOP;
-
-    test_left_bottom = moveable_tile(tmp_x, tmp_y);
-    test_right_bottom = moveable_tile(tmp_x + add_right, tmp_y);
+    move_side = TILE_X;
+    test_y_ptr = &new_y;
+    test_y_height = add_bottom;
+    
+    test_left_bottom  = moveable_tile_left_bottom(tmp_x, tmp_y);
+    test_right_bottom = moveable_tile_right_bottom(tmp_x + add_right, tmp_y);
     
     simple_mover_type = this->type;
     
     if (!this->is_flyer) {
+        
         // if nothing below, start accelerating
         if (test_left_bottom || test_right_bottom) {
             if (test_left_bottom && test_right_bottom) {
@@ -96,7 +99,7 @@ void simple_move_handler(simple_move_t *this) {
                 tmp_vy = -6;
             }
         }
-    
+        
         // check if velocity change
         if (tmp_vy) {
                 
@@ -105,10 +108,10 @@ void simple_move_handler(simple_move_t *this) {
                     
                     // check bottom of tile
                     move_side = TILE_BOTTOM;
-        
+                    
                     // binary test until we find the new thing -- bitwise or because need both sides
                     while(!(moveable_tile(tmp_x, new_y + tmp_vy) & moveable_tile(tmp_x + add_right, new_y + tmp_vy))) {
-                        if ((tmp_vy /= 2) >= 0) { break; }
+                        if ((int8_t)(tmp_vy /= 2) >= 0) { break; }
                     }
                     
                     new_y += tmp_vy;
@@ -117,14 +120,16 @@ void simple_move_handler(simple_move_t *this) {
                 } else {
                     
                     // test against top
-                    test_y = tmp_y = new_y + add_bottom;
+                    tmp_y = new_y + add_bottom;
                     
                     // check top of tile
                     move_side = TILE_TOP;
                     
-                    // binary test until we find the new thing
-                    while(!(moveable_tile(tmp_x, tmp_y + tmp_vy) && moveable_tile(tmp_x + add_right, tmp_y + tmp_vy))) {
-                        if ((tmp_vy /= 2) <= 0) { break; }
+                    for(; tmp_vy > 0; tmp_vy--) {
+                        int ty = tmp_y + tmp_vy;
+                        if (moveable_tile_right_bottom(tmp_x + add_right, ty) & moveable_tile_left_bottom(tmp_x, ty)) {
+                            break;
+                        }
                     }
                     
                     new_y += tmp_vy;
@@ -146,8 +151,8 @@ void simple_move_handler(simple_move_t *this) {
 
         // check left of tile
         move_side = TILE_LEFT;
-                
-        if (moveable_tile(tmp_x, new_y) && moveable_tile(tmp_x, new_y + add_bottom)) {
+        
+        if (moveable_tile_right_bottom(tmp_x, new_y + add_bottom) && moveable_tile(tmp_x, new_y)) {
             new_x += tmp_vx;
         } else {
             tmp_vx = -tmp_vx;
@@ -158,13 +163,13 @@ void simple_move_handler(simple_move_t *this) {
         // check right of tile
         move_side = TILE_RIGHT;
         
-        if (moveable_tile(tmp_x, new_y) && moveable_tile(tmp_x, new_y + add_bottom)) {
+        if (moveable_tile_left_bottom(tmp_x, new_y + add_bottom) && moveable_tile(tmp_x, new_y)) {
             new_x += tmp_vx;
         } else {
             tmp_vx = -tmp_vx;
         }
     }
-
+    
     this->x = new_x;
     this->y = new_y;
     this->vy = tmp_vy;

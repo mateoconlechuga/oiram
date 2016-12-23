@@ -82,6 +82,11 @@ gfx_image_t *mario_up_big_0;
 gfx_image_t *mario_up_big_1;
 gfx_image_t *mario_up_fire_0;
 gfx_image_t *mario_up_fire_1;
+gfx_image_t *fish_left_0;
+gfx_image_t *fish_left_1;
+gfx_image_t *fish_right_0;
+gfx_image_t *fish_right_1;
+gfx_image_t *mushroom_1up;
 
 gfx_image_t *fireball_sprite;
 gfx_image_t *goomba_sprite;
@@ -96,6 +101,8 @@ gfx_image_t *koopa_bones_left_sprite;
 gfx_image_t *koopa_bones_right_sprite;
 gfx_image_t *flame_sprite_up;
 gfx_image_t *flame_sprite_down;
+gfx_image_t *fish_left_sprite;
+gfx_image_t *fish_right_sprite;
 
 gfx_image_t *mario_right[] = {
     mario_0_buffer_right, mario_1_buffer_right
@@ -106,12 +113,12 @@ gfx_image_t *mario_left[] = {
 };
 
 void extract_tiles(void) {
-    uint8_t i;
     uint8_t slot;
     
     ti_CloseAll();
     slot = ti_Open("MarioT", "r");
     if (slot) {
+        uint8_t i;
         uint16_t pal_size;
         uint16_t *pal_ptr;
         uint8_t *tmp_ptr;
@@ -287,7 +294,19 @@ void extract_sprites(void) {
         spr_ptr += 402;
         mario_up_fire_1 = (gfx_image_t*)spr_ptr;
         spr_ptr += 402;
+        fish_left_sprite = fish_left_0 = (gfx_image_t*)spr_ptr;
+        spr_ptr += 258;
+        fish_left_1 = (gfx_image_t*)spr_ptr;
+        spr_ptr += 258;
+        fish_right_sprite = fish_right_0 = (gfx_image_t*)spr_ptr;
+        spr_ptr += 258;
+        fish_right_1 = (gfx_image_t*)spr_ptr;
+        spr_ptr += 258;
+        mushroom_1up = (gfx_image_t*)spr_ptr;
+        spr_ptr += 258;
     } else {
+        gfx_End();
+        prgm_CleanUp();
         exit(0);
     }
     

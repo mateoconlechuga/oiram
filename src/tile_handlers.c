@@ -1,6 +1,8 @@
 #include <stdint.h>
 #include <lib/ce/graphx.h>
 #include <tice.h>
+#include <debug.h>
+#include <stdio.h>
 
 #include "defines.h"
 #include "powerups.h"
@@ -11,83 +13,96 @@
 #include "images.h"
 #include "lower.h"
 
+#define tile_y_loc(x) ((((unsigned int)(x) - (unsigned int)tilemap.map) / tilemap.width) * TILE_HEIGHT)
+
 uint8_t move_side;
 bool force_jump;
 int test_y;
 int test_x;
+int *test_y_ptr;
+int test_y_height;
+uint8_t testing_side;
+bool handled_slope = false; 
+uint8_t on_slope = 0;
 
-// ------------------------------------------------------------------------
-// some assembly optimizations since these functions can be quite intensive
-// ------------------------------------------------------------------------
+#pragma asm "xref _gfx_TilePtr"
+#pragma asm "xref __indcall"
+#pragma asm "xdef _moveable_tile"
+#pragma asm "xdef _moveable_tile_left_bottom"
+#pragma asm "xdef _moveable_tile_right_bottom"
 
-/*
+#pragma asm "_moveable_tile_right_bottom:"
+#pragma asm "	xor	a,a ; TEST_RIGHT"
+#pragma asm "	jr	_test_against"
+#pragma asm "_moveable_tile_left_bottom:"
+#pragma asm "	ld	a,1 ; TEST_LEFT"
+#pragma asm "	jr	_test_against"
+#pragma asm "_moveable_tile:"
+#pragma asm "	ld	a,2 ; TEST_NONE"
+#pragma asm "_test_against:"
+#pragma asm "	ld	(_testing_side),a"
+#pragma asm "	pop	bc"
+#pragma asm "	pop	hl"
+#pragma asm "	pop	de"
+#pragma asm "	push	de"
+#pragma asm "	push	hl"
+#pragma asm "	push	bc"
+#pragma asm "	ld	bc,0"
+#pragma asm "	xor	a,a"
+#pragma asm "	sbc	hl,bc"
+#pragma asm "	jp	p,_l__2"
+#pragma asm "	jp	pe,_l_2"
+#pragma asm "	ret"
+#pragma asm "_l__2:"
+#pragma asm "	jp	po,_l_2"
+#pragma asm "	ret"
+#pragma asm "_l_2:"
+#pragma asm "	ex	de,hl"
+#pragma asm "	or	a,a"
+#pragma asm "	sbc	hl,bc"
+#pragma asm "	jp	p,_l__4"
+#pragma asm "	jp	pe,_l_3"
+#pragma asm "	jr	_l__5"
+#pragma asm "_l__4:"
+#pragma asm "	jp	po,_l_3"
+#pragma asm "_l__5:"
+#pragma asm "	ld	a,1"
+#pragma asm "	ret"
+#pragma asm "_l_3:"
+#pragma asm "	ld	(_test_x),de"
+#pragma asm "	ld	(_test_y),hl"
+#pragma asm "	push	hl"
+#pragma asm "	push	de"
+#pragma asm "	ld	de,_tilemap"
+#pragma asm "	push	de"
+#pragma asm "	call	_gfx_TilePtr"
+#pragma asm "	pop	de"
+#pragma asm "	pop	de"
+#pragma asm "	pop	de"
+#pragma asm "	push	hl"
+#pragma asm "	ld	l,(hl)"
+#pragma asm "	ld	h,3"
+#pragma asm "	mlt	hl"
+#pragma asm "	ld	de,_tile_handler"
+#pragma asm "	add	hl,de"
+#pragma asm "	ld	iy,(hl)"
+#pragma asm "	call	__indcall"
+#pragma asm "	pop	de"
+#pragma asm "	ret"
+   
 // handle collisions with different tiles
 // function pointers are nice for this
+/*
 bool moveable_tile(int x, int y) {
     uint8_t *tile;
+    testing_side = 2;
     
     if (x < 0) { return false; }
     if (y < 0) { return true; }
-    tile = gfx_TilePtr(&tilemap, x, y);
+    tile = gfx_TilePtr(&tilemap, test_x = x, test_y = y);
     return (*tile_handler[*tile])(tile);
 }
 */
-
-#pragma asm "_moveable_tile:"
-
-#pragma asm "call __frameset0"
-#pragma asm "ld bc,0"
-#pragma asm "ld	hl,(ix+6)"
-#pragma asm "or a,a"
-#pragma asm "sbc hl,bc"
-
-#pragma asm "jp p,label_1"
-#pragma asm "jp pe,label_2"
-#pragma asm "jr label_3"
-#pragma asm "label_1:"
-#pragma asm "jp	po,label_2"
-#pragma asm "label_3:"
-#pragma asm "xor a,a"
-#pragma asm "jr	exit_func"
-#pragma asm "label_2"
-
-#pragma asm "ld hl,(ix+9)"
-#pragma asm "or	a,a"
-#pragma asm "sbc hl,bc"
-#pragma asm "jp	p,label_4"
-#pragma asm "jp	pe,label_5"
-#pragma asm "jr	label_6"
-#pragma asm "label_4:"
-#pragma asm "jp	po,label_5"
-#pragma asm "label_6:"
-#pragma asm "ld	a,1"
-#pragma asm "jr	exit_func"
-#pragma asm "label_5"
-#pragma asm "add hl,bc"
-#pragma asm "push hl"
-#pragma asm "ld bc,(ix+6)"
-#pragma asm "push bc"
-#pragma asm "ld bc,_tilemap"
-#pragma asm "push bc"
-#pragma asm "call _gfx_TilePtr"
-
-#pragma asm "push hl"
-#pragma asm "ld l,(hl)"
-#pragma asm "ld h,3"
-#pragma asm "mlt hl"
-#pragma asm "ld	bc,_tile_handler"
-#pragma asm "add hl,bc"
-#pragma asm "ld	iy,(hl)"
-#pragma asm "call __indcall"
-#pragma asm "exit_func:"
-#pragma asm "ld	sp,ix"
-#pragma asm "pop ix"
-#pragma asm "ret"
-
-#pragma asm "xdef _moveable_tile"
-#pragma asm "xref __indcall"
-#pragma asm "xref _tile_handler"
-#pragma asm "xref _gfx_TilePtr"
 
 /*
 static uint8_t solid_tile_handler(uint8_t *tile) {
@@ -186,6 +201,26 @@ static uint8_t dnspk_tile_handler(uint8_t *tile) {
     return 0;
 }
 
+static uint8_t down_tile_handler(uint8_t *tile) {
+    bumped_tile_t *bump_tile;
+    if (move_side == TILE_BOTTOM) {
+        if (!handling_events) {
+            add_bumped(tile, TILE_BOTTOM);
+            *tile = 61;
+            if (game.end_counter) {
+                game.end_counter--;
+                bump_tile = add_bumped(tile - tilemap.width, TILE_BOTTOM);
+                bump_tile->tile_ptr = NULL;
+                bump_tile->tile = 150;
+                bump_tile->count = 6;
+                bump_tile->y -= TILE_HEIGHT/2;
+                add_coin();
+            }
+        }
+    }
+    return 0;
+}
+
 static uint8_t quest_tile_handler(uint8_t *tile) {
     bumped_tile_t *bump_tile;
     if (move_side == TILE_BOTTOM) {
@@ -243,15 +278,6 @@ static uint8_t coin_tile_handler(uint8_t *tile) {
 
 static uint8_t top_tile_handler(uint8_t *tile) {
     if (move_side == TILE_TOP) {
-        if (!handling_events) {
-            unsigned int x, y;
-            
-            tile_to_abs_xy_pos(tile, &x, &y);
-            
-            if (test_y > y) {
-                return 1;
-            }
-        }
         return 0;
     }
     return 1;
@@ -259,30 +285,160 @@ static uint8_t top_tile_handler(uint8_t *tile) {
 
 static uint8_t vine_tile_handler(uint8_t *tile) {
     if (!handling_events) {
-        if ((move_side == TILE_TOP) && pressed_up) {
+        if (pressed_up) {
             if (!mario.on_vine) {
                 mario.on_vine = true;
                 if (mario.flags & FLAG_MARIO_FIRE) {
-                    memcpy(mario_0_buffer_right, mario_up_fire_0, 25*16 + 2);
-                    memcpy(mario_1_buffer_right, mario_up_fire_1, 25*16 + 2);
+                    memcpy(mario_0_buffer_right, mario_up_fire_0, MARIO_BIG_SPRITE_SIZE);
+                    memcpy(mario_1_buffer_right, mario_up_fire_1, MARIO_BIG_SPRITE_SIZE);
                 } else if (mario.flags & FLAG_MARIO_BIG) {
-                    memcpy(mario_0_buffer_right, mario_up_big_0, 25*16 + 2);
-                    memcpy(mario_1_buffer_right, mario_up_big_1, 25*16 + 2);
+                    memcpy(mario_0_buffer_right, mario_up_big_0, MARIO_BIG_SPRITE_SIZE);
+                    memcpy(mario_1_buffer_right, mario_up_big_1, MARIO_BIG_SPRITE_SIZE);
                 } else {
-                    memcpy(mario_0_buffer_right, mario_up_small_0, 16*16 + 2);
-                    memcpy(mario_1_buffer_right, mario_up_small_1, 16*16 + 2);
+                    memcpy(mario_0_buffer_right, mario_up_small_0, MARIO_SMALL_SPRITE_SIZE);
+                    memcpy(mario_1_buffer_right, mario_up_small_1, MARIO_SMALL_SPRITE_SIZE);
                 }
                 set_left_mario_sprites();
             }
-            mario.vy = -2;
             return 1;
-        } else {
-            if (move_side == TILE_X) {
-                return 2;
-            }
+        }
+        if (move_side == TILE_TOP) {
+            return 2;
         }
     }
     return 1;
+}
+
+bool in_quicksand;
+unsigned int quicksand_clip_y;
+
+static uint8_t quicksand_handler(uint8_t *tile) {
+    static uint8_t adder = 0;
+    static uint8_t test_sides = 0;
+    unsigned int x, y;
+    
+    tile_to_abs_xy_pos(tile, &x, &y);
+    
+    if (move_side == TILE_TOP) {
+        if (testing_side == TEST_RIGHT && test_sides == 0) {
+            test_sides = 1;
+        } else if (testing_side == TEST_LEFT && test_sides == 1) {
+            if (!adder) {
+                *test_y_ptr += 1;
+            }
+            adder = (adder+1) & 5;
+            in_quicksand = true;
+            pressed_right = false;
+            pressed_left = false;
+            test_sides = 0;
+        } else {
+            test_sides = 0;
+        }
+    }
+    
+    if (handling_events) { something_died = true;}
+    
+    return 0;
+}
+
+bool in_water;
+
+static uint8_t water_tile_hander(uint8_t *tile) {
+    static uint8_t adder = 0;
+    static uint8_t test_sides = 0;
+    
+    if (move_side == TILE_TOP) {
+        if (testing_side == TEST_RIGHT && test_sides == 0) {
+            test_sides = 1;
+        } else if (testing_side == TEST_LEFT && test_sides == 1) {
+            if(mario.vy < 0) { mario.vy += 1; } else { if (mario.vy > 1) { mario.vy = 1; } }
+            in_water = true;
+            test_sides = 0;
+        } else {
+            test_sides = 0;
+        }
+    }
+    
+    return 1;
+}
+
+static uint8_t quicksandt_handler(const uint8_t *tile) {
+    unsigned int x;
+    
+    tile_to_abs_xy_pos(tile, &x, &quicksand_clip_y);
+    return quicksand_handler(tile);
+}
+
+static uint8_t handle_slope_tile(const uint8_t *heightmap, const uint8_t *tile, const uint8_t test_side) {
+    if (!handling_events) {
+        if (mario.vy < 0) { return 1; }
+    }
+    
+    if (test_side == TEST_LEFT) {
+        if (testing_side == TEST_LEFT) {
+            goto resolve_slope;
+        }
+    } else {
+        if (testing_side == TEST_RIGHT) {
+resolve_slope:
+            *test_y_ptr = tile_y_loc(tile) - test_y_height + heightmap[test_x & 15] - 1;
+            on_slope = test_side;
+        }
+    }
+    
+    if (move_side == TILE_LEFT || move_side == TILE_RIGHT) {
+        return 1;
+    }
+    return 0;
+}
+
+static uint8_t steepl_slope_handler(uint8_t *tile) {
+    static const uint8_t heightmap[] = { 15,14,13,12,11,10,9,8,7,6,5,4,3,2,1,0 };
+    return handle_slope_tile(heightmap, tile, TEST_RIGHT);
+}
+
+static uint8_t semi1l_slope_handler(uint8_t *tile) {
+    static const uint8_t heightmap[] = { 15,14,14,13,13,13,12,12,11,11,10,10,9,9,8,8 };
+    return handle_slope_tile(heightmap, tile, TEST_RIGHT);
+}
+
+static uint8_t semi2l_slope_handler(uint8_t *tile) {
+    static const uint8_t heightmap[] = { 7,6,6,5,5,5,4,4,3,3,2,2,1,1,0,0 };
+    return handle_slope_tile(heightmap, tile, TEST_RIGHT);
+}
+
+static uint8_t steepr_slope_handler(uint8_t *tile) {
+    static const uint8_t heightmap[] = { 0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15 };
+    return handle_slope_tile(heightmap, tile, TEST_LEFT);
+}
+
+static uint8_t semi1r_slope_handler(uint8_t *tile) {
+    static const uint8_t heightmap[] = { 8,8,9,9,10,10,11,11,12,12,13,13,13,14,14,15 };
+    return handle_slope_tile(heightmap, tile, TEST_LEFT);
+}
+
+static uint8_t semi2r_slope_handler(uint8_t *tile) {
+    static const uint8_t heightmap[] = { 0,0,1,1,2,2,3,3,4,4,5,5,5,6,6,7 };
+    return handle_slope_tile(heightmap, tile, TEST_LEFT);
+}
+
+static uint8_t jelly_tile_handler(uint8_t *tile) {
+    if (!handling_events) {
+        if(!shrink_mario()) {
+            *tile = 26;
+        }
+    }
+    return 0;
+}
+
+static uint8_t end_pipe_handler(uint8_t *tile) {
+    if (move_side == TILE_TEST_PIPE_DOWN) {
+        mario.in_pipe = PIPE_DOWN;
+        mario.enter_pipe = true;
+        mario.pipe_counter = mario.hitbox.height; 
+        game.entered_end_pipe = true;
+    }
+    return 0;
 }
 
 uint8_t (*tile_handler[])(uint8_t*) = {
@@ -312,7 +468,7 @@ uint8_t (*tile_handler[])(uint8_t*) = {
     solid_tile_handler, // 23  solid grass
     solid_tile_handler, // 24  solid grass
     solid_tile_handler, // 25  solid ball
-    empty_tile_handler, // 26  water
+    water_tile_hander,  // 26  water
     empty_tile_handler, // 27  empty
     solid_tile_handler, // 28  pipe green up left mid
     solid_tile_handler, // 29  pipe green up right mid
@@ -331,9 +487,9 @@ uint8_t (*tile_handler[])(uint8_t*) = {
     solid_tile_handler, // 42  solid wood
     solid_tile_handler, // 43  solid wood
     solid_tile_handler, // 44  solid wood
-    solid_tile_handler, // 45  solid wood
-    solid_tile_handler, // 46  solid wood
-    solid_tile_handler, // 47  solid wood
+    empty_tile_handler, // 45  half black
+    empty_tile_handler, // 46  black
+    down_tile_handler,  // 47  down block
     solid_tile_handler, // 48  solid wood
     solid_tile_handler, // 49  solid wood
     solid_tile_handler, // 50  solid wood
@@ -345,9 +501,9 @@ uint8_t (*tile_handler[])(uint8_t*) = {
     solid_tile_handler, // 56  solid wood
     solid_tile_handler, // 57  solid wood
     solid_tile_handler, // 58  solid wood
-    solid_tile_handler, // 59  solid wood
-    solid_tile_handler, // 60  solid wood
-    solid_tile_handler, // 61  solid wood 
+    end_pipe_handler,   // 59  end pipe 0
+    solid_tile_handler, // 60  end pipe 1 -- solid :)
+    solid_tile_handler, // 61  empty solid black
     solid_tile_handler, // 62  solid wood
     solid_tile_handler, // 63  solid wood
     solid_tile_handler, // 64  solid wood
@@ -355,7 +511,7 @@ uint8_t (*tile_handler[])(uint8_t*) = {
     solid_tile_handler, // 66  solid ground
     solid_tile_handler, // 67  solid ground
     solid_tile_handler, // 68  solid stone
-    solid_tile_handler, // 69  steep slope right
+    steepr_slope_handler, // 69  steep slope right
     solid_tile_handler, // 70  cannon up
     solid_tile_handler, // 71  solid sand
     solid_tile_handler, // 72  solid sand
@@ -380,9 +536,9 @@ uint8_t (*tile_handler[])(uint8_t*) = {
     solid_tile_handler, // 91  solid ground
     solid_tile_handler, // 92  solid ground
     solid_tile_handler, // 93  solid ground
-    vine_tile_handler,  // 94  vine 0
-    vine_tile_handler,  // 95  vine 1
-    vine_tile_handler,  // 96  vine 2
+    upspk_tile_handler,  // 94  yummy plant
+    upspk_tile_handler,  // 95  yummy plant
+    upspk_tile_handler,  // 96  yummy plant
     solid_tile_handler, // 97  cannon down left
     solid_tile_handler, // 98  cannon part
     solid_tile_handler, // 99  solid sand
@@ -397,31 +553,31 @@ uint8_t (*tile_handler[])(uint8_t*) = {
     vine_tile_handler,  // 108 vine 0
     vine_tile_handler,  // 109 vine 1
     vine_tile_handler,  // 110 vine 2
-    solid_tile_handler, // 111 steep slope left
-    solid_tile_handler, // 112 semi slope left 0
-    solid_tile_handler, // 113 semi slope left 1
-    solid_tile_handler, // 114 semi slope right 0
-    solid_tile_handler, // 115 semi slope right 1
+    steepl_slope_handler, // 111 steep slope left
+    semi1l_slope_handler, // 112 semi slope left 0
+    semi2l_slope_handler, // 113 semi slope left 1
+    semi2r_slope_handler, // 114 semi slope right 0
+    semi1r_slope_handler, // 115 semi slope right 1
     empty_tile_handler, // 116 empty landscape
     empty_tile_handler, // 117 empty landscape
-    empty_tile_handler, // 118 quicksand top 0
-    empty_tile_handler, // 119 quicksand top 1
-    empty_tile_handler, // 120 quicksand top 2
-    empty_tile_handler, // 121 quicksand top 2
+    quicksandt_handler, // 118 quicksand top 0
+    quicksandt_handler, // 119 quicksand top 1
+    quicksandt_handler, // 120 quicksand top 2
+    quicksandt_handler, // 121 quicksand top 2
     lavas_tile_handler, // 122 lave 0
     lavas_tile_handler, // 123 lava 1
     lavas_tile_handler, // 124 lava 2
     lavas_tile_handler, // 125 lava 3
-    empty_tile_handler, // 126 water 0
-    empty_tile_handler, // 127 water 1
-    empty_tile_handler, // 128 water 2
-    empty_tile_handler, // 129 water 3
+    water_tile_hander, // 126 water 0
+    water_tile_hander, // 127 water 1
+    water_tile_hander, // 128 water 2
+    water_tile_hander, // 129 water 3
     empty_tile_handler, // 130 empty landscape
     empty_tile_handler, // 131 empty landscape
-    solid_tile_handler, // 132 quicksand 0
-    solid_tile_handler, // 133 quicksand 1
-    solid_tile_handler, // 134 quicksand 2
-    solid_tile_handler, // 135 quicksand 3
+    quicksand_handler,  // 132 quicksand 0
+    quicksand_handler,  // 133 quicksand 1
+    quicksand_handler,  // 134 quicksand 2
+    quicksand_handler,  // 135 quicksand 3
     empty_tile_handler, // 136 empty landscape
     empty_tile_handler, // 137 empty landscape
     empty_tile_handler, // 138 empty landscape
@@ -432,10 +588,10 @@ uint8_t (*tile_handler[])(uint8_t*) = {
     empty_tile_handler, // 143 box shadow
     empty_tile_handler, // 144 empty landscape
     empty_tile_handler, // 145 empty landscape
-    solid_tile_handler, // 146 semi slope left 0
-    solid_tile_handler, // 147 semi slope left 1
-    solid_tile_handler, // 148 semi slope right 0
-    solid_tile_handler, // 149 semi slope right 1
+    jelly_tile_handler, // 146 jelly
+    jelly_tile_handler, // 147 jelly
+    jelly_tile_handler, // 148 jelly
+    jelly_tile_handler, // 149 jelly
     coin_tile_handler,  // 150 coin 0
     coin_tile_handler,  // 151 coin 1
     coin_tile_handler,  // 152 coin 2
@@ -494,7 +650,7 @@ uint8_t (*tile_handler[])(uint8_t*) = {
     empty_tile_handler, // 205
     empty_tile_handler, // 206
     empty_tile_handler, // 208
-    empty_tile_handler, // 209 
+    empty_tile_handler, // 209
     empty_tile_handler, // 210
     empty_tile_handler, // 211
     empty_tile_handler, // 212
@@ -510,26 +666,20 @@ uint8_t (*tile_handler[])(uint8_t*) = {
     empty_tile_handler, // 222
     empty_tile_handler, // 223
     empty_tile_handler, // 224
-    empty_tile_handler, // 225
-    empty_tile_handler, // 226
-    empty_tile_handler, // 227
-    empty_tile_handler, // 228
-    empty_tile_handler, // 229
-    empty_tile_handler, // 230
 };
 
 // animates animated tiles
-// 0 (4 tiles):		mystery brick
-// 4 (4 tiles):		bricks
-// 8 (3 tiles):		music brick
-// 94 (3 tiles):	underground vine
-// 108 (3 tiles):	normal vine
-// 118 (4 tiles):	quicksand top
-// 122 (4 tiles):	lava
-// 126 (4 tiles):	water
-// 132 (4 tiles):	quicksand
-// 146 (3 tiles):   yummy plant
-// 150 (4 tiles):	coins
+// 0 (4 tiles):        mystery brick
+// 4 (4 tiles):        bricks
+// 8 (3 tiles):        music brick
+// 94 (3 tiles):       yummy plant
+// 108 (3 tiles):      normal vine
+// 118 (4 tiles):      quicksand top
+// 122 (4 tiles):      lava
+// 126 (4 tiles):      water
+// 132 (4 tiles):      quicksand
+// 146 (4 tiles):      jelly
+// 150 (4 tiles):      coins
 
 #define animate_tile(x) ((x) = (gfx_image_t*)(((uint8_t*)(x)) + TILE_DATA_SIZE))
 #define animate_reset_4(x) ((x) = (gfx_image_t*)(((uint8_t*)(x)) - 4*TILE_DATA_SIZE))
@@ -537,9 +687,9 @@ uint8_t (*tile_handler[])(uint8_t*) = {
 
 #define animate_sprite(x, y, z) if ((x) == (y)) { (x) = (z); } else { (x) = (y); }
 
-void animate_tiles(void) {
-	
-	if (tiles.animation_counter++ == 3) {
+void animate(void) {
+    
+    if (tiles.animation_counter++ == 3) {
         animate_sprite(goomba_sprite, goomba_0, goomba_1);
         animate_sprite(koopa_red_left_sprite, koopa_red_left_0, koopa_red_left_1);
         animate_sprite(koopa_red_right_sprite, koopa_red_right_0, koopa_red_right_1);
@@ -547,27 +697,29 @@ void animate_tiles(void) {
         animate_sprite(koopa_green_right_sprite, koopa_green_right_0, koopa_green_right_1);
         animate_sprite(koopa_bones_left_sprite, koopa_bones_left_0, koopa_bones_left_1);
         animate_sprite(koopa_bones_right_sprite, koopa_bones_right_0, koopa_bones_right_1);
+        animate_sprite(fish_right_sprite, fish_right_0, fish_right_1);
+        animate_sprite(fish_left_sprite, fish_left_0, fish_left_1);
         animate_sprite(chomper_sprite, chomper_0, chomper_1);
         animate_sprite(fireball_sprite, fire_0, fire_1);
         animate_sprite(flame_sprite_up, flame_fire_up_0, flame_fire_up_1);
         animate_sprite(flame_sprite_down, flame_fire_down_0, flame_fire_down_1);
         animate_sprite(wing_right_sprite, wing_right_0, wing_right_1);
         animate_sprite(wing_left_sprite, wing_left_0, wing_left_1);
-        mario.sprite_index++;
+        mario.sprite_index ^= 1;
         
-		animate_tile(tileset_tiles[TILE_QUESTIONBOX_0]);
-		animate_tile(tileset_tiles[TILE_BRICK_0]);
-		animate_tile(tileset_tiles[8]);
-		animate_tile(tileset_tiles[94]);
-		animate_tile(tileset_tiles[108]);
-		animate_tile(tileset_tiles[126]);
-		animate_tile(tileset_tiles[118]);
-		animate_tile(tileset_tiles[122]);
-		animate_tile(tileset_tiles[132]);
+        animate_tile(tileset_tiles[TILE_QUESTIONBOX_0]);
+        animate_tile(tileset_tiles[TILE_BRICK_0]);
+        animate_tile(tileset_tiles[8]);
+        animate_tile(tileset_tiles[94]);
+        animate_tile(tileset_tiles[108]);
+        animate_tile(tileset_tiles[126]);
+        animate_tile(tileset_tiles[118]);
+        animate_tile(tileset_tiles[122]);
+        animate_tile(tileset_tiles[132]);
         animate_tile(tileset_tiles[146]);
-		animate_tile(tileset_tiles[TILE_COIN_0]);
-		
-		if (tiles.animation_4_counter == 3) {
+        animate_tile(tileset_tiles[TILE_COIN_0]);
+        
+        if (tiles.animation_4_counter == 3) {
             animate_reset_4(tileset_tiles[TILE_QUESTIONBOX_0]);
             animate_reset_4(tileset_tiles[TILE_BRICK_0]);
             animate_reset_4(tileset_tiles[126]);
@@ -575,20 +727,20 @@ void animate_tiles(void) {
             animate_reset_4(tileset_tiles[122]);
             animate_reset_4(tileset_tiles[132]);
             animate_reset_4(tileset_tiles[TILE_COIN_0]);
-			tiles.animation_4_counter = 255;
-		}
-		
-		if (tiles.animation_3_counter == 2) {
+            animate_reset_4(tileset_tiles[146]);
+            tiles.animation_4_counter = 255;
+        }
+        
+        if (tiles.animation_3_counter == 2) {
             animate_reset_3(tileset_tiles[8]);
             animate_reset_3(tileset_tiles[94]);
             animate_reset_3(tileset_tiles[108]);
-            animate_reset_3(tileset_tiles[146]);
-			tiles.animation_3_counter = 255;
-		}
+            tiles.animation_3_counter = 255;
+        }
         
-		tiles.animation_3_counter++;
-		tiles.animation_4_counter++;
-		tiles.animation_counter = 0;
+        tiles.animation_3_counter++;
+        tiles.animation_4_counter++;
+        tiles.animation_counter = 0;
         if (mario.score_display_counter) {
             if (!--mario.score_display_counter) {
                 gfx_SetColor(252);
@@ -596,7 +748,7 @@ void animate_tiles(void) {
                 gfx_BlitLines(gfx_buffer, 161, 14);
             }
         }
-	}
+    }
 }
 
 void tile_to_abs_xy_pos(uint8_t *tile, unsigned int *x, unsigned int *y) {
@@ -742,7 +894,7 @@ uint8_t handle_warp_pipe(uint8_t *tile) {
                 break;
             case TILE_TEST_PIPE_DOWN:
                 if (offset == pipe_enter_masked) {
-                    if (mario.x + mario.scrollx < x + 2) {
+                    if (mario.x < x + 2) {
                         return 0;
                     }
                     mario.in_pipe = PIPE_DOWN;
@@ -753,7 +905,7 @@ uint8_t handle_warp_pipe(uint8_t *tile) {
             case TILE_BOTTOM:
                 if (pipe_enter & MASK_PIPE_UP) {
                     if (offset == pipe_enter_masked) {
-                        if (mario.x + mario.scrollx < x + 2) {
+                        if (mario.x < x + 2) {
                             return 0;
                         }
                         mario.in_pipe = PIPE_UP;

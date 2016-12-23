@@ -24,9 +24,16 @@ extern uint8_t num_bumped_tiles;
 
 extern int test_y;
 extern int test_x;
-
+extern int *test_y_ptr;
+extern uint8_t on_slope;
+extern int test_y_height;
 extern uint8_t (*tile_handler[])(uint8_t*);
 extern bool force_jump;
+extern bool in_quicksand;
+extern bool in_water;
+extern unsigned int quicksand_clip_y;
+
+enum testing_side_enum { TEST_RIGHT=0, TEST_LEFT=1, TEST_NONE=2 };
 
 enum tile_interaction {
     TILE_TOP=0,
@@ -39,12 +46,13 @@ enum tile_interaction {
 extern uint8_t move_side;
 
 uint8_t moveable_tile(int x, int y);
+uint8_t moveable_tile_left_bottom(int x, int y);
+uint8_t moveable_tile_right_bottom(int x, int y);
 
 #define TILE_QUESTIONBOX_0  0
 #define TILE_QUESTIONBOX_1  1
 #define TILE_QUESTIONBOX_2  2
 #define TILE_QUESTIONBOX_3  3
-#define TILE_COIN_0         150
 #define TILE_BRICK_0        4
 #define TILE_BRICK_1        5
 #define TILE_BRICK_2        6
@@ -53,9 +61,10 @@ uint8_t moveable_tile(int x, int y);
 #define TILE_SOLID_EMPTY    13
 #define TILE_WATER          26
 #define TILE_EMPTY          27
+#define TILE_COIN_0         150
 
 // animation functions
-void animate_tiles(void);
+void animate(void);
 void draw_tile_grid(void);
 void reset_3_animations(void);
 void reset_4_animations(void);
