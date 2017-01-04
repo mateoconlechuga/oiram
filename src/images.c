@@ -4,22 +4,26 @@
 #include <lib/ce/fileioc.h>
 
 #include "images.h"
+#include "lower.h"
 #include "defines.h"
 
-gfx_image_t mario_0_buffer_left[27*27 + 2];
-gfx_image_t mario_1_buffer_left[27*27 + 2];
-gfx_image_t mario_0_buffer_right[27*27 + 2];
-gfx_image_t mario_1_buffer_right[27*27 + 2];
+gfx_image_t oiram_0_buffer_left[27*27 + 2];
+gfx_image_t oiram_1_buffer_left[27*27 + 2];
+gfx_image_t oiram_0_buffer_right[27*27 + 2];
+gfx_image_t oiram_1_buffer_right[27*27 + 2];
 
-gfx_image_t *mario_0_small;
-gfx_image_t *mario_1_small;
-gfx_image_t *mario_0_big;
-gfx_image_t *mario_1_big;
-gfx_image_t *mario_0_fire;
-gfx_image_t *mario_1_fire;
-gfx_image_t *mario_crouch_big;
-gfx_image_t *mario_crouch_fire;
-gfx_image_t *mario_fail;
+gfx_image_t *oiram_0_small;
+gfx_image_t *oiram_1_small;
+gfx_image_t *oiram_0_big;
+gfx_image_t *oiram_1_big;
+gfx_image_t *oiram_0_fire;
+gfx_image_t *oiram_1_fire;
+gfx_image_t *oiram_0_racoon;
+gfx_image_t *oiram_1_racoon;
+gfx_image_t *oiram_crouch_big;
+gfx_image_t *oiram_crouch_fire;
+gfx_image_t *oiram_crouch_racoon;
+gfx_image_t *oiram_fail;
 gfx_image_t *mushroom;
 gfx_image_t *fire_flower;
 gfx_image_t *goomba_0;
@@ -64,7 +68,6 @@ gfx_image_t *boo_right_hide;
 gfx_image_t *boo_left;
 gfx_image_t *boo_right;
 gfx_image_t *bullet_left;
-gfx_image_t *bullet_right;
 gfx_image_t *cannonball_sprite;
 gfx_image_t *wing_left_0;
 gfx_image_t *wing_left_1;
@@ -73,20 +76,26 @@ gfx_image_t *wing_right_1;
 gfx_image_t *star_0;
 gfx_image_t *easter_egg_0;
 gfx_image_t *easter_egg_1;
-gfx_image_t *mario_lives;
+gfx_image_t *oiram_lives;
 gfx_image_t *clock;
 gfx_image_t *one_up;
-gfx_image_t *mario_up_small_0;
-gfx_image_t *mario_up_small_1;
-gfx_image_t *mario_up_big_0;
-gfx_image_t *mario_up_big_1;
-gfx_image_t *mario_up_fire_0;
-gfx_image_t *mario_up_fire_1;
+gfx_image_t *oiram_up_small_0;
+gfx_image_t *oiram_up_small_1;
+gfx_image_t *oiram_up_big_0;
+gfx_image_t *oiram_up_big_1;
+gfx_image_t *oiram_up_fire_0;
+gfx_image_t *oiram_up_fire_1;
 gfx_image_t *fish_left_0;
 gfx_image_t *fish_left_1;
 gfx_image_t *fish_right_0;
 gfx_image_t *fish_right_1;
 gfx_image_t *mushroom_1up;
+gfx_image_t *spike_left_0;
+gfx_image_t *spike_left_1;
+gfx_image_t *spike_right_0;
+gfx_image_t *spike_right_1;
+gfx_image_t *spike_shell_0;
+gfx_image_t *spike_shell_1;
 
 gfx_image_t *fireball_sprite;
 gfx_image_t *goomba_sprite;
@@ -99,24 +108,62 @@ gfx_image_t *koopa_green_left_sprite;
 gfx_image_t *koopa_green_right_sprite;
 gfx_image_t *koopa_bones_left_sprite;
 gfx_image_t *koopa_bones_right_sprite;
+gfx_image_t *spike_left_sprite;
+gfx_image_t *spike_right_sprite;
 gfx_image_t *flame_sprite_up;
 gfx_image_t *flame_sprite_down;
 gfx_image_t *fish_left_sprite;
 gfx_image_t *fish_right_sprite;
+gfx_image_t *coin_sprite;
 
-gfx_image_t *mario_right[] = {
-    mario_0_buffer_right, mario_1_buffer_right
+gfx_image_t *oiram_logo;
+
+gfx_image_t *score_100;
+gfx_image_t *score_200;
+gfx_image_t *score_400;
+gfx_image_t *score_800;
+gfx_image_t *score_1000;
+gfx_image_t *score_2000;
+gfx_image_t *score_4000;
+gfx_image_t *score_8000;
+
+gfx_image_t *leaf_left;
+gfx_image_t *leaf_right;
+gfx_image_t *oiram_start;
+
+gfx_image_t *oiram_up_racoon_0;
+gfx_image_t *oiram_up_racoon_1;
+
+gfx_image_t *tail_left_0;
+gfx_image_t *tail_right_0;
+
+gfx_image_t *reswob_left_0;
+gfx_image_t *reswob_left_1;
+gfx_image_t *reswob_right_0;
+gfx_image_t *reswob_right_1;
+gfx_image_t *reswob_down;
+
+gfx_image_t *oiram_right[] = {
+    oiram_0_buffer_right, oiram_1_buffer_right
 };
 
-gfx_image_t *mario_left[] = {
-    mario_0_buffer_left, mario_1_buffer_left
+gfx_image_t *oiram_left[] = {
+    oiram_0_buffer_left, oiram_1_buffer_left
 };
+
+static void invert_palette(void) {
+    unsigned int j;
+    for (j=0; j<256; j++) {
+        lcd_Palette[j] = ~lcd_Palette[j];
+    }
+}
 
 void extract_tiles(void) {
     uint8_t slot;
+    gfx_image_t *tile_0;
     
     ti_CloseAll();
-    slot = ti_Open("MarioT", "r");
+    slot = ti_Open("OiramT", "r");
     if (slot) {
         uint8_t i;
         uint16_t pal_size;
@@ -129,6 +176,7 @@ void extract_tiles(void) {
         
         // set up the palette
         gfx_SetPalette( pal_ptr, pal_size, 0 );
+        if (oiram.less2) { invert_palette(); }
         tmp_ptr = (uint8_t*)pal_ptr;
         tmp_ptr += pal_size;
         
@@ -139,8 +187,19 @@ void extract_tiles(void) {
         // now the order should be the same as in convpng.ini
         
     } else {
-        exit(0);
+        missing_appvars();
     }
+    
+    coin_sprite = tileset_tiles[150];
+    
+    tile_0 = tileset_tiles[0];
+    tileset_tiles[225] = tile_0;
+    tileset_tiles[226] = tile_0;
+    tileset_tiles[227] = tile_0;
+    tileset_tiles[228] = tile_0;
+    tileset_tiles[229] = tile_0;
+    tileset_tiles[230] = tile_0;
+    
     ti_CloseAll();
 }
     
@@ -148,27 +207,27 @@ void extract_sprites(void) {
     uint8_t slot;
     
     ti_CloseAll();
-    slot = ti_Open("MarioS", "r");
+    slot = ti_Open("OiramS", "r");
     if (slot) {
         uint8_t *spr_ptr = ti_GetDataPtr(slot);
         
-        mario_0_small = (gfx_image_t*)spr_ptr;
+        oiram_0_small = (gfx_image_t*)spr_ptr;
         spr_ptr += 258;
-        mario_1_small = (gfx_image_t*)spr_ptr;
+        oiram_1_small = (gfx_image_t*)spr_ptr;
         spr_ptr += 258;
-        mario_0_big = (gfx_image_t*)spr_ptr;
+        oiram_0_big = (gfx_image_t*)spr_ptr;
         spr_ptr += 434;
-        mario_1_big = (gfx_image_t*)spr_ptr;
+        oiram_1_big = (gfx_image_t*)spr_ptr;
         spr_ptr += 434;
-        mario_0_fire = (gfx_image_t*)spr_ptr;
+        oiram_0_fire = (gfx_image_t*)spr_ptr;
         spr_ptr += 434;
-        mario_1_fire = (gfx_image_t*)spr_ptr;
+        oiram_1_fire = (gfx_image_t*)spr_ptr;
         spr_ptr += 434;
-        mario_crouch_big = (gfx_image_t*)spr_ptr;
+        oiram_crouch_big = (gfx_image_t*)spr_ptr;
         spr_ptr += 258;
-        mario_crouch_fire = (gfx_image_t*)spr_ptr;
+        oiram_crouch_fire = (gfx_image_t*)spr_ptr;
         spr_ptr += 258;
-        mario_fail = (gfx_image_t*)spr_ptr;
+        oiram_fail = (gfx_image_t*)spr_ptr;
         spr_ptr += 258;
         mushroom = (gfx_image_t*)spr_ptr;
         spr_ptr += 258;
@@ -258,8 +317,6 @@ void extract_sprites(void) {
         spr_ptr += 258;
         bullet_left = (gfx_image_t*)spr_ptr;
         spr_ptr += 226;
-        bullet_right = (gfx_image_t*)spr_ptr;
-        spr_ptr += 226;
         cannonball_sprite = (gfx_image_t*)spr_ptr;
         spr_ptr += 146;
         wing_left_sprite = wing_left_0 = (gfx_image_t*)spr_ptr;
@@ -276,23 +333,23 @@ void extract_sprites(void) {
         spr_ptr += 258;
         easter_egg_1 = (gfx_image_t*)spr_ptr;
         spr_ptr += 258;
-        mario_lives = (gfx_image_t*)spr_ptr;
+        oiram_lives = (gfx_image_t*)spr_ptr;
         spr_ptr += 93;
         clock = (gfx_image_t*)spr_ptr;
         spr_ptr += 83;
-        one_up = (gfx_image_t*)spr_ptr;
+        oiram_score_chain_sprites[8] = one_up = (gfx_image_t*)spr_ptr;
         spr_ptr += 380;
-        mario_up_small_0 = (gfx_image_t*)spr_ptr;
+        oiram_up_small_0 = (gfx_image_t*)spr_ptr;
         spr_ptr += 258;
-        mario_up_small_1 = (gfx_image_t*)spr_ptr;
+        oiram_up_small_1 = (gfx_image_t*)spr_ptr;
         spr_ptr += 258;
-        mario_up_big_0 = (gfx_image_t*)spr_ptr;
+        oiram_up_big_0 = (gfx_image_t*)spr_ptr;
         spr_ptr += 402;
-        mario_up_big_1 = (gfx_image_t*)spr_ptr;
+        oiram_up_big_1 = (gfx_image_t*)spr_ptr;
         spr_ptr += 402;
-        mario_up_fire_0 = (gfx_image_t*)spr_ptr;
+        oiram_up_fire_0 = (gfx_image_t*)spr_ptr;
         spr_ptr += 402;
-        mario_up_fire_1 = (gfx_image_t*)spr_ptr;
+        oiram_up_fire_1 = (gfx_image_t*)spr_ptr;
         spr_ptr += 402;
         fish_left_sprite = fish_left_0 = (gfx_image_t*)spr_ptr;
         spr_ptr += 258;
@@ -304,10 +361,67 @@ void extract_sprites(void) {
         spr_ptr += 258;
         mushroom_1up = (gfx_image_t*)spr_ptr;
         spr_ptr += 258;
+        spike_left_sprite = spike_left_0 = (gfx_image_t*)spr_ptr;
+        spr_ptr += 258;
+        spike_left_1 = (gfx_image_t*)spr_ptr;
+        spr_ptr += 258;
+        spike_right_sprite = spike_right_0 = (gfx_image_t*)spr_ptr;
+        spr_ptr += 258;
+        spike_right_1 = (gfx_image_t*)spr_ptr;
+        spr_ptr += 258;
+        spike_shell_0 = (gfx_image_t*)spr_ptr;
+        spr_ptr += 258;
+        spike_shell_1 = (gfx_image_t*)spr_ptr;
+        spr_ptr += 258;
+        oiram_logo = (gfx_image_t*)spr_ptr;
+        spr_ptr += 442;
+        oiram_score_chain_sprites[0] = score_100 = (gfx_image_t*)spr_ptr;
+        spr_ptr += 90;
+        oiram_score_chain_sprites[1] =  score_200 = (gfx_image_t*)spr_ptr;
+        spr_ptr += 98;
+        oiram_score_chain_sprites[2] = score_400 = (gfx_image_t*)spr_ptr;
+        spr_ptr += 98;
+        oiram_score_chain_sprites[3] = score_800 = (gfx_image_t*)spr_ptr;
+        spr_ptr += 98;
+        oiram_score_chain_sprites[4] = score_1000 = (gfx_image_t*)spr_ptr;
+        spr_ptr += 122;
+        oiram_score_chain_sprites[5] = score_2000 = (gfx_image_t*)spr_ptr;
+        spr_ptr += 130;
+        oiram_score_chain_sprites[6] = score_4000 = (gfx_image_t*)spr_ptr;
+        spr_ptr += 130;
+        oiram_score_chain_sprites[7] = score_8000 = (gfx_image_t*)spr_ptr;
+        spr_ptr += 130;
+        leaf_left = (gfx_image_t*)spr_ptr;
+        spr_ptr += 226;
+        leaf_right = (gfx_image_t*)spr_ptr;
+        spr_ptr += 226;
+        oiram_0_racoon = (gfx_image_t*)spr_ptr;
+        spr_ptr += 434;
+        oiram_1_racoon = (gfx_image_t*)spr_ptr;
+        spr_ptr += 434;
+        oiram_crouch_racoon = (gfx_image_t*)spr_ptr;
+        spr_ptr += 258;
+        oiram_up_racoon_0 = (gfx_image_t*)spr_ptr;
+        spr_ptr += 434;
+        oiram_up_racoon_1 = (gfx_image_t*)spr_ptr;
+        spr_ptr += 434;
+        tail_left_0 = (gfx_image_t*)spr_ptr;
+        spr_ptr += 37;
+        tail_right_0 = (gfx_image_t*)spr_ptr;
+        spr_ptr += 37;
+        reswob_left_0 = (gfx_image_t*)spr_ptr;
+        spr_ptr += 1282;
+        reswob_left_1 = (gfx_image_t*)spr_ptr;
+        spr_ptr += 1282;
+        reswob_right_0 = (gfx_image_t*)spr_ptr;
+        spr_ptr += 1282;
+        reswob_right_1 = (gfx_image_t*)spr_ptr;
+        spr_ptr += 1282;
+        reswob_down = (gfx_image_t*)spr_ptr;
+        spr_ptr += 1282;
+        oiram_start = (gfx_image_t*)spr_ptr;
     } else {
-        gfx_End();
-        prgm_CleanUp();
-        exit(0);
+        missing_appvars();
     }
     
     ti_CloseAll();

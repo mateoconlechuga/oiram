@@ -7,13 +7,15 @@
 #include "defines.h"
 #include "powerups.h"
 #include "tile_handlers.h"
+#include "loadscreen.h"
 #include "simple_mover.h"
 #include "events.h"
-#include "mario.h"
+#include "enemies.h"
+#include "oiram.h"
 #include "images.h"
 #include "lower.h"
 
-#define tile_y_loc(x) ((((unsigned int)(x) - (unsigned int)tilemap.map) / tilemap.width) * TILE_HEIGHT)
+#define tile_y_loc(x) ((((unsigned int)(x) - (unsigned int)(tilemap.map)) / tilemap.width) * TILE_HEIGHT)
 
 uint8_t move_side;
 bool force_jump;
@@ -25,162 +27,66 @@ uint8_t testing_side;
 bool handled_slope = false; 
 uint8_t on_slope = 0;
 
-#pragma asm "xref _gfx_TilePtr"
-#pragma asm "xref __indcall"
-#pragma asm "xdef _moveable_tile"
-#pragma asm "xdef _moveable_tile_left_bottom"
-#pragma asm "xdef _moveable_tile_right_bottom"
-
-#pragma asm "_moveable_tile_right_bottom:"
-#pragma asm "	xor	a,a ; TEST_RIGHT"
-#pragma asm "	jr	_test_against"
-#pragma asm "_moveable_tile_left_bottom:"
-#pragma asm "	ld	a,1 ; TEST_LEFT"
-#pragma asm "	jr	_test_against"
-#pragma asm "_moveable_tile:"
-#pragma asm "	ld	a,2 ; TEST_NONE"
-#pragma asm "_test_against:"
-#pragma asm "	ld	(_testing_side),a"
-#pragma asm "	pop	bc"
-#pragma asm "	pop	hl"
-#pragma asm "	pop	de"
-#pragma asm "	push	de"
-#pragma asm "	push	hl"
-#pragma asm "	push	bc"
-#pragma asm "	ld	bc,0"
-#pragma asm "	xor	a,a"
-#pragma asm "	sbc	hl,bc"
-#pragma asm "	jp	p,_l__2"
-#pragma asm "	jp	pe,_l_2"
-#pragma asm "	ret"
-#pragma asm "_l__2:"
-#pragma asm "	jp	po,_l_2"
-#pragma asm "	ret"
-#pragma asm "_l_2:"
-#pragma asm "	ex	de,hl"
-#pragma asm "	or	a,a"
-#pragma asm "	sbc	hl,bc"
-#pragma asm "	jp	p,_l__4"
-#pragma asm "	jp	pe,_l_3"
-#pragma asm "	jr	_l__5"
-#pragma asm "_l__4:"
-#pragma asm "	jp	po,_l_3"
-#pragma asm "_l__5:"
-#pragma asm "	ld	a,1"
-#pragma asm "	ret"
-#pragma asm "_l_3:"
-#pragma asm "	ld	(_test_x),de"
-#pragma asm "	ld	(_test_y),hl"
-#pragma asm "	push	hl"
-#pragma asm "	push	de"
-#pragma asm "	ld	de,_tilemap"
-#pragma asm "	push	de"
-#pragma asm "	call	_gfx_TilePtr"
-#pragma asm "	pop	de"
-#pragma asm "	pop	de"
-#pragma asm "	pop	de"
-#pragma asm "	push	hl"
-#pragma asm "	ld	l,(hl)"
-#pragma asm "	ld	h,3"
-#pragma asm "	mlt	hl"
-#pragma asm "	ld	de,_tile_handler"
-#pragma asm "	add	hl,de"
-#pragma asm "	ld	iy,(hl)"
-#pragma asm "	call	__indcall"
-#pragma asm "	pop	de"
-#pragma asm "	ret"
-   
-// handle collisions with different tiles
-// function pointers are nice for this
-/*
-bool moveable_tile(int x, int y) {
-    uint8_t *tile;
-    testing_side = 2;
-    
-    if (x < 0) { return false; }
-    if (y < 0) { return true; }
-    tile = gfx_TilePtr(&tilemap, test_x = x, test_y = y);
-    return (*tile_handler[*tile])(tile);
-}
-*/
-
-/*
-static uint8_t solid_tile_handler(uint8_t *tile) {
-    return 0;
-}
-*/
-
-static uint8_t solid_tile_handler(uint8_t *tile);
-
-#pragma asm "_solid_tile_handler:"
-#pragma asm "xor a,a"
-#pragma asm "ret"
-
-#pragma asm "xdef _solid_tile_handler"
-
-/*
-static uint8_t empty_tile_handler(uint8_t *tile) {
-    return 1;
-}
-*/
-
-static uint8_t empty_tile_handler(uint8_t *tile);
-
-#pragma asm "_empty_tile_handler:"
-#pragma asm "ld a,1"
-#pragma asm "ret"
-
-#pragma asm "xdef _empty_tile_handler"
-
 uint8_t handle_warp_pipe(uint8_t *tile);
 
 static uint8_t brick_tile_handler(uint8_t *tile) {
     unsigned int x, y;
-    if (move_side == TILE_BOTTOM) {
-        if (!handling_events) {
-            if (!mario.on_vine) {
-                if (mario.flags & FLAG_MARIO_BIG) {
-                    *tile = TILE_EMPTY;
-                    add_bumped(tile, TILE_BOTTOM);
-                    tile_to_abs_xy_pos(tile, &x, &y);
-                    add_poof(x + 2, y + 2);
+    if (!handling_events) {
+        if (move_side == TILE_BOTTOM) {
+            if (!oiram.on_vine) {
+                if (oiram.flags & FLAG_OIRAM_BIG) {
+                    goto destroy_block;
                 } else {
                     add_bumped(tile, TILE_BOTTOM);
                     *tile = TILE_SOLID_EMPTY;
                 }
             }
+        } else
+        if (move_side == TILE_RACOON_POWER) {
+            goto destroy_block;
         }
-    }
-    if (move_side == TILE_LEFT || move_side == TILE_RIGHT) {
-        if (handling_events) {
-            if (simple_mover_type == KOOPA_RED_SHELL_TYPE || simple_mover_type == KOOPA_GREEN_SHELL_TYPE) {
+    } else {
+        if (move_side == TILE_LEFT || move_side == TILE_RIGHT) {
+            if (simple_mover_type > SHELL_TYPES) {
+    destroy_block:
+                *tile = TILE_EMPTY;
+                add_bumped(tile, TILE_BOTTOM);
                 tile_to_abs_xy_pos(tile, &x, &y);
                 add_poof(x + 2, y + 2);
-                *tile = TILE_EMPTY;
+                *tile = TILE_SOLID_EMPTY;
             }
+        } else if (move_side == TILE_RESWOB_DOWN) {
+            *tile = TILE_EMPTY;
+            tile_to_abs_xy_pos(tile, &x, &y);
+            add_poof(x + 2, y + 2);
         }
     }
+    
     return 0;
 }
 
 static uint8_t upspk_tile_handler(uint8_t *tile) {
-    if (move_side == TILE_TOP) {
-        if (!handling_events) {
-            shrink_mario();
+    if (!handling_events) {
+        if (move_side == TILE_TOP) {
+            shrink_oiram();
         }
     }
     return 0;
 }
 
+static uint8_t plant_tile_handler(uint8_t *tile) {
+    if (!handling_events) {
+        if (move_side == TILE_TOP) {
+            shrink_oiram();
+        }
+        return 0;
+    }
+    return 1;
+}
+
 static uint8_t lavas_tile_handler(uint8_t *tile) {
     if (!handling_events) {
-        if (!someone_died) {
-            mario.vy = -11;
-            mario.has_shell = false;
-            mario.momentum = 8;
-            mario.curr_sprite = mario_fail;
-            someone_died = true;
-        }
+        oiram.failed = true;
     }
     return 1;
 }
@@ -195,26 +101,25 @@ static uint8_t lava_tile_handler(uint8_t *tile) {
 static uint8_t dnspk_tile_handler(uint8_t *tile) {
     if (move_side == TILE_BOTTOM) {
         if (!handling_events) {
-            shrink_mario();
+            shrink_oiram();
         }
     }
     return 0;
 }
 
 static uint8_t down_tile_handler(uint8_t *tile) {
-    bumped_tile_t *bump_tile;
     if (move_side == TILE_BOTTOM) {
         if (!handling_events) {
             add_bumped(tile, TILE_BOTTOM);
-            *tile = 61;
+            *tile = 46;
             if (game.end_counter) {
-                game.end_counter--;
-                bump_tile = add_bumped(tile - tilemap.width, TILE_BOTTOM);
+                bumped_tile_t *bump_tile = add_bumped(tile - tilemap.width, TILE_BOTTOM);
                 bump_tile->tile_ptr = NULL;
                 bump_tile->tile = 150;
                 bump_tile->count = 6;
                 bump_tile->y -= TILE_HEIGHT/2;
-                add_coin();
+                add_coin(bump_tile->x, bump_tile->y);
+                game.end_counter--;
             }
         }
     }
@@ -222,43 +127,62 @@ static uint8_t down_tile_handler(uint8_t *tile) {
 }
 
 static uint8_t quest_tile_handler(uint8_t *tile) {
-    bumped_tile_t *bump_tile;
-    if (move_side == TILE_BOTTOM) {
-        if (!handling_events) {
-            if (!mario.on_vine) {
-handle_hit:         
-                //if (rand() & 1) { add_mushroom(tile); } else { add_star(tile); }
-                
-                add_fire_flower(tile);
-                
-                *tile = TILE_SOLID_BOX;
-                add_bumped(tile, TILE_BOTTOM);
-                bump_tile = add_bumped(tile - tilemap.width, TILE_BOTTOM);
-                bump_tile->tile_ptr = NULL;
-                bump_tile->tile = 150;
-                bump_tile->count = 6;
-                bump_tile->y -= TILE_HEIGHT/2;
-                
-                *tile = TILE_SOLID_EMPTY;
-                
-                add_coin();
-            }
+    if (handling_events) {
+        if ((move_side == TILE_LEFT || move_side == TILE_RIGHT) && (simple_mover_type > SHELL_TYPES)) {
+            goto handle_hit;
         }
-    } else if (move_side == TILE_LEFT || move_side == TILE_RIGHT) {
-        if (handling_events) {
-            if (simple_mover_type == KOOPA_RED_SHELL_TYPE) {
-                goto handle_hit;
-            }
+    } else {
+        if (move_side == TILE_RACOON_POWER) {
+            goto handle_hit;
+        }
+        if (move_side == TILE_BOTTOM  && !oiram.on_vine) {
+handle_hit:     
+            *tile = TILE_SOLID_BOX;
+            add_bumped(tile, TILE_BOTTOM);
+            *tile = TILE_SOLID_EMPTY;
+            return 1;
         }
     }
     return 0;
 }
 
+static uint8_t coin_quest_handler(uint8_t *tile) {
+    if (quest_tile_handler(tile)) {
+        bumped_tile_t *bump_coin = add_bumped(tile - tilemap.width, TILE_BOTTOM);
+        bump_coin->tile_ptr = NULL;
+        bump_coin->tile = 150;
+        bump_coin->count = 6;
+        bump_coin->y -= TILE_HEIGHT/2;
+        add_coin(bump_coin->x, bump_coin->y);
+    }
+    return 0;
+}
+static uint8_t up1_quest_handler(uint8_t *tile) {
+    if (quest_tile_handler(tile)) { add_mushroom_1up(tile); }
+    return 0;
+}
+static uint8_t mushroom_quest_handler(uint8_t *tile) {
+    if (quest_tile_handler(tile)) { add_mushroom(tile); }
+    return 0;
+}
+static uint8_t star_quest_handler(uint8_t *tile) {
+    if (quest_tile_handler(tile)) { add_star(tile); }
+    return 0;
+}
+static uint8_t fireflower_quest_handler(uint8_t *tile) {
+    if (quest_tile_handler(tile)) { if ((oiram.flags & FLAG_OIRAM_BIG)) { add_fire_flower(tile); } else { add_mushroom(tile); } }
+    return 0;
+}
+static uint8_t leaf_quest_handler(uint8_t *tile) {
+    if (quest_tile_handler(tile)) { if ((oiram.flags & FLAG_OIRAM_BIG)) { add_simple_enemy(tile - tilemap.width, LEAF_TYPE); } else { add_mushroom(tile); } }
+    return 0;
+}
+
 static uint8_t jump_tile_handler(uint8_t *tile) {
-    if (move_side == TILE_TOP) {
-        if (!handling_events) {
+    if (!handling_events) {
+        if (move_side == TILE_TOP) {
             force_jump = true;
-            mario.vy = -11;
+            oiram.vy = -6;
             add_bumped(tile, TILE_TOP);
             *tile = TILE_SOLID_EMPTY;
         }
@@ -268,9 +192,9 @@ static uint8_t jump_tile_handler(uint8_t *tile) {
 
 static uint8_t coin_tile_handler(uint8_t *tile) {
     if (!handling_events) {
-        add_coin();
-        
-        // delete the coin
+        unsigned int x, y;
+        tile_to_abs_xy_pos(tile, &x, &y);
+        add_coin(x, y);
         *tile = TILE_EMPTY;
     }
     return 1;
@@ -278,7 +202,11 @@ static uint8_t coin_tile_handler(uint8_t *tile) {
 
 static uint8_t top_tile_handler(uint8_t *tile) {
     if (move_side == TILE_TOP) {
-        return 0;
+        if (!handling_events) {
+            if ((test_y & 15) < 8) { return 0; }
+        } else {
+            if ((test_y & 15) < 5) { return 0; }
+        }
     }
     return 1;
 }
@@ -286,24 +214,33 @@ static uint8_t top_tile_handler(uint8_t *tile) {
 static uint8_t vine_tile_handler(uint8_t *tile) {
     if (!handling_events) {
         if (pressed_up) {
-            if (!mario.on_vine) {
-                mario.on_vine = true;
-                if (mario.flags & FLAG_MARIO_FIRE) {
-                    memcpy(mario_0_buffer_right, mario_up_fire_0, MARIO_BIG_SPRITE_SIZE);
-                    memcpy(mario_1_buffer_right, mario_up_fire_1, MARIO_BIG_SPRITE_SIZE);
-                } else if (mario.flags & FLAG_MARIO_BIG) {
-                    memcpy(mario_0_buffer_right, mario_up_big_0, MARIO_BIG_SPRITE_SIZE);
-                    memcpy(mario_1_buffer_right, mario_up_big_1, MARIO_BIG_SPRITE_SIZE);
+            if (!oiram.on_vine) {
+                gfx_image_t *img0;
+                gfx_image_t *img1;
+                oiram.on_vine = true;
+                if (oiram.flags & FLAG_OIRAM_RACOON) {
+                    img0 = oiram_up_racoon_0;
+                    img1 = oiram_up_racoon_1;
+                } else if (oiram.flags & FLAG_OIRAM_FIRE) {
+                    img0 = oiram_up_fire_0;
+                    img1 = oiram_up_fire_1;
+                } else if (oiram.flags & FLAG_OIRAM_BIG) {
+                    img0 = oiram_up_big_0;
+                    img1 = oiram_up_big_1;
                 } else {
-                    memcpy(mario_0_buffer_right, mario_up_small_0, MARIO_SMALL_SPRITE_SIZE);
-                    memcpy(mario_1_buffer_right, mario_up_small_1, MARIO_SMALL_SPRITE_SIZE);
+                    img0 = oiram_up_small_0;
+                    img1 = oiram_up_small_1;
                 }
-                set_left_mario_sprites();
+                memcpy(oiram_0_buffer_right, img0, OIRAM_BIG_SPRITE_SIZE);
+                memcpy(oiram_1_buffer_right, img1, OIRAM_BIG_SPRITE_SIZE);
+                set_left_oiram_sprites();
             }
             return 1;
         }
-        if (move_side == TILE_TOP) {
-            return 2;
+        if (oiram.on_vine) {
+            if (move_side == TILE_TOP) {
+                return 3;
+            }
         }
     }
     return 1;
@@ -313,13 +250,14 @@ bool in_quicksand;
 unsigned int quicksand_clip_y;
 
 static uint8_t quicksand_handler(uint8_t *tile) {
-    static uint8_t adder = 0;
-    static uint8_t test_sides = 0;
     unsigned int x, y;
     
     tile_to_abs_xy_pos(tile, &x, &y);
     
     if (move_side == TILE_TOP) {
+        static uint8_t test_sides = 0;
+        static uint8_t adder = 0;
+        
         if (testing_side == TEST_RIGHT && test_sides == 0) {
             test_sides = 1;
         } else if (testing_side == TEST_LEFT && test_sides == 1) {
@@ -336,6 +274,13 @@ static uint8_t quicksand_handler(uint8_t *tile) {
         }
     }
     
+    if (move_side == TILE_SOLID) {
+        in_quicksand = true;
+        pressed_right = false;
+        pressed_left = false;
+        return 1;
+    }
+    
     if (handling_events) { something_died = true;}
     
     return 0;
@@ -344,14 +289,13 @@ static uint8_t quicksand_handler(uint8_t *tile) {
 bool in_water;
 
 static uint8_t water_tile_hander(uint8_t *tile) {
-    static uint8_t adder = 0;
-    static uint8_t test_sides = 0;
-    
     if (move_side == TILE_TOP) {
+        static uint8_t test_sides = 0;
+        
         if (testing_side == TEST_RIGHT && test_sides == 0) {
             test_sides = 1;
         } else if (testing_side == TEST_LEFT && test_sides == 1) {
-            if(mario.vy < 0) { mario.vy += 1; } else { if (mario.vy > 1) { mario.vy = 1; } }
+            if(oiram.vy < 0) { oiram.vy += 1; } else { if (oiram.vy > 1) { oiram.vy = 1; } }
             in_water = true;
             test_sides = 0;
         } else {
@@ -371,7 +315,8 @@ static uint8_t quicksandt_handler(const uint8_t *tile) {
 
 static uint8_t handle_slope_tile(const uint8_t *heightmap, const uint8_t *tile, const uint8_t test_side) {
     if (!handling_events) {
-        if (mario.vy < 0) { return 1; }
+        if (oiram.vy < 0) { return 1; }
+        if (oiram.vy > 2) oiram.vy = 2;
     }
     
     if (test_side == TEST_LEFT) {
@@ -424,28 +369,131 @@ static uint8_t semi2r_slope_handler(uint8_t *tile) {
 
 static uint8_t jelly_tile_handler(uint8_t *tile) {
     if (!handling_events) {
-        if(!shrink_mario()) {
+        if(!shrink_oiram()) {
             *tile = 26;
         }
     }
-    return 0;
+    return 1;
 }
 
 static uint8_t end_pipe_handler(uint8_t *tile) {
     if (move_side == TILE_TEST_PIPE_DOWN) {
-        mario.in_pipe = PIPE_DOWN;
-        mario.enter_pipe = true;
-        mario.pipe_counter = mario.hitbox.height; 
+        
+        oiram.in_pipe = PIPE_DOWN;
+        oiram.enter_pipe = true;
+        oiram.pipe_counter = oiram.hitbox.height + 2;
+        oiram.pipe_clip_y = tile_y_loc(tile);
         game.entered_end_pipe = true;
     }
     return 0;
 }
 
+static uint8_t vanish_tile_handler(uint8_t *tile) {
+    if (!handling_events) {
+        if (move_side == TILE_TOP) {
+            bumped_tile_t *bump_tile = add_bumped(tile, TILE_BOTTOM);
+            bump_tile->count = 6;
+            bump_tile->y = tile_y_loc(tile);
+            *tile = TILE_SOLID_EMPTY;
+        }
+    }
+    return 0;
+}
+
+fireball_t *fireball[MAX_FIREBALLS];
+uint8_t num_fireballs = 0;
+
+poof_t *poof[MAX_POOFS];
+uint8_t num_poofs = 0;
+
+void remove_poof(uint8_t i) {
+    poof_t *free_me = poof[i];
+    uint8_t num_poofs_less = num_poofs--;
+    
+    for(; i < num_poofs_less; i++) {
+        poof[i] = poof[i+1];
+    }
+    
+    free(free_me);
+}
+
+void add_poof(int x, int y) {
+    poof_t *fluff;
+    
+   if (num_poofs >= MAX_POOFS - 1) {
+        remove_poof(0);
+    }
+    
+    fluff = poof[num_poofs] = safe_malloc(sizeof(poof_t));
+    num_poofs++;
+    fluff->x = x;
+    fluff->y = y;
+    fluff->count = 3;
+    fluff->second = false;
+}
+
+void remove_fireball(uint8_t i) {
+    fireball_t *free_me = fireball[i];
+    uint8_t num_fireballs_less = num_fireballs--;
+    
+    if (free_me->mover->type == OIRAM_FIREBALL) {
+        oiram.fireballs--;
+    }
+    
+    for(; i < num_fireballs_less; i++) {
+        fireball[i] = fireball[i+1];
+    }
+    
+    free(free_me->mover);
+    free(free_me);
+}
+
+// add a fireball
+void add_fireball(int x, int y, uint8_t dir, uint8_t type) {
+    fireball_t *ball;
+    simple_move_t *mover;
+    
+    if (num_fireballs >= MAX_FIREBALLS - 1) {
+        return;
+    }
+    
+    ball = fireball[num_fireballs] = safe_malloc(sizeof(fireball_t));
+    mover = ball->mover = safe_malloc(sizeof(simple_move_t));
+    mover->x = x;
+    mover->y = y;
+    
+    // handle DOWN_RIGHT by default
+    mover->vy = 3;
+    mover->vx = 3;
+    
+    switch(dir) {
+        case UP_LEFT:
+            mover->vx = -3;
+            mover->vy = -3;
+            break;
+        case UP_RIGHT:
+            mover->vy = -3;
+            break;
+        case DOWN_LEFT:
+            mover->vx = -3;
+            break;
+        default:
+            break;
+    }
+    mover->is_bouncer = true;
+    mover->hitbox.height = 7;
+    mover->hitbox.width = 7;
+    mover->type = type;
+    mover->is_flyer = false;
+    ball->count = 127;
+    num_fireballs++;
+}
+
 uint8_t (*tile_handler[])(uint8_t*) = {
-    quest_tile_handler, // 0   question box 0
-    quest_tile_handler, // 1   question box 1
-    quest_tile_handler, // 2   question box 2
-    quest_tile_handler, // 3   question box 3
+    solid_tile_handler, // 0   question box 0
+    solid_tile_handler, // 1   question box 1
+    solid_tile_handler, // 2   question box 2
+    solid_tile_handler, // 3   question box 3
     brick_tile_handler, // 4   brick block 0
     brick_tile_handler, // 5   brick block 1
     brick_tile_handler, // 6   brick block 2
@@ -460,9 +508,9 @@ uint8_t (*tile_handler[])(uint8_t*) = {
     handle_warp_pipe,   // 15  pipe green up top right
     handle_warp_pipe,   // 16  pipe gray up top left
     handle_warp_pipe,   // 17  pipe gray up top right
-    handle_warp_pipe,   // 18  pipe green left left top
+    solid_tile_handler,   // 18  pipe green left left top
     solid_tile_handler, // 19  pipe green left mid top
-    handle_warp_pipe,   // 20  pipe gray left left top
+    solid_tile_handler,   // 20  pipe gray left left top
     solid_tile_handler, // 21  pipe gray left mid top
     solid_tile_handler, // 22  solid grass
     solid_tile_handler, // 23  solid grass
@@ -488,7 +536,7 @@ uint8_t (*tile_handler[])(uint8_t*) = {
     solid_tile_handler, // 43  solid wood
     solid_tile_handler, // 44  solid wood
     empty_tile_handler, // 45  half black
-    empty_tile_handler, // 46  black
+    solid_tile_handler, // 46  solid black
     down_tile_handler,  // 47  down block
     solid_tile_handler, // 48  solid wood
     solid_tile_handler, // 49  solid wood
@@ -503,7 +551,7 @@ uint8_t (*tile_handler[])(uint8_t*) = {
     solid_tile_handler, // 58  solid wood
     end_pipe_handler,   // 59  end pipe 0
     solid_tile_handler, // 60  end pipe 1 -- solid :)
-    solid_tile_handler, // 61  empty solid black
+    empty_tile_handler, // 61  empty black
     solid_tile_handler, // 62  solid wood
     solid_tile_handler, // 63  solid wood
     solid_tile_handler, // 64  solid wood
@@ -536,9 +584,9 @@ uint8_t (*tile_handler[])(uint8_t*) = {
     solid_tile_handler, // 91  solid ground
     solid_tile_handler, // 92  solid ground
     solid_tile_handler, // 93  solid ground
-    upspk_tile_handler,  // 94  yummy plant
-    upspk_tile_handler,  // 95  yummy plant
-    upspk_tile_handler,  // 96  yummy plant
+    plant_tile_handler,  // 94  yummy plant
+    plant_tile_handler,  // 95  yummy plant
+    plant_tile_handler,  // 96  yummy plant
     solid_tile_handler, // 97  cannon down left
     solid_tile_handler, // 98  cannon part
     solid_tile_handler, // 99  solid sand
@@ -602,8 +650,8 @@ uint8_t (*tile_handler[])(uint8_t*) = {
     empty_tile_handler, // 157 box shadow
     empty_tile_handler, // 158 landscape
     empty_tile_handler, // 159 landscape
-    empty_tile_handler, // 160 rope left 0
-    empty_tile_handler, // 161 rope right 0
+    empty_tile_handler, // 160 rope
+    vanish_tile_handler, // 161 vanishing tile
     empty_tile_handler, // 162 landscape
     empty_tile_handler, // 163 landscape
     empty_tile_handler, // 164 landscape
@@ -616,8 +664,8 @@ uint8_t (*tile_handler[])(uint8_t*) = {
     empty_tile_handler, // 171 box shadow
     empty_tile_handler, // 172 landscape
     empty_tile_handler, // 173 landscape
-    empty_tile_handler, // 174 rope left 1
-    empty_tile_handler, // 175 rope right 1
+    empty_tile_handler, // 174 rope end
+    solid_tile_handler, // 175 reswob clear block
     empty_tile_handler, // 176 landscape
     empty_tile_handler, // 177 landscape
     empty_tile_handler, // 178 landscape
@@ -637,7 +685,7 @@ uint8_t (*tile_handler[])(uint8_t*) = {
     top_tile_handler,   // 192 box top
     empty_tile_handler, // 193 box shadow
     empty_tile_handler, // 194 landscape
-    empty_tile_handler, // 195 the rest are box parts + shadows and landscapes
+    empty_tile_handler, // 195 the rest are (mostly) box parts + shadows and landscapes
     empty_tile_handler, // 196 
     empty_tile_handler, // 197 
     empty_tile_handler, // 198
@@ -666,96 +714,14 @@ uint8_t (*tile_handler[])(uint8_t*) = {
     empty_tile_handler, // 222
     empty_tile_handler, // 223
     empty_tile_handler, // 224
+    empty_tile_handler, // 223
+    coin_quest_handler, // 225
+    up1_quest_handler,  // 226
+    mushroom_quest_handler, // 227
+    star_quest_handler, // 228
+    fireflower_quest_handler, // 229
+    leaf_quest_handler, // 230
 };
-
-// animates animated tiles
-// 0 (4 tiles):        mystery brick
-// 4 (4 tiles):        bricks
-// 8 (3 tiles):        music brick
-// 94 (3 tiles):       yummy plant
-// 108 (3 tiles):      normal vine
-// 118 (4 tiles):      quicksand top
-// 122 (4 tiles):      lava
-// 126 (4 tiles):      water
-// 132 (4 tiles):      quicksand
-// 146 (4 tiles):      jelly
-// 150 (4 tiles):      coins
-
-#define animate_tile(x) ((x) = (gfx_image_t*)(((uint8_t*)(x)) + TILE_DATA_SIZE))
-#define animate_reset_4(x) ((x) = (gfx_image_t*)(((uint8_t*)(x)) - 4*TILE_DATA_SIZE))
-#define animate_reset_3(x) ((x) = (gfx_image_t*)(((uint8_t*)(x)) - 3*TILE_DATA_SIZE))
-
-#define animate_sprite(x, y, z) if ((x) == (y)) { (x) = (z); } else { (x) = (y); }
-
-void animate(void) {
-    
-    if (tiles.animation_counter++ == 3) {
-        animate_sprite(goomba_sprite, goomba_0, goomba_1);
-        animate_sprite(koopa_red_left_sprite, koopa_red_left_0, koopa_red_left_1);
-        animate_sprite(koopa_red_right_sprite, koopa_red_right_0, koopa_red_right_1);
-        animate_sprite(koopa_green_left_sprite, koopa_green_left_0, koopa_green_left_1);
-        animate_sprite(koopa_green_right_sprite, koopa_green_right_0, koopa_green_right_1);
-        animate_sprite(koopa_bones_left_sprite, koopa_bones_left_0, koopa_bones_left_1);
-        animate_sprite(koopa_bones_right_sprite, koopa_bones_right_0, koopa_bones_right_1);
-        animate_sprite(fish_right_sprite, fish_right_0, fish_right_1);
-        animate_sprite(fish_left_sprite, fish_left_0, fish_left_1);
-        animate_sprite(chomper_sprite, chomper_0, chomper_1);
-        animate_sprite(fireball_sprite, fire_0, fire_1);
-        animate_sprite(flame_sprite_up, flame_fire_up_0, flame_fire_up_1);
-        animate_sprite(flame_sprite_down, flame_fire_down_0, flame_fire_down_1);
-        animate_sprite(wing_right_sprite, wing_right_0, wing_right_1);
-        animate_sprite(wing_left_sprite, wing_left_0, wing_left_1);
-        mario.sprite_index ^= 1;
-        
-        animate_tile(tileset_tiles[TILE_QUESTIONBOX_0]);
-        animate_tile(tileset_tiles[TILE_BRICK_0]);
-        animate_tile(tileset_tiles[8]);
-        animate_tile(tileset_tiles[94]);
-        animate_tile(tileset_tiles[108]);
-        animate_tile(tileset_tiles[126]);
-        animate_tile(tileset_tiles[118]);
-        animate_tile(tileset_tiles[122]);
-        animate_tile(tileset_tiles[132]);
-        animate_tile(tileset_tiles[146]);
-        animate_tile(tileset_tiles[TILE_COIN_0]);
-        
-        if (tiles.animation_4_counter == 3) {
-            animate_reset_4(tileset_tiles[TILE_QUESTIONBOX_0]);
-            animate_reset_4(tileset_tiles[TILE_BRICK_0]);
-            animate_reset_4(tileset_tiles[126]);
-            animate_reset_4(tileset_tiles[118]);
-            animate_reset_4(tileset_tiles[122]);
-            animate_reset_4(tileset_tiles[132]);
-            animate_reset_4(tileset_tiles[TILE_COIN_0]);
-            animate_reset_4(tileset_tiles[146]);
-            tiles.animation_4_counter = 255;
-        }
-        
-        if (tiles.animation_3_counter == 2) {
-            animate_reset_3(tileset_tiles[8]);
-            animate_reset_3(tileset_tiles[94]);
-            animate_reset_3(tileset_tiles[108]);
-            tiles.animation_3_counter = 255;
-        }
-        
-        tiles.animation_3_counter++;
-        tiles.animation_4_counter++;
-        tiles.animation_counter = 0;
-        if (mario.score_display_counter) {
-            if (!--mario.score_display_counter) {
-                gfx_SetColor(252);
-                gfx_FillRectangle_NoClip(140, 161, 45, 14);
-                gfx_BlitLines(gfx_buffer, 161, 14);
-            }
-        }
-    }
-}
-
-void tile_to_abs_xy_pos(uint8_t *tile, unsigned int *x, unsigned int *y) {
-    unsigned int offset = (unsigned int)tile - (unsigned int)tilemap.map;
-    *y = (offset / tilemap.width) * TILE_HEIGHT;
-    *x = (offset % tilemap.width) * TILE_WIDTH;
-}
 
 bumped_tile_t *bumped_tile[MAX_TILE_BUMPS];
 uint8_t num_bumped_tiles = 0;
@@ -766,11 +732,11 @@ bumped_tile_t *add_bumped(uint8_t *tile, uint8_t dir) {
     uint8_t i;
     
     if (num_bumped_tiles > MAX_TILE_BUMPS - 1) {
-        return NULL;
+        remove_bumped_tile(0);
     }
     
     tile_to_abs_xy_pos(tile, &x, &y);
-    bump = bumped_tile[num_bumped_tiles++] = malloc(sizeof(bumped_tile_t));
+    bump = bumped_tile[num_bumped_tiles] = safe_malloc(sizeof(bumped_tile_t));
     
     switch(dir) {
         case TILE_BOTTOM:
@@ -789,8 +755,6 @@ bumped_tile_t *add_bumped(uint8_t *tile, uint8_t dir) {
             bump->x = x - TILE_HEIGHT/2;
             bump->y = y;
             break;
-        default:
-            abort();
     }
     
     bump->dir = dir;
@@ -808,6 +772,8 @@ bumped_tile_t *add_bumped(uint8_t *tile, uint8_t dir) {
         }
     }
     
+    num_bumped_tiles++;
+    
     return bump;
 }
 
@@ -822,6 +788,10 @@ bool remove_bumped_tile(uint8_t i) {
         *free_me->tile_ptr = free_me->tile;
     }
     
+    if (free_me->tile == 161) {
+        *free_me->tile_ptr = TILE_EMPTY;
+    }
+    
     for(; i < num_bumped_tiles - 1; i++) {
         bumped_tile[i] = bumped_tile[i+1];
     }
@@ -833,114 +803,91 @@ bool remove_bumped_tile(uint8_t i) {
     return true;
 }
 
-#define MASK_PIPE_UP     (1<<23)
 #define MASK_PIPE_DOWN   (0)
+#define MASK_PIPE_UP     (1<<23)
 #define MASK_PIPE_LEFT   (1<<22)
 #define MASK_PIPE_RIGHT  (1<<21)
 
-const unsigned int warp_pipe_info[] = {
-    4,                            // number of pipe warp places
-    14 + (7*50) | MASK_PIPE_RIGHT,  // pipe location data -- 1<<23 = up, 1<<22 = left, 1<<21 = right
-    45 + (5*50) | MASK_PIPE_RIGHT, // exits to the right
-    
-    14 + (10*50) | MASK_PIPE_LEFT, // enters to the left
-    48 + (5*50)  | MASK_PIPE_LEFT, // exits to the left
-    
-    20 + (11*50) | MASK_PIPE_DOWN, // enters to the left
-    46 + (1*50)  | MASK_PIPE_UP, // exits to the left
-    
-    23 + (10*50) | MASK_PIPE_UP, // enters to the left
-    46 + (6*50)  | MASK_PIPE_DOWN // exits to the left
-    
-};
-
 uint8_t handle_warp_pipe(uint8_t *tile) {
-    uint8_t i, max_tests;
+    unsigned int i;
     unsigned int offset, x, y;
     
-    if (handling_events) {
+    if (handling_events || oiram.vy > 0) {
         return 0;
     }
     
     tile_to_abs_xy_pos(tile, &x, &y);
     
-    max_tests = (*warp_pipe_info)*2;
     offset = tile - tilemap.map;
+    oiram.enter_pipe = false;
     
-    mario.enter_pipe = false;
-    
-    for(i = 1; i <= max_tests; i += 2) {
+    for(i = 0; i < pipe_max_tests; i += 2) {
         unsigned int pipe_enter = warp_pipe_info[i];
         unsigned int pipe_enter_masked = pipe_enter & ~(MASK_PIPE_UP | MASK_PIPE_LEFT | MASK_PIPE_RIGHT /* | MASK_PIPE_DOWN */ );
-        
-        switch (move_side) {
-            case TILE_LEFT:
-                if (pipe_enter & MASK_PIPE_LEFT) {
-                    if (offset == pipe_enter_masked) {
-                        mario.in_pipe = PIPE_LEFT;
-                        mario.enter_pipe = true;
-                        mario.pipe_counter = mario.hitbox.width;
+
+        if (offset == pipe_enter_masked) {
+            switch (move_side) {
+                case TILE_LEFT:
+                    if (pipe_enter & MASK_PIPE_RIGHT) {
+                        oiram.in_pipe = PIPE_LEFT;
+                        oiram.enter_pipe = true;
+                        oiram.pipe_counter = OIRAM_HITBOX_WIDTH;
+                        oiram.pipe_clip_x = x;
                     }
-                }
-                break;
-            case TILE_RIGHT:
-                if (pipe_enter & MASK_PIPE_RIGHT) {
-                    if (offset == pipe_enter_masked) {
-                        mario.in_pipe = PIPE_RIGHT;
-                        mario.enter_pipe = true;
-                        mario.pipe_counter = mario.hitbox.width;
+                    break;
+                case TILE_RIGHT:
+                    if (pipe_enter & MASK_PIPE_LEFT) {
+                        oiram.in_pipe = PIPE_RIGHT;
+                        oiram.enter_pipe = true;
+                        oiram.pipe_counter = OIRAM_HITBOX_WIDTH;
+                        oiram.pipe_clip_x = x + TILE_WIDTH;
                     }
-                }
-                break;
-            case TILE_TEST_PIPE_DOWN:
-                if (offset == pipe_enter_masked) {
-                    if (mario.x < x + 2) {
+                    break;
+                case TILE_TEST_PIPE_DOWN:
+                    if (oiram.x < x + 2) {
                         return 0;
                     }
-                    mario.in_pipe = PIPE_DOWN;
-                    mario.enter_pipe = true;
-                    mario.pipe_counter = mario.hitbox.height;
-                }
-                break;
-            case TILE_BOTTOM:
-                if (pipe_enter & MASK_PIPE_UP) {
-                    if (offset == pipe_enter_masked) {
-                        if (mario.x < x + 2) {
+                    oiram.in_pipe = PIPE_DOWN;
+                    oiram.enter_pipe = true;
+                    oiram.pipe_counter = oiram.hitbox.height;
+                    oiram.pipe_clip_y = y;
+                    break;
+                case TILE_BOTTOM:
+                    if (pipe_enter & MASK_PIPE_UP) {
+                        if (oiram.x < x + 2) {
                             return 0;
                         }
-                        mario.in_pipe = PIPE_UP;
-                        mario.enter_pipe = true;
-                        mario.pipe_counter = mario.hitbox.height;
+                        oiram.in_pipe = PIPE_UP;
+                        oiram.enter_pipe = true;
+                        oiram.pipe_clip_y = y + TILE_HEIGHT;
+                        oiram.pipe_counter = oiram.hitbox.height;
                     }
-                }
-                break;
-            default:
-                break;
+                    break;
+                default:
+                    break;
+            }
         }
         
-        if (mario.enter_pipe) {
+        if (oiram.enter_pipe) {
             unsigned int not_masked = warp_pipe_info[i+1];
-            mario.exit_pipe_loc = not_masked & ~(MASK_PIPE_UP | MASK_PIPE_LEFT | MASK_PIPE_RIGHT /* | MASK_PIPE_DOWN */ );
+            oiram.exit_pipe_loc = not_masked & ~(MASK_PIPE_UP | MASK_PIPE_LEFT | MASK_PIPE_RIGHT /* | MASK_PIPE_DOWN */ );
             
             if (not_masked & MASK_PIPE_UP) {
-                mario.exit_pipe_dir = PIPE_DOWN;
-                if (mario.flags & (FLAG_MARIO_BIG | FLAG_MARIO_FIRE)) {
-                    mario.exit_pipe_loc -= tilemap.width;
-                }
+                oiram.exit_pipe_dir = PIPE_UP;
             } else
             if (not_masked & MASK_PIPE_LEFT) {
-                mario.exit_pipe_dir = PIPE_RIGHT;
-                if (mario.flags & (FLAG_MARIO_BIG | FLAG_MARIO_FIRE)) {
-                    mario.exit_pipe_loc -= tilemap.width;
+                oiram.exit_pipe_dir = PIPE_RIGHT;
+                if (oiram.flags & (FLAG_OIRAM_BIG | FLAG_OIRAM_FIRE)) {
+                    oiram.exit_pipe_loc -= tilemap.width;
                 }
             } else
             if (not_masked & MASK_PIPE_RIGHT) {
-                mario.exit_pipe_dir = PIPE_LEFT;
-                if (mario.flags & (FLAG_MARIO_BIG | FLAG_MARIO_FIRE)) {
-                    mario.exit_pipe_loc -= tilemap.width;
+                oiram.exit_pipe_dir = PIPE_LEFT;
+                if (oiram.flags & (FLAG_OIRAM_BIG | FLAG_OIRAM_FIRE)) {
+                    oiram.exit_pipe_loc -= tilemap.width;
                 }
             } else {
-                mario.exit_pipe_dir = PIPE_UP;
+                oiram.exit_pipe_dir = PIPE_DOWN;
             }
             break;
         }
@@ -948,3 +895,39 @@ uint8_t handle_warp_pipe(uint8_t *tile) {
     
     return 0;
 }
+
+/**
+ * Functions rewritten in common.asm for speedz
+ */
+ 
+/*
+bool moveable_tile(int x, int y) {
+    uint8_t *tile;
+    testing_side = 2;
+    
+    if (x < 0) { return false; }
+    if (y < 0) { return true; }
+    tile = gfx_TilePtr(&tilemap, test_x = x, test_y = y);
+    return (*tile_handler[*tile])(tile);
+}
+*/
+
+/*
+uint8_t solid_tile_handler(uint8_t *tile) {
+    return 0;
+}
+*/
+
+/*
+uint8_t empty_tile_handler(uint8_t *tile) {
+    return 1;
+}
+*/
+
+/*
+void tile_to_abs_xy_pos(uint8_t *tile, unsigned int *x, unsigned int *y) {
+    unsigned int offset = (unsigned int)tile - (unsigned int)tilemap.map;
+    *y = (offset / tilemap.width) * TILE_HEIGHT;
+    *x = (offset % tilemap.width) * TILE_WIDTH;
+}
+*/

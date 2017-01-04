@@ -22,12 +22,12 @@ simple_move_t *add_simple_mover(uint8_t *spawing_tile) {
     unsigned int x, y;
     
     if (num_simple_movers > MAX_SIMPLE_MOVERS - 1) {
-        return NULL;
+        remove_simple_mover(0);
     }
     
     tile_to_abs_xy_pos(spawing_tile, &x, &y);
     
-    mover = simple_mover[num_simple_movers] = malloc(sizeof(simple_move_t));
+    mover = simple_mover[num_simple_movers] = safe_malloc(sizeof(simple_move_t));
     
     mover->vy = 0;
     mover->vx = 0;
@@ -44,7 +44,7 @@ simple_move_t *add_simple_mover(uint8_t *spawing_tile) {
     return mover;
 }
 
-bool remove_simple_mover(uint8_t i) {
+void remove_simple_mover(uint8_t i) {
     simple_move_t *mover = simple_mover[i];
     uint8_t num_simple_movers_less = num_simple_movers--;
     
@@ -53,8 +53,6 @@ bool remove_simple_mover(uint8_t i) {
     }
     
     free(mover);
-    
-    return true;
 }
 
 void simple_move_handler(simple_move_t *this) {
@@ -88,7 +86,7 @@ void simple_move_handler(simple_move_t *this) {
         // if nothing below, start accelerating
         if (test_left_bottom || test_right_bottom) {
             if (test_left_bottom && test_right_bottom) {
-                if (tmp_vy < 9) { tmp_vy += 1; }
+                if (tmp_vy < 8) { tmp_vy += 1; }
             } else if (this->smart) {
                 if ((tmp_vx < 0 && test_left_bottom) || (tmp_vx >= 0 && test_right_bottom)) {
                     tmp_vx = -tmp_vx;

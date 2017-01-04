@@ -3,20 +3,24 @@
 
 #include <lib/ce/graphx.h>
 
-extern gfx_image_t mario_0_buffer_left[27*27 + 2];
-extern gfx_image_t mario_1_buffer_left[27*27 + 2];
-extern gfx_image_t mario_0_buffer_right[27*27 + 2];
-extern gfx_image_t mario_1_buffer_right[27*27 + 2];
+extern gfx_image_t oiram_0_buffer_left[27*27 + 2];
+extern gfx_image_t oiram_1_buffer_left[27*27 + 2];
+extern gfx_image_t oiram_0_buffer_right[27*27 + 2];
+extern gfx_image_t oiram_1_buffer_right[27*27 + 2];
  
-extern gfx_image_t *mario_0_small;
-extern gfx_image_t *mario_1_small;
-extern gfx_image_t *mario_0_big;
-extern gfx_image_t *mario_1_big;
-extern gfx_image_t *mario_0_fire;
-extern gfx_image_t *mario_1_fire;
-extern gfx_image_t *mario_crouch_big;
-extern gfx_image_t *mario_crouch_fire;
-extern gfx_image_t *mario_fail;
+extern gfx_image_t *coin_sprite;
+extern gfx_image_t *oiram_0_small;
+extern gfx_image_t *oiram_1_small;
+extern gfx_image_t *oiram_0_big;
+extern gfx_image_t *oiram_1_big;
+extern gfx_image_t *oiram_0_fire;
+extern gfx_image_t *oiram_1_fire;
+extern gfx_image_t *oiram_0_racoon;
+extern gfx_image_t *oiram_1_racoon;
+extern gfx_image_t *oiram_crouch_big;
+extern gfx_image_t *oiram_crouch_fire;
+extern gfx_image_t *oiram_crouch_racoon;
+extern gfx_image_t *oiram_fail;
 extern gfx_image_t *mushroom;
 extern gfx_image_t *fire_flower;
 extern gfx_image_t *goomba_0;
@@ -61,7 +65,6 @@ extern gfx_image_t *boo_right_hide;
 extern gfx_image_t *boo_left;
 extern gfx_image_t *boo_right;
 extern gfx_image_t *bullet_left;
-extern gfx_image_t *bullet_right;
 extern gfx_image_t *cannonball_sprite;
 extern gfx_image_t *wing_left_0;
 extern gfx_image_t *wing_left_1;
@@ -70,20 +73,28 @@ extern gfx_image_t *wing_right_1;
 extern gfx_image_t *star_0;
 extern gfx_image_t *easter_egg_0;
 extern gfx_image_t *easter_egg_1;
-extern gfx_image_t *mario_lives;
+extern gfx_image_t *oiram_lives;
 extern gfx_image_t *clock;
 extern gfx_image_t *one_up;
-extern gfx_image_t *mario_up_small_0;
-extern gfx_image_t *mario_up_small_1;
-extern gfx_image_t *mario_up_big_0;
-extern gfx_image_t *mario_up_big_1;
-extern gfx_image_t *mario_up_fire_0;
-extern gfx_image_t *mario_up_fire_1;
+extern gfx_image_t *oiram_up_small_0;
+extern gfx_image_t *oiram_up_small_1;
+extern gfx_image_t *oiram_up_big_0;
+extern gfx_image_t *oiram_up_big_1;
+extern gfx_image_t *oiram_up_fire_0;
+extern gfx_image_t *oiram_up_fire_1;
 extern gfx_image_t *fish_left_0;
 extern gfx_image_t *fish_left_1;
 extern gfx_image_t *fish_right_0;
 extern gfx_image_t *fish_right_1;
 extern gfx_image_t *mushroom_1up;
+extern gfx_image_t *spike_left_0;
+extern gfx_image_t *spike_left_1;
+extern gfx_image_t *spike_right_0;
+extern gfx_image_t *spike_right_1;
+extern gfx_image_t *spike_shell_0;
+extern gfx_image_t *spike_shell_1;
+
+extern gfx_image_t *oiram_start;
 
 extern gfx_image_t *fireball_sprite;
 extern gfx_image_t *goomba_sprite;
@@ -96,13 +107,41 @@ extern gfx_image_t *koopa_green_left_sprite;
 extern gfx_image_t *koopa_green_right_sprite;
 extern gfx_image_t *koopa_bones_left_sprite;
 extern gfx_image_t *koopa_bones_right_sprite;
+extern gfx_image_t *spike_left_sprite;
+extern gfx_image_t *spike_right_sprite;
 extern gfx_image_t *flame_sprite_up;
 extern gfx_image_t *flame_sprite_down;
 extern gfx_image_t *fish_left_sprite;
 extern gfx_image_t *fish_right_sprite;
 
-extern gfx_image_t *mario_right[];
-extern gfx_image_t *mario_left[];
+extern gfx_image_t *oiram_right[];
+extern gfx_image_t *oiram_left[];
+
+extern gfx_image_t *oiram_logo;
+
+extern gfx_image_t *score_100;
+extern gfx_image_t *score_200;
+extern gfx_image_t *score_400;
+extern gfx_image_t *score_800;
+extern gfx_image_t *score_1000;
+extern gfx_image_t *score_2000;
+extern gfx_image_t *score_4000;
+extern gfx_image_t *score_8000;
+
+extern gfx_image_t *leaf_left;
+extern gfx_image_t *leaf_right;
+
+extern gfx_image_t *oiram_up_racoon_0;
+extern gfx_image_t *oiram_up_racoon_1;
+
+extern gfx_image_t *tail_left_0;
+extern gfx_image_t *tail_right_0;
+
+extern gfx_image_t *reswob_left_0;
+extern gfx_image_t *reswob_left_1;
+extern gfx_image_t *reswob_right_0;
+extern gfx_image_t *reswob_right_1;
+extern gfx_image_t *reswob_down;
 
 void extract_sprites(void);
 void extract_tiles(void);

@@ -1,11 +1,8 @@
 #ifndef POWERUPS_H
 #define POWERUPS_H
 
-// standard headers
 #include <stdbool.h>
 #include <stdint.h>
-
-extern uint8_t shrink_counter;
 
 bool add_mushroom_1up(uint8_t*);
 void eat_mushroom_1up(void);
@@ -19,7 +16,9 @@ void eat_fire_flower(void);
 bool add_star(uint8_t*);
 void eat_star(void);
 
-bool shrink_mario(void);
-void set_left_mario_sprites(void);
+void eat_leaf(void);
+
+bool shrink_oiram(void);
+void set_left_oiram_sprites(void);
 
 #endif

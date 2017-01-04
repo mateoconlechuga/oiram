@@ -10,57 +10,26 @@
 #include "simple_mover.h"
 #include "enemies.h"
 #include "tile_handlers.h"
-#include "tilemapdata.h"
 #include "defines.h"
-
-unsigned int fire_flame_data[] = {
-    0,       // number of fire flames
-    13 + (50 * 6),
-};
-
-unsigned int thwomp_data[] = {
-    0,       // number of thwomps
-    2,
-    6
-};
-
-unsigned int chomper_data[] = {
-    0,
-    20+(3*50) | 0x800000,
-    16+(15*50),
-};
-
-unsigned int boo_data[] = {
-    0,
-    20
-};
-
-unsigned int koopa_data[] = {
-    0,       // number of koopas
-    (10 + 11*50) | 1<<22,
-    10,
-    13,
-    26,
-    48,
-    5,
-};
-
-unsigned int simple_enemy_data[] = {
-    0,       // number of bullets/cannonballs
-    11+ (50*4),
-};
+#include "loadscreen.h"
+#include "images.h"
 
 void add_goomba(uint8_t *tile) {
     simple_move_t *goomba = add_simple_mover(tile);
-    
-    if (!goomba) {
-        return;
-    }
     
     goomba->hitbox.width = 15;
     goomba->hitbox.height = 15;
     goomba->vx = -1;
     goomba->type = GOOMBA_TYPE;
+}
+
+void add_reswob(uint8_t *tile) {
+    simple_move_t *reswob = add_simple_mover(tile);
+    
+    reswob->hitbox.width = 31;
+    reswob->hitbox.height = 39;
+    reswob->vx = -1;
+    reswob->type = RESWOB_TYPE;
 }
 
 boo_t *boo[MAX_BOOS];
@@ -76,11 +45,7 @@ void add_boo(uint8_t *tile) {
     
     tile_to_abs_xy_pos(tile, &x, &y);
     
-    booooo = boo[num_boos] = malloc(sizeof(boo_t));
-    
-    if (!booooo) {
-        return;
-    }
+    booooo = boo[num_boos] = safe_malloc(sizeof(boo_t));
     
     booooo->x = x;
     booooo->y = y;
@@ -101,45 +66,41 @@ void remove_boo(uint8_t i) {
     free(free_me);
 }
 
-void add_koopa(uint8_t *tile, uint8_t type) {
-    simple_move_t *koopa = add_simple_mover(tile);
+void add_shell_enemy(uint8_t *tile, uint8_t type) {
+    simple_move_t *special = add_simple_mover(tile);
     
-    if (!koopa) {
-        return;
-    }
-    
-    koopa->hitbox.width = 15;
-    koopa->hitbox.height = 26;
-    koopa->vx = -1;
+    special->hitbox.width = 15;
+    special->hitbox.height = 26;
+    special->vx = -1;
     switch(type) {
         case 0:
-            koopa->type = KOOPA_GREEN_TYPE;
-            koopa->smart = false;
+            special->type = KOOPA_GREEN_TYPE;
+            special->smart = false;
             break;
         case 1:
-            koopa->type = KOOPA_RED_TYPE;
-            koopa->smart = true;
+            special->type = KOOPA_RED_TYPE;
+            special->smart = true;
             break;
         case 2:
-            koopa->type = KOOPA_GREEN_FLY_TYPE;
-            koopa->smart = false;
-            koopa->vx = 0;
-            koopa->vy = 1;
-            koopa->is_flyer = true;
-            break;
+            special->type = KOOPA_GREEN_FLY_TYPE;
+            goto flying_type;
         case 3:
-            koopa->type = KOOPA_RED_FLY_TYPE;
-            koopa->smart = true;
-            koopa->vx = 0;
-            koopa->vy = 1;
-            koopa->is_flyer = true;
-            break; 
-        case 4:
-            koopa->type = KOOPA_BONES_TYPE;
-            koopa->smart = true;
+            special->type = KOOPA_RED_FLY_TYPE;
+flying_type:
+            special->smart = true;
+            special->vx = 0;
+            special->vy = 1;
+            special->is_flyer = true;
             break;
-        default:
-            abort();
+        case 4:
+            special->type = KOOPA_BONES_TYPE;
+            special->smart = true;
+            break;
+        case 5:
+            special->hitbox.height = 15;
+            special->smart = false;
+            special->type = SPIKE_TYPE;
+            break;
     }
 }
 
@@ -156,11 +117,7 @@ void add_chomper(uint8_t *tile, bool throws_fire) {
     
     tile_to_abs_xy_pos(tile, &x, &y);
     
-    chomp = chomper[num_chompers] = malloc(sizeof(chomper_t));
-    
-    if (!chomp) {
-        return;
-    }
+    chomp = chomper[num_chompers] = safe_malloc(sizeof(chomper_t));
     
     chomp->x = x + TILE_WIDTH/2;
     chomp->y = y;
@@ -196,11 +153,7 @@ void add_flame(uint8_t *tile) {
     
     tile_to_abs_xy_pos(tile, &x, &y);
     
-    fire = flame[num_flames] = malloc(sizeof(flame_t));
-    
-    if (!fire) {
-        return;
-    }
+    fire = flame[num_flames] = safe_malloc(sizeof(flame_t));
     
     fire->x = x;
     fire->y = y;
@@ -234,11 +187,7 @@ void add_thwomp(uint8_t *tile) {
     
     tile_to_abs_xy_pos(tile, &x, &y);
     
-    womp = thwomp[num_thwomps] = malloc(sizeof(thwomp_t));
-    
-    if (!womp) {
-        return;
-    }
+    womp = thwomp[num_thwomps] = safe_malloc(sizeof(thwomp_t));
     
     womp->x = x + 4;
     womp->y = y;
@@ -267,36 +216,43 @@ enemy_t *add_simple_enemy(uint8_t *tile, uint8_t type) {
     unsigned int x, y;
     
     if (num_simple_enemies > MAX_SIMPLE_ENEMY - 1) {
-        return NULL;
+        remove_simple_enemy(0);
     }
     
     tile_to_abs_xy_pos(tile, &x, &y);
     
-    enemy = simple_enemy[num_simple_enemies] = malloc(sizeof(enemy_t));
-    
-    if (!enemy) {
-        return NULL;
-    }
+    enemy = simple_enemy[num_simple_enemies] = safe_malloc(sizeof(enemy_t));
     
     enemy->vx = 0;
     enemy->vy = 0;
-    
+    enemy->counter = 100;
+    enemy->y = y;
+    enemy->x = x;
+	    
     switch(type) {
         case BULLET_TYPE:
-            enemy->vx = -2;
+            enemy->vx = -3;
             enemy->y = y + 1;
             enemy->x = x - 4;
+            enemy->sprite = bullet_left;
             break;
+        case SCORE_TYPE:
+            enemy->counter = 16;
+            enemy->sprite = bullet_left;
+            break;
+        case CANNONBALL_TYPE:
+            enemy->sprite = cannonball_sprite;
+            enemy->vx = -2;
+            break;
+        case LEAF_TYPE:
+            enemy->y -= TILE_HEIGHT;
+            enemy->counter = 16;
         case FISH_TYPE:
             enemy->vx = -1;
-            *tile = 0x1A;
         default:
-            enemy->y = y;
-            enemy->x = x;
             break;
     }
     
-    enemy->counter = 100;
     enemy->type = type;
     num_simple_enemies++;
     return enemy;
@@ -315,89 +271,77 @@ void remove_simple_enemy(uint8_t i) {
 
 void get_enemies(void) {
     unsigned int j;
-    uint8_t i;
-    uint8_t num_red_koopas = *koopa_data;
-    uint8_t num_chomps = *chomper_data;
-    uint8_t num_flamers = *fire_flame_data;
-    uint8_t num_womps = *thwomp_data;
-    uint8_t num_boooos = *boo_data;
-    uint8_t num_simples = *simple_enemy_data;
+    unsigned int loop = tilemap.width * tilemap.height;
     
-    for(i = 1; i <= num_red_koopas; i++) {
-        unsigned int koop = koopa_data[i];
-        uint8_t type;
+    for(j = 0; j < loop; j++) {
+        uint8_t *this = tilemap_data + j;
+        uint8_t tile = *this;
         
-        switch((koop & ((1<<23) | (1<<22) | (1<<21) | (1<<20)))) {
-            case 1<<23:
-                type = 4;
-                break;
-            case 1<<22:
-                type = 3;
-                break;
-            case 1<<21:
-                type = 2;
-                break;
-            case 1<<20:
-                type = 1;
-                break;
-            default:
-                type = 0;
-                break;
-        }
-        
-        add_koopa(tilemapdata + (koop & ~((1<<23) | (1<<22) | (1<<21) | (1<<20))), type);
-    }
-    
-    for(i = 1; i <= num_chomps; i++) {
-        unsigned int chomp = chomper_data[i];
-        add_chomper(tilemapdata + (chomp & ~(1<<23)), (bool)((chomp & (1<<23)) == (1<<23)));
-    }
-    
-    for(i = 1; i <= num_flamers; i++) {
-        add_flame(tilemapdata + fire_flame_data[i]);
-    }
-    
-    for(i = 1; i <= num_womps; i++) {
-        add_thwomp(tilemapdata + thwomp_data[i]);
-    }
-    
-    for(i = 1; i <= num_boooos; i++) {
-        add_boo(tilemapdata + boo_data[i]);
-    }
-    
-    for(j = 0; j < sizeof(tilemapdata); j++) {
-        uint8_t tile = tilemapdata[j];
-        uint8_t *this = tilemapdata + j;
-        if (tile == 0x61) {
-            add_simple_enemy(this, CANNONBALL_DOWN_CREATOR_TYPE);
-        }
-        if (tile == 0x53) {
-            add_simple_enemy(this, CANNONBALL_UP_CREATOR_TYPE);
-        }
-        if (tile == 0x46) {
-            add_simple_enemy(this, BULLET_CREATOR_TYPE);
-        }
-        
+        // f0 = oriam start
+        // f1 = reswob
+        // f2 = spike
         // f3 = fish
         // f4 = goomba
-        // f5 = red koopa
-        // f6 = green koopa
-        // f7 = boo
-        // f8 = thwomp
-        // f9 = 
-        // fa = 
-        // fb = 
-        // fc = 
-        // fd =
-        // fe = 
-        // ff = 
-        if (tile == 0xf3) {
-            add_simple_enemy(this, FISH_TYPE);
-        }
-        if (tile == 0xf4) {
-            add_goomba(this);
-            *this = TILE_EMPTY;
+        // f5 = green koopa
+        // f6 = red koopa
+        // f7 = green flying koopa
+        // f8 = red flying koopa
+        // f9 = bones koopa
+        // fa = thwomp
+        // fb = fireball
+        // fc = chomper
+        // fd = fire chomper
+        // fe = boo
+        
+        switch(tile) {
+            case 0x61:
+                add_simple_enemy(this, CANNONBALL_DOWN_CREATOR_TYPE);
+                break;
+            case 0x53:
+                add_simple_enemy(this, CANNONBALL_UP_CREATOR_TYPE);
+                break;
+            case 0x46:
+                add_simple_enemy(this, BULLET_CREATOR_TYPE);
+                break;
+            case 0xf0:
+                tile_to_abs_xy_pos(this, (unsigned int*)&oiram.x, (unsigned int*)&oiram.y);
+                if (oiram.flags & FLAG_OIRAM_BIG) {
+                    oiram.y -= TILE_HEIGHT;
+                }
+                goto set_empty_tile;
+            case 0xf1:
+                add_reswob(this);
+                goto set_empty_tile;
+            case 0xf2:
+                add_shell_enemy(this, 5);
+                goto set_empty_tile;
+            case 0xf3:
+                add_simple_enemy(this, FISH_TYPE);
+                *this = 26;
+                break;
+            case 0xf4:
+                add_goomba(this);
+                goto set_empty_tile;
+            case 0xf5: case 0xf6: case 0xf7: case 0xf8: case 0xf9:
+                add_shell_enemy(this, tile - 0xf5);
+                goto set_empty_tile;
+            case 0xfa:
+                add_thwomp(this);
+                goto set_empty_tile;
+            case 0xfb:
+                add_flame(this);
+                *this = 122;
+                break;
+            case 0xfc: case 0xfd:
+                add_chomper(this + tilemap.width, tile == 0xfd);
+                goto set_empty_tile;
+            case 0xfe:
+                add_boo(this);
+set_empty_tile:
+                *this = TILE_EMPTY;
+                break;
+            default:
+                break;
         }
     }
-    
 }

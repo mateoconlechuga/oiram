@@ -3,69 +3,83 @@
 
 #include "images.h"
 #include "defines.h"
-#include "mario.h"
+#include "oiram.h"
 #include "lower.h"
+#include "enemies.h"
 
-uint8_t seconds = 0;
-const unsigned int mario_score_chain[] = { 100, 200, 400, 500, 800, 1000, 2000, 4000, 5000, 8000, ONE_UP_SCORE };
+const unsigned int oiram_score_chain[] = { 100, 200, 400, 800, 1000, 2000, 4000, 8000, ONE_UP_SCORE };
+gfx_image_t *oiram_score_chain_sprites[9];
 
 void draw_time(void) {
     gfx_SetTextXY(285, 144);
-    gfx_PrintUInt(seconds, 3);
+    gfx_PrintUInt(game.seconds, 3);
     gfx_BlitLines(gfx_buffer, 144, 8);
 }
 
 void draw_score(void) {
     gfx_SetTextXY(253, 164);
-    gfx_PrintUInt(mario.score, 7);
+    gfx_PrintUInt(oiram.score, 7);
     gfx_BlitLines(gfx_buffer, 161, 14);
 }
 
-void draw_world(void) {
-    gfx_PrintStringXY("WORLD 1", 19, 207);
+void draw_level(void) {
+    gfx_PrintStringXY("LEVEL ", 12, 207);
+    gfx_PrintUInt(game.level + 1, 3);
     gfx_BlitLines(gfx_buffer, 207, 8);
 }
 
 void draw_coins(void) {
     gfx_SetTextXY(29, 144);
-    gfx_PrintUInt(num_coins, 2);
+    gfx_PrintUInt(oiram.coins, 2);
     gfx_BlitLines(gfx_buffer, 144, 8);
 }
 
 void draw_lives(void) {
     gfx_SetTextXY(29, 164);
-    gfx_PrintUInt(mario.lives, 2);
+    gfx_PrintUInt(oiram.lives, 2);
     gfx_BlitLines(gfx_buffer, 164, 8);
 }
 
 void add_life(void) {
-    mario.lives++;
-    gfx_TransparentSprite_NoClip(one_up, 140, 161);
-    if (mario.lives > 99) { mario.lives = 99; }
-    mario.score_display_counter = 2;
+    oiram.lives++;
+    if (oiram.lives > 99) { oiram.lives = 99; }
+    draw_lives();
 }
 
 // add a coin, if we reach 100 coins, add another life
-void add_coin(void) {
-    num_coins++;
-    if (num_coins == 100) {
-        num_coins = 0;
+void add_coin(int x, int y) {
+    oiram.coins++;
+    if (oiram.coins == 100) {
+        oiram.coins = 0;
         add_life();
     }
     draw_coins();
-    add_score(200);
+    add_score(1, x, y);
 }
 
-void add_next_chain_score(void) {
-    add_score(mario_score_chain[mario.score_counter]);
-    if(mario.score_counter != 10) { mario.score_counter++; }
+void add_next_chain_score(int x, int y) {
+    add_score(oiram.score_counter, x, y);
+    if(oiram.score_counter != 8) { oiram.score_counter++; }
 }
 
-void add_score(unsigned int add) {
+void add_score(uint8_t add, int x, int y) {
+    enemy_t *score = add_simple_enemy(NULL, SCORE_TYPE);
+    score->x = x;
+    score->y = y;
+    score->sprite = oiram_score_chain_sprites[add];
     if (add == ONE_UP_SCORE) {
         add_life();
     } else {
-        mario.score += add;
+        oiram.score += oiram_score_chain[add];
+    }
+    draw_score();
+}
+
+void add_score_no_sprite(uint8_t add) {
+    if (add == ONE_UP_SCORE) {
+        add_life();
+    } else {
+        oiram.score += oiram_score_chain[add];
     }
     draw_score();
 }

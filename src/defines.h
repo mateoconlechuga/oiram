@@ -3,14 +3,12 @@
 
 #include <lib/ce/graphx.h>
 #include <stdint.h>
+#include "stdlib.h"
 
-extern unsigned int num_coins;
 extern bool handling_events;
-extern bool someone_died;
 extern bool something_died;
-extern bool force_align;
 
-extern gfx_image_t *tileset_tiles[224];
+extern gfx_image_t *tileset_tiles[256];
 
 typedef struct {
     uint8_t animation_counter;
@@ -25,10 +23,13 @@ extern tiles_struct_t tiles;
 typedef struct map {
     uint8_t width, height;
     uint8_t *data;
-    unsigned int max_x_offset, max_y_offset;
+    unsigned int max_x_scroll, max_y_scroll;
     int max_y, max_x;
 } map_t;
 extern map_t level_map;
+
+void missing_appvars(void);
+void *safe_malloc(size_t bytes);
 
 extern gfx_tilemap_t tilemap;
 
@@ -47,12 +48,18 @@ enum power_ups {
     PWR_FIRE,
 };
 
-#define FLAG_MARIO_BIG        1
-#define FLAG_MARIO_FIRE       2
-#define FLAG_MARIO_INVINCIBLE 4
-#define FLAG_MARIO_SLIDE      8
+#define FLAG_OIRAM_RESET      0
+#define FLAG_OIRAM_BIG        1
+#define FLAG_OIRAM_FIRE       2
+#define FLAG_OIRAM_INVINCIBLE 4
+#define FLAG_OIRAM_SLIDE      8
+#define FLAG_OIRAM_RACOON     16
 
-#define ONE_UP_SCORE          0x10000
+#define ONE_UP_SCORE          8
+
+#define OIRAM_HITBOX_WIDTH        15
+#define OIRAM_SMALL_HITBOX_HEIGHT 15
+#define OIRAM_BIG_HITBOX_HEIGHT   26
 
 typedef struct {
     int x, y;
@@ -76,7 +83,6 @@ typedef struct {
     bool on_vine;
     uint8_t lives;
     unsigned int score;
-    uint8_t score_display_counter;
     uint8_t score_counter;
     uint8_t in_pipe;
     bool enter_pipe;
@@ -87,8 +93,19 @@ typedef struct {
     int pipe_clip_x;
     int pipe_clip_y;
     bool on_slope;
-} mario_t;
-extern mario_t mario;
+    bool failed;
+    int fail_x;
+    int fail_y;
+    bool is_flying;
+    uint8_t fly_count;
+    uint8_t spin_count;
+    bool force_fall;
+    bool started_fail;
+    unsigned int coins;
+    uint8_t shrink_counter;
+    bool less2;
+} oiram_t;
+extern oiram_t oiram;
 
 enum pipe_types {
     PIPE_DOWN=1,
@@ -97,14 +114,18 @@ enum pipe_types {
     PIPE_UP,
 };
 
-extern gfx_image_t *mario_left[];
-extern gfx_image_t *mario_right[];
+extern gfx_image_t *oiram_left[];
+extern gfx_image_t *oiram_right[];
 
 typedef struct {
     bool exit;
     bool fastexit;
     uint8_t end_counter;
     bool entered_end_pipe;
+    uint8_t level;
+    uint8_t end_level;
+    uint8_t pack;
+    unsigned int seconds;
 } game_t;
 
 extern game_t game;
@@ -121,17 +142,15 @@ extern game_t game;
 #define TILEMAP_DRAW_WIDTH  21
 #define TILEMAP_DRAW_HEIGHT 9
 
-#define Y_OFFSET 0
-#define X_OFFSET 0
-
 #define Y_PXL_MAX ((TILEMAP_DRAW_HEIGHT-1) * TILE_HEIGHT)
 #define X_PXL_MAX ((TILEMAP_DRAW_WIDTH-1) * TILE_WIDTH)
 
 #define BACKGROUND_COLOR_INDEX 0
-#define BLACK_INDEX   255
-#define WHITE_INDEX   254
-#define PURPLE_INDEX  253
+#define BLACK_INDEX            255
+#define WHITE_INDEX            254
+#define DARK_BLUE_INDEX        252
 
-#define MARIO_BIG_SPRITE_SIZE   ((27*16) + 2)
-#define MARIO_SMALL_SPRITE_SIZE ((16*16) + 2)
+#define OIRAM_BIG_SPRITE_SIZE   ((27*16) + 2)
+#define OIRAM_SMALL_SPRITE_SIZE ((16*16) + 2)
+
 #endif

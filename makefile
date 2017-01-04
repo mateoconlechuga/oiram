@@ -8,13 +8,13 @@
 #Change DESCRIPTION to modify what is displayed within a compatible shell (Not compiled in if icon is not present)
 
 #----------------------------
-TARGET ?= MARIO
-DEBUGMODE ?= DEBUG
+TARGET ?= OIRAM
+DEBUGMODE ?= NDEBUG
 ARCHIVED ?= NO
 APPVAR ?= NO
 #----------------------------
 ICONPNG ?= iconc.png
-DESCRIPTION ?= "Mario v1.0"
+DESCRIPTION ?= "Oiram v1.0"
 #----------------------------
 
 #Add shared library names to the L varible, for instance:

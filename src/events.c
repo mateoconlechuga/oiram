@@ -14,8 +14,8 @@
 #include <lib/ce/keypadc.h>
 #include <lib/ce/fileioc.h>
 
-// mario stuffs
-#include "tilemapdata.h"
+// oiram stuffs
+#include "loadscreen.h"
 #include "tile_handlers.h"
 #include "defines.h"
 #include "events.h"
@@ -25,49 +25,48 @@
 #include "enemies.h"
 #include "simple_mover.h"
 
-fireball_t *fireball[MAX_FIREBALLS];
-uint8_t num_fireballs = 0;
-
-poof_t *poof[MAX_POOFS];
-uint8_t num_poofs = 0;
-
-bool someone_died = false;
 bool something_died = false;
-unsigned int num_coins;
-
 const unsigned int shell_score_chain[] = { 500, 800, 1000, 2000, 4000, 5000, 8000, ONE_UP_SCORE };
 
 // only handle if somewhat within view; otherwise we can just ignore it
 bool in_viewport(int x, int y) {
-    if (x - 360 >= mario.x) {
+    int test_x, test_y;
+    
+    if (oiram.failed) {
+        test_x = oiram.fail_x;
+        test_y = oiram.fail_y;
+    } else {
+        test_x = oiram.x;
+        test_y = oiram.y;
+    }
+    if (x - 360 >= test_x) {
+        return false;
+    } else
+    if (x + 360 <= test_x) {
         return false;
     }
-    if (x + 360 <= mario.x) {
+    if (y - 160 >= test_y) {
         return false;
-    }
-    if (y - 360 >= mario.y) {
-        return false;
-    }
-    if (y + 360 <= mario.y) {
+    } else
+    if (y + 160 <= test_y) {
         return false;
     }
     return true;
 }
 
-// gloabl used to handle events that aren't mario
+// gloabl used to handle events that aren't oiram
 bool handling_events;
 
 void handle_pending_events(void) {
     uint8_t i;
     int x, y;
     int rel_x, rel_y;
-        
+    
     handling_events = true;
     
     if (num_thwomps) {
         for(i = 0; i < num_thwomps; i++) {
             thwomp_t *cur = thwomp[i];
-            int tmp_y;
             int8_t tmp_vy;
             
             x = cur->x;
@@ -78,13 +77,13 @@ void handle_pending_events(void) {
             }
             
             tmp_vy = cur->vy;
-            rel_x = x - mario.scrollx;
-            rel_y = y - mario.scrolly;
+            rel_x = x - oiram.scrollx;
+            rel_y = y - oiram.scrolly;
             
             gfx_TransparentSprite(thwomp_0, rel_x, rel_y);
             
             if (y == cur->start_y) {
-                if (mario.x >= x - 32 && mario.x <= x + 32 + mario.hitbox.width) {
+                if (oiram.x >= x - 20 && oiram.x <= x + 20 + OIRAM_HITBOX_WIDTH) {
                     tmp_vy = 4;
                 } else {
                     tmp_vy = 0;
@@ -100,6 +99,8 @@ void handle_pending_events(void) {
             }
             
             if (tmp_vy > 0) {
+                int tmp_y;
+                
                 if (tmp_vy < 9) { tmp_vy++; }
                 
                 // test against bottom
@@ -122,9 +123,9 @@ void handle_pending_events(void) {
             
             y += tmp_vy;
             
-            if (gfx_CheckRectangleHotspot(mario.x, mario.y, mario.hitbox.width, mario.hitbox.height, x, y, 23, 31)) {
-                if (!shrink_mario()) {
-                    add_poof(mario.x, mario.y + 2);
+            if (gfx_CheckRectangleHotspot(oiram.x, oiram.y, OIRAM_HITBOX_WIDTH, oiram.hitbox.height, x, y, 23, 31)) {
+                if (!shrink_oiram()) {
+                    add_poof(oiram.x, oiram.y + 2);
                     remove_thwomp(i--);
                 }
             }
@@ -135,9 +136,9 @@ void handle_pending_events(void) {
     }
     
     if (num_simple_movers) {
-        
         for(i = 0; i < num_simple_movers; i++) {
             simple_move_t *cur = simple_mover[i];
+            uint8_t type;
             
             x = cur->x;
             y = cur->y;
@@ -146,47 +147,119 @@ void handle_pending_events(void) {
                 continue;
             }
             
+            if (y > level_map.max_y) {
+               if (cur->type == RESWOB_TYPE) {
+                   unsigned int chk = 0;
+                   unsigned int max = tilemap.width * tilemap.height;
+                   for (; chk < max; chk++) {
+                       if (tilemap_data[chk] == 175) {
+                           tilemap_data[chk] = TILE_EMPTY;
+                       }
+                   }
+               }
+    continue_loop_fail:
+               remove_simple_mover(i);
+               i = -1;
+               continue;  
+            }
+            
             simple_move_handler(cur);
+            
+            x = cur->x;
+            y = cur->y;
             
             if (something_died) {
                 something_died = false;
                 add_poof(x + 4, y + 4);
-                remove_simple_mover(i--);
+                goto continue_loop_fail;
             }
             
-            rel_x = x - mario.scrollx;
-            rel_y = y - mario.scrolly;
-            
+            rel_x = x - oiram.scrollx;
+            rel_y = y - oiram.scrolly;
+            type = cur->type;
+
             if (cur->bumped) {
                 bumped_tile_t *bump;
                 
-                switch(cur->type) {
+                switch(type) {
                     case GOOMBA_TYPE:
                         add_poof(x + 4, y + 4);
                         remove_simple_mover(i--);
-                        add_score(100);
+                        add_score(0, x, y);
                         continue;
-                    case KOOPA_RED_TYPE: case KOOPA_GREEN_TYPE: case KOOPA_BONES_TYPE:
-                        add_score(100);
-                        goto create_koopa_shell;
+                    case KOOPA_RED_TYPE: case KOOPA_GREEN_TYPE: case KOOPA_BONES_TYPE: case SPIKE_TYPE:
+                        add_score(0, x, y);
+                        goto create_shell;
                     default:
                         cur->bumped = false;
                         break;
                 }
             }
             
-            if (!gfx_CheckRectangleHotspot(mario.x, mario.y, mario.hitbox.width, mario.hitbox.height, x, y, cur->hitbox.width, cur->hitbox.height) || someone_died) {
+            if (!gfx_CheckRectangleHotspot(oiram.x, oiram.y, OIRAM_HITBOX_WIDTH, oiram.hitbox.height, x, y, cur->hitbox.width, cur->hitbox.height)) {
                 gfx_image_t *img;
+                uint8_t cur_counter;
+                static uint8_t reswob_sprite_count = 0;
+                static gfx_image_t *reswob_sprite;
+                static bool reswob_is_jumping = false;
+                static uint8_t reswob_force_fall = 0;
 draw_sprite:
-                switch(cur->type) {
+                switch(type) {
                     case MUSHROOM_TYPE:
                         img = mushroom;
+                        break;
+                    case MUSHROOM_1UP_TYPE:
+                        img = mushroom_1up;
                         break;
                     case FIRE_FLOWER_TYPE:
                         img = fire_flower;
                         break;
                     case STAR_TYPE:
                         img = star_0;
+                        break;
+                    case RESWOB_TYPE:
+                        if (!reswob_is_jumping) {
+                            if (!reswob_sprite_count) {
+                                if (cur->vx < 0) {
+                                    if (reswob_sprite == reswob_left_0) {
+                                        img = reswob_left_1;
+                                    } else {
+                                        img = reswob_left_0;
+                                    }
+                                } else {
+                                    if (reswob_sprite == reswob_right_0) {
+                                        img = reswob_right_1;
+                                    } else {
+                                        img = reswob_right_0;
+                                    }
+                                }
+                                reswob_sprite = img;
+                            }
+                            if (reswob_sprite_count++ == 5) { reswob_sprite_count = 0; }
+                            if ((oiram.x >= x - 23 && oiram.x <= x + 23 + OIRAM_HITBOX_WIDTH)) {
+                                cur->vy = -11;
+                                reswob_is_jumping = true;
+                                reswob_sprite = reswob_down;
+                            }
+                        } else {
+                            if (cur->vy == 0) {
+                                reswob_force_fall ^= 1;
+                                if (!reswob_force_fall) {
+                                    reswob_is_jumping = false;
+                                    if (oiram.x < x) {
+                                        cur->vx = -1;
+                                        img = reswob_left_0;
+                                    } else {
+                                        cur->vx = 1;
+                                        img = reswob_right_0;
+                                    }
+                                    move_side = TILE_RESWOB_DOWN;
+                                    moveable_tile(x, y + 45);
+                                    moveable_tile(x + 16, y + 45);
+                                }
+                            }
+                        }
+                        img = reswob_sprite;
                         break;
                     case GOOMBA_TYPE:
 draw_goomba_sprite:
@@ -197,10 +270,14 @@ draw_flat_goomba_sprite:
                         img = goomba_flat;
                         break;
                     case KOOPA_BONES_TYPE:
-                        img = (cur->vx < 0) ? koopa_bones_left_sprite : koopa_bones_right_sprite;
+                        if (cur->vx < 0) {
+                            img = koopa_bones_left_sprite;
+                        } else {
+                            img = koopa_bones_right_sprite;
+                        }
                         break;
                     case KOOPA_RED_FLY_TYPE:
-                        if (rel_x > mario.x) {
+                        if (x > oiram.x) {
                             gfx_TransparentSprite(koopa_red_left_sprite, rel_x, rel_y);
                             gfx_TransparentSprite(wing_left_sprite, rel_x + 7, rel_y);
                         } else {
@@ -208,12 +285,22 @@ draw_flat_goomba_sprite:
                             gfx_TransparentSprite(wing_right_sprite, rel_x, rel_y);
                         }
                         goto skip_draw;
-                        break;
                     case KOOPA_RED_TYPE:
-                        img = (cur->vx < 0) ? koopa_red_left_sprite : koopa_red_right_sprite;
+                        if (cur->vx < 0) {
+                            img = koopa_red_left_sprite;
+                        } else {
+                            img = koopa_red_right_sprite;
+                        }
+                        break;
+                    case SPIKE_TYPE:
+                        if (cur->vx < 0) {
+                            img = spike_left_sprite;
+                        } else {
+                            img = spike_right_sprite;
+                        }
                         break;
                     case KOOPA_GREEN_FLY_TYPE:
-                        if (cur->vx < 0) {
+                        if (x > oiram.x) {
                             gfx_TransparentSprite(koopa_green_left_sprite, rel_x, rel_y);
                             gfx_TransparentSprite(wing_left_sprite, rel_x + 7, rel_y);
                         } else {
@@ -221,9 +308,12 @@ draw_flat_goomba_sprite:
                             gfx_TransparentSprite(wing_right_sprite, rel_x, rel_y);
                         }
                         goto skip_draw;
-                        break;
                     case KOOPA_GREEN_TYPE:
-                        img = (cur->vx < 0) ? koopa_green_left_sprite : koopa_green_right_sprite;
+                        if (cur->vx < 0) {
+                            img = koopa_green_left_sprite;
+                        } else {
+                            img = koopa_green_right_sprite;
+                        }
                         break;
                     case KOOPA_BONES_DEAD_TYPE:
 draw_koopa_bones_dead_sprite:
@@ -231,33 +321,33 @@ draw_koopa_bones_dead_sprite:
                         if (cur->counter < 20) { if (cur->counter & 1) { goto skip_draw; } }
                         break;
                     case KOOPA_RED_SHELL_TYPE:
+                        if (cur->sprite == koopa_red_shell_1) { img = koopa_red_shell_0; } else { img = koopa_red_shell_1; }
+                        goto draw_shell;
                     case KOOPA_GREEN_SHELL_TYPE:
-draw_koopa_shell:
+                        if (cur->sprite == koopa_green_shell_1) { img = koopa_green_shell_0; } else { img = koopa_green_shell_1; }
+                        goto draw_shell;
+                    case SPIKE_SHELL_TYPE:
+                        if (cur->sprite == spike_shell_1) { img = spike_shell_0; } else { img = spike_shell_1; }
+draw_shell:
                         if (cur->vx) {
                             uint8_t j;
-                            if (cur->type == KOOPA_RED_SHELL_TYPE) {
-                                img = cur->sprite = (cur->sprite == koopa_red_shell_0) ? koopa_red_shell_1 : koopa_red_shell_0;
-                            } else {
-                                img = cur->sprite = (cur->sprite == koopa_green_shell_0) ? koopa_green_shell_1 : koopa_green_shell_0;
-                            }
+                            cur->sprite = img;
                             
                             for(j = 0; j < num_simple_movers; j++) {
                                 simple_move_t *hit = simple_mover[j];
+                                uint8_t hit_type = hit->type;
                                 
-                                if (hit->type > HITABLE_TYPES) {
-                                    if (gfx_CheckRectangleHotspot(hit->x, hit->y, hit->hitbox.width, hit->hitbox.height, x, y, 15, 15)) {
-                                        if (hit != cur) {
-                                            add_score(shell_score_chain[cur->score_counter]);
-                                            if(cur->score_counter != 7) { cur->score_counter++; }
+                                if (hit_type > HITABLE_TYPES) {
+                                    int hit_x = hit->x;
+                                    int hit_y = hit->y;
+                                    if (gfx_CheckRectangleHotspot(hit_x, hit_y, hit->hitbox.width, hit->hitbox.height, x, y, 15, 15)) {
+                                        if (i != j) {
+                                            add_score(cur->score_counter, x, y);
+                                            if(cur->score_counter != 8) { cur->score_counter++; }
                                             remove_simple_mover(j);
-                                            add_poof(hit->x + 4, hit->y + 4);
-                                            if (hit->type == KOOPA_RED_SHELL_TYPE || hit->type == KOOPA_GREEN_SHELL_TYPE) {
-                                                remove_simple_mover(i);
-                                            }
-                                            
-                                            // need to reprocess all the cleared enemies
-                                            i = j;
-                                            goto continue_loop;
+                                            add_poof(hit_x + 4, hit_y + 4);
+                                            i = -1;
+                                            break;
                                         }
                                     }
                                 }
@@ -266,64 +356,68 @@ draw_koopa_shell:
                             for(j = 0; j < num_chompers; j++) {
                                 chomper_t *hit = chomper[j];
                                 
-                                if (gfx_CheckRectangleHotspot(hit->x, hit->y, 15, 30, x, y, 15, 15)) {
-                                    remove_chomper(j--);
-                                    add_score(shell_score_chain[cur->score_counter]);
-                                    if(cur->score_counter != 7) { cur->score_counter++; }
-                                    add_poof(hit->x + 4, y);
-                                    goto continue_loop;
+                                if (hit->y < hit->start_y) {
+                                    if (gfx_CheckRectangleHotspot(hit->x, hit->y, 15, 30, x, y, 15, 15)) {
+                                        remove_chomper(j);
+                                        add_score(cur->score_counter, x, y);
+                                        if(cur->score_counter != 8) { cur->score_counter++; }
+                                        add_poof(hit->x + 4, y);
+                                        break;
+                                    }
                                 }
                             }
                             
                         } else {
-                            img = (cur->type == KOOPA_RED_SHELL_TYPE) ? koopa_red_shell_0 : koopa_green_shell_0;
                             if (cur->counter < 20) { if (cur->counter & 1) { goto skip_draw; } }
                         }
                         
                         break;
                     default:
-                        img = NULL;
-                        break;
+                        goto skip_draw;
                 }
-                gfx_TransparentSprite(img, rel_x, rel_y);
+                gfx_TransparentSprite(img, rel_x, rel_y);  
             } else {
-                switch(cur->type) {
+                switch(type) {
+                    case RESWOB_TYPE:
+                        shrink_oiram();
+                        break;
                     case MUSHROOM_TYPE:
                         eat_mushroom();
-                        remove_simple_mover(i--);
-                        break;
+                        goto remove_curr_mover;
                     case MUSHROOM_1UP_TYPE:
-                        eat_mushroom_1up();
-                        remove_simple_mover(i--);
-                        break;
+                        add_score(8, x, y);
+                        goto remove_curr_mover_no_score;
                     case FIRE_FLOWER_TYPE:
                         eat_fire_flower();
-                        remove_simple_mover(i--);
-                        break;
+                        goto remove_curr_mover;
                     case STAR_TYPE:
                         eat_star();
-                        remove_simple_mover(i--);
+    remove_curr_mover:
+                        add_score(4, x, y);
+    remove_curr_mover_no_score:
+                        remove_simple_mover(i);
+                        i = -1;
                         break;
                     case GOOMBA_TYPE:
-                        if ((mario.vy <= 0) || mario.flags & (FLAG_MARIO_INVINCIBLE | FLAG_MARIO_SLIDE)) {
-                            if (!shrink_mario()) {
-                                add_next_chain_score();
-                                add_poof(mario.x, mario.y + 2);
-                                remove_simple_mover(i--);
+                        if ((oiram.vy <= 0 && oiram.y + ((oiram.flags & FLAG_OIRAM_BIG) ? 11 : 0) >= y) || oiram.flags & (FLAG_OIRAM_INVINCIBLE | FLAG_OIRAM_SLIDE)) {
+                            if (!shrink_oiram()) {
+                                add_next_chain_score(x, y);
+                                add_poof(oiram.x, oiram.y + 2);
+                                goto remove_curr_mover_no_score;
                             } else {
                                 goto draw_goomba_sprite;
                             }
-                        } else if (mario.flags & (FLAG_MARIO_INVINCIBLE | FLAG_MARIO_SLIDE)) {
-                            add_next_chain_score();
-                            add_poof(mario.x, mario.y + 2);
-                            remove_simple_mover(i--);
+                        } else if (oiram.flags & (FLAG_OIRAM_INVINCIBLE | FLAG_OIRAM_SLIDE)) {
+                            add_next_chain_score(x, y);
+                            add_poof(oiram.x, oiram.y + 2);
+                            goto remove_curr_mover_no_score;
                         } else {
-                            add_next_chain_score();
-                            mario.vy = -5;
+                            add_next_chain_score(x, y);
+                            oiram.vy = -5;
                             cur->hitbox.height = 8;
-                            cur->type = FLAT_GOOMBA_TYPE;
+                            type = FLAT_GOOMBA_TYPE;
                             cur->vx = 0;
-                            cur->y += 5;
+                            y += 5;
                             cur->counter = 30;
                             goto draw_goomba_sprite;
                         }
@@ -332,23 +426,29 @@ draw_koopa_shell:
                         goto draw_flat_goomba_sprite;
                     case KOOPA_GREEN_FLY_TYPE:
                     case KOOPA_RED_FLY_TYPE:
-                        if ((mario.vy <= 0) || mario.flags & (FLAG_MARIO_INVINCIBLE | FLAG_MARIO_SLIDE)) {
-                            if (!shrink_mario()) {
-                                add_next_chain_score();
-                                add_poof(mario.x, mario.y + 2);
-                                remove_simple_mover(i--);
+                        if ((oiram.vy <= 0 && oiram.y >= y) || oiram.flags & (FLAG_OIRAM_INVINCIBLE | FLAG_OIRAM_SLIDE)) {
+                            if (!shrink_oiram()) {
+                                add_next_chain_score(x, y);
+                                add_poof(oiram.x, oiram.y + 2);
+                                goto remove_curr_mover_no_score;
                             } else {
                                 goto draw_sprite;
                             }
                         } else {
-                            add_next_chain_score();
-                            mario.vy = -9;
-                            if (cur->type == KOOPA_GREEN_FLY_TYPE) {
-                                cur->type = KOOPA_GREEN_TYPE;
+                            add_next_chain_score(x, y);
+                            oiram.vy = -9;
+                            if (type == KOOPA_GREEN_FLY_TYPE) {
+                                type = KOOPA_GREEN_TYPE;
+                                cur->smart = false;
                             } else {
-                                cur->type = KOOPA_RED_TYPE;
+                                type = KOOPA_RED_TYPE;
                             }
-                            cur->vy = 0; cur->vx = (rel_x < mario.x) ? 1 : -1;
+                            cur->vy = 0;
+                            if (rel_x < oiram.x) {
+                                cur->vx = 1;
+                            } else {
+                                cur->vx = -1;
+                            }
                             cur->is_flyer = false;
                             goto draw_sprite;
                         }
@@ -356,47 +456,51 @@ draw_koopa_shell:
                     case KOOPA_BONES_TYPE:
                     case KOOPA_RED_TYPE:
                     case KOOPA_GREEN_TYPE:
-                        if ((mario.vy <= 0) || mario.flags & (FLAG_MARIO_INVINCIBLE | FLAG_MARIO_SLIDE)) {
-                            if (!shrink_mario()) {
-                                add_next_chain_score();
-                                add_poof(mario.x, mario.y + 2);
-                                remove_simple_mover(i--);
+                        if ((oiram.vy <= 0 && oiram.y >= y) || oiram.flags & (FLAG_OIRAM_INVINCIBLE | FLAG_OIRAM_SLIDE)) {
+                    case SPIKE_TYPE:
+                            if (!shrink_oiram()) {
+                                add_next_chain_score(x, y);
+                                add_poof(oiram.x, oiram.y + 2);
+                                goto remove_curr_mover_no_score;
                             } else {
                                 goto draw_sprite;
                             }
                         } else {
-                            mario.vy = -5;
-create_koopa_shell:
-                            add_next_chain_score();
-                            if (cur->type == KOOPA_RED_TYPE) {
+                            oiram.vy = -5;
+create_shell:
+                            add_next_chain_score(x, y);
+                            if (type == KOOPA_RED_TYPE) {
                                 cur->sprite = koopa_red_shell_0;
-                                cur->type = KOOPA_RED_SHELL_TYPE;
+                                type = KOOPA_RED_SHELL_TYPE;
                                 cur->hitbox.height = 15;
-                            } else if (cur->type == KOOPA_GREEN_TYPE) {
+                            } else if (type == KOOPA_GREEN_TYPE) {
                                 cur->sprite = koopa_green_shell_0;
-                                cur->type = KOOPA_GREEN_SHELL_TYPE;
+                                type = KOOPA_GREEN_SHELL_TYPE;
                                 cur->hitbox.height = 15;
+                            } else if (type == SPIKE_TYPE) {
+                                cur->sprite = spike_shell_0;
+                                type = SPIKE_SHELL_TYPE;
                             } else {
                                 cur->sprite = (cur->vx < 0) ? koopa_bones_dead_left : koopa_bones_dead_right;
-                                cur->type = KOOPA_BONES_DEAD_TYPE;
+                                type = KOOPA_BONES_DEAD_TYPE;
                                 cur->hitbox.height = 12;
                                 cur->vx = 0;
-                                cur->y += 11;
+                                y += 11;
                                 cur->smart = false;
                                 cur->counter = 127;
                                 goto draw_koopa_bones_dead_sprite;
                             }
                             cur->vx = 0;
-                            cur->y += 11;
+                            y += 11;
                             cur->smart = false;
                             cur->counter = 127;
-                            goto draw_koopa_shell;
+                            goto draw_sprite;
                         }
                         break;
                     case KOOPA_RED_SHELL_TYPE: case KOOPA_GREEN_SHELL_TYPE:
-                        if (mario.y + mario.hitbox.height - 7 < y) {
-                            mario.vy = -8;
-                            if (!cur->vx && (mario.x != x)) {
+                        if (oiram.y + oiram.hitbox.height - 8 < y) {
+                            oiram.vy = -8;
+                            if (!cur->vx && (oiram.x != x)) {
                                 goto kick_shell;
                             }
                             cur->vx = 0;
@@ -404,23 +508,24 @@ create_koopa_shell:
                             cur->counter = 127;
                         } else {
                             if (cur->vx) {
-                                if (mario.vy <= 0 || mario.flags & (FLAG_MARIO_INVINCIBLE | FLAG_MARIO_SLIDE)) {
-                                    if (!shrink_mario()) {
-                                        add_score(100);
-                                        add_poof(mario.x, mario.y + 2);
-                                        remove_simple_mover(i--);
+                    case SPIKE_SHELL_TYPE:
+                                if (oiram.vy <= 0 || oiram.flags & (FLAG_OIRAM_INVINCIBLE | FLAG_OIRAM_SLIDE)) {
+                                    if (!shrink_oiram()) {
+                                        add_score(0, oiram.x, oiram.y);
+                                        add_poof(oiram.x, oiram.y + 2);
+                                        goto remove_curr_mover_no_score;
                                     } else {
                                         goto draw_sprite;
                                     }
                                 }
                             } else {
 kick_shell:
-                                if ((mario.x + mario.hitbox.width/2) < x) {
+                                if ((oiram.x + OIRAM_HITBOX_WIDTH/2) < x) {
                                     cur->vx = 4;
                                 } else {
                                     cur->vx = -4;
                                 }
-                                add_next_chain_score();
+                                add_next_chain_score(x, y);
                                 cur->counter = -1;
                             }
                         }
@@ -433,38 +538,49 @@ kick_shell:
 skip_draw:
 
             if (cur->counter >= 0) {
-                if (!cur->counter--) {
+                cur->counter--;
+                if (!cur->counter) {
                     cur->smart = true;
-                    cur->y -= 11;
-                    if (cur->type == KOOPA_GREEN_SHELL_TYPE) {
+                    cur->hitbox.height = 26;
+                    y -= 11;
+                    
+                    if (type == KOOPA_GREEN_SHELL_TYPE) {
                         cur->smart = false;
-                        cur->type = KOOPA_GREEN_TYPE;
-                    } else if (cur->type == KOOPA_RED_SHELL_TYPE) {
-                        cur->type = KOOPA_RED_TYPE;
-                    } else if (cur->type == KOOPA_BONES_DEAD_TYPE) {
-                        cur->y -= 3;
-                        cur->type = KOOPA_BONES_TYPE;
+                        type = KOOPA_GREEN_TYPE;
+                    } else if (type == KOOPA_RED_SHELL_TYPE) {
+                        type = KOOPA_RED_TYPE;
+                    } else if (type == KOOPA_BONES_DEAD_TYPE) {
+                        y -= 3;
+                        type = KOOPA_BONES_TYPE;
+                    } else if (type == SPIKE_SHELL_TYPE) {
+                        type = SPIKE_TYPE;
+                        y += 10;
+                        cur->hitbox.height = 15;
+                        cur->smart = false;
                     } else {
-                        remove_simple_mover(i--);
-                        goto continue_loop;
+                        goto remove_curr_mover_no_score;
                     }
                     cur->counter = -1;
-                    if (mario.x < rel_x) {
+                    if (oiram.x < rel_x) {
                         cur->vx = -1;
                     } else {
                         cur->vx = 1;
                     }
-                    cur->hitbox.height = 26;
                 }
             }
-continue_loop:
+            cur->y = y;
+            cur->type = type;
             continue;
         }
     }
     
+    oiram.rel_x = oiram.x - oiram.scrollx;
+    oiram.rel_y = oiram.y - oiram.scrolly;
+        
     if (num_bumped_tiles) {
         for(i = 0; i < num_bumped_tiles; i++) {
             bumped_tile_t *cur = bumped_tile[i];
+            uint8_t tile_img = cur->tile;
             
             x = cur->x;
             y = cur->y;
@@ -486,18 +602,21 @@ continue_loop:
                 case TILE_LEFT:
                     x -= 2;
                     break;
-                default:
-                    abort();
             }
             
             cur->x = x;
             cur->y = y;
            
             // draw the tile
-            gfx_TransparentSprite(tileset_tiles[cur->tile], x - mario.scrollx, y - mario.scrolly);
+            if (tile_img == TILE_COIN_0) {
+                gfx_TransparentSprite(tileset_tiles[tile_img], x - oiram.scrollx, y - oiram.scrolly);
+            } else {
+                gfx_Sprite(tileset_tiles[tile_img], x - oiram.scrollx, y - oiram.scrolly);
+            }
             
             if (!(cur->count--)) {
-                remove_bumped_tile(i--);
+                remove_bumped_tile(i);
+                i = -1;
             }
         }
     }
@@ -507,6 +626,7 @@ continue_loop:
         
         for(i = 0; i < num_chompers; i++) {
             chomper_t *cur = chomper[i];
+            int start_y;
             
             x = cur->x;
             y = cur->y;
@@ -515,19 +635,20 @@ continue_loop:
                 continue;
             }
             
-            rel_x = x - mario.scrollx;
-            rel_y = y - mario.scrolly;
+            rel_x = x - oiram.scrollx;
+            rel_y = y - oiram.scrolly;
+            start_y = cur->start_y;
             
-            if (y < cur->start_y) {
-                gfx_image_t *img;
-                
-                if (cur->start_y - mario.scrolly < (TILEMAP_DRAW_HEIGHT * TILE_HEIGHT) - TILE_HEIGHT) {
-                    gfx_SetClipRegion(0, 0, 320, cur->start_y - mario.scrolly);
-                }
+            if (y < start_y) {
+                int ymax = start_y - oiram.scrolly;
+                if (ymax < 0) { ymax = 0; }
+                if (ymax > Y_PXL_MAX) { ymax = Y_PXL_MAX; }
+                gfx_SetClipRegion(0, 0, X_PXL_MAX, ymax);
                 
                 if (cur->throws_fire) {
-                    if (x > mario.x) {
-                        if (y < mario.y) {
+                    gfx_image_t *img;
+                    if (x > oiram.x) {
+                        if (y < oiram.y) {
                             img = chomper_fire_down_left;
                             dir = DOWN_LEFT;
                         } else {
@@ -535,7 +656,7 @@ continue_loop:
                             dir = UP_LEFT;
                         }
                     } else {
-                        if (y < mario.y) {
+                        if (y < oiram.y) {
                             img = chomper_fire_down_right;
                             dir = DOWN_RIGHT;
                         } else {
@@ -548,14 +669,14 @@ continue_loop:
                     gfx_TransparentSprite(chomper_sprite, rel_x, rel_y);
                 }
                 gfx_TransparentSprite(chomper_body, rel_x, rel_y + 16);
-                gfx_SetClipRegion(0, 0, 320, (TILEMAP_DRAW_HEIGHT * TILE_HEIGHT) - TILE_HEIGHT);
+                gfx_SetClipRegion(0, 0, X_PXL_MAX, (TILEMAP_DRAW_HEIGHT * TILE_HEIGHT) - TILE_HEIGHT);
             }
             
             if (!cur->count) {
                 
                 y += cur->vy;
                 
-                if (y + 30 == cur->start_y || y - 10 == cur->start_y) {
+                if (y + 30 == start_y || y - 10 == start_y) {
                     cur->count = 40;
                     cur->vy = -cur->vy;
                 }
@@ -563,19 +684,16 @@ continue_loop:
             } else {
                 cur->count--;
                 if (cur->vy > 0 && cur->throws_fire && (cur->count == 36 || cur->count == 5)) {
-                    fireball_t *ball;
-                    ball = add_fireball(x + 4, y + 4, dir);
-                    ball->type = CHOMPER_FIREBALL;
+                    add_fireball(x + 4, y + 4, dir, CHOMPER_FIREBALL);
                 }
             }
             
-            if (gfx_CheckRectangleHotspot(mario.x, mario.y, mario.hitbox.width, mario.hitbox.height, x, y, 15, 30)) {
-                if (!shrink_mario()) {
-                    add_score(200);
-                    add_poof(mario.x, mario.y + 2);
+            if (gfx_CheckRectangleHotspot(oiram.x, oiram.y, OIRAM_HITBOX_WIDTH, oiram.hitbox.height, x, y, 15, 30)) {
+                if (!shrink_oiram()) {
+                    add_score(1, x, y);
+                    add_poof(oiram.x, oiram.y + 2);
                     remove_chomper(i--);
-                } else {
-                    if (mario.crouched) { mario.y -= 12; }
+                    continue;
                 }
             }
             
@@ -587,15 +705,27 @@ continue_loop:
         for(i = 0; i < num_simple_enemies; i++) {
             enemy_t *cur = simple_enemy[i];
             gfx_image_t *img;
+            uint8_t *tile;
             int tmp_add;
             
             x = cur->x;
             y = cur->y;
             
-            rel_x = x - mario.scrollx;
-            rel_y = y - mario.scrolly;
+            rel_x = x - oiram.scrollx;
+            rel_y = y - oiram.scrolly;
+            
+            tile = gfx_TilePtr(&tilemap, x, y);
             
             switch(cur->type) {
+                case SCORE_TYPE:
+                    cur->counter--;
+                    if (!cur->counter) {
+                        remove_simple_enemy(i--);
+                    } else {
+                        cur->y--;
+                        gfx_TransparentSprite(cur->sprite, rel_x, rel_y);
+                    }
+                    break;
                 case FISH_TYPE:
                     if (!in_viewport(x, y)) {
                         continue;
@@ -612,10 +742,12 @@ continue_loop:
                         cur->vx = -cur->vx;
                     }
                     cur->x += cur->vx;
-                    if (gfx_CheckRectangleHotspot(mario.x, mario.y, mario.hitbox.width, mario.hitbox.height, x, y, 16, 16)) {
-                        if (!shrink_mario()) {
-                            add_poof(x, y + 4);
-                            remove_simple_enemy(i--);
+                    if (gfx_CheckRectangleHotspot(oiram.x, oiram.y, OIRAM_HITBOX_WIDTH, oiram.hitbox.height, x, y, 16, 16)) {
+                        if (!shrink_oiram()) {
+                            add_score_no_sprite(1);
+                            cur->type = SCORE_TYPE;
+                            cur->counter = 16;
+                            cur->sprite = score_200;
                         }
                     }
                     break;
@@ -625,8 +757,7 @@ continue_loop:
                     }
             
                     if (!cur->counter) {
-                        enemy_t *bullet;
-                        bullet = add_simple_enemy(gfx_TilePtr(&tilemap, x, y), BULLET_TYPE);
+                        enemy_t *bullet = add_simple_enemy(tile, BULLET_TYPE);
                         add_poof(x, y + 2);
                         cur->counter = 100;
                     } else {
@@ -639,11 +770,10 @@ continue_loop:
                     }
                     if (!cur->counter) {
                         enemy_t *cannon;
-                        cannon = add_simple_enemy(gfx_TilePtr(&tilemap, x, y), CANNONBALL_TYPE);
+                        cannon = add_simple_enemy(tile, CANNONBALL_TYPE);
                         add_poof(x, y + 6);
-                        cur->counter = 90;
-                        cannon->vx = -2;
                         cannon->vy = 2;
+                        cur->counter = 110;
                     } else {
                         cur->counter--;
                     }
@@ -653,12 +783,10 @@ continue_loop:
                         continue;
                     }
                     if (!cur->counter) {
-                        enemy_t *cannon;
-                        cannon = add_simple_enemy(gfx_TilePtr(&tilemap, x, y), CANNONBALL_TYPE);
+                        enemy_t *cannon = add_simple_enemy(tile, CANNONBALL_TYPE);
                         add_poof(x, y);
-                        cannon->vx = -2;
                         cannon->vy = -2;
-                        cur->counter = 90;
+                        cur->counter = 110;
                     } else {
                         cur->counter--;
                     }
@@ -670,54 +798,83 @@ continue_loop:
                         continue;
                     }
                     
-                    gfx_TransparentSprite(cur->type == CANNONBALL_TYPE ? cannonball_sprite : bullet_left, rel_x, rel_y);
+                    gfx_TransparentSprite(cur->sprite, rel_x, rel_y);
                     cur->x += cur->vx;
                     cur->y += cur->vy;
-                    if (gfx_CheckRectangleHotspot(mario.x, mario.y, mario.hitbox.width, mario.hitbox.height, x, y, 15, 13)) {
-                        if ((y < mario.y + mario.hitbox.height/2) || mario.flags & (FLAG_MARIO_INVINCIBLE | FLAG_MARIO_SLIDE)) {
-                            if (!shrink_mario()) {
-                                add_next_chain_score();
+                    if (gfx_CheckRectangleHotspot(oiram.x, oiram.y, OIRAM_HITBOX_WIDTH, oiram.hitbox.height, x, y, 15, 13)) {
+                        if ((y < oiram.y + oiram.hitbox.height/2) || oiram.flags & (FLAG_OIRAM_INVINCIBLE | FLAG_OIRAM_SLIDE)) {
+                            if (!shrink_oiram()) {
                                 cur->vy = 4;
                                 cur->vx = 0;
                             }
                         } else {
-                            mario.vy = -8;
+                            oiram.vy = -8;
                             cur->vy = 4;
                             cur->vx = 0;
                         }
                     }
                     break;
-                default:
+                case LEAF_TYPE:
+                    if (y > level_map.max_y) {
+                        remove_simple_enemy(i--);
+                        continue;
+                    }
+                    
+                    if (cur->vx < 0) {
+                        img = leaf_left;
+                    } else {
+                        img = leaf_right;
+                    }
+                    
+                    gfx_TransparentSprite(img, rel_x, rel_y);
+                    cur->x += cur->vx;
+                    cur->y++;
+                
+                    cur->counter--;
+                
+                    if (!cur->counter) {
+                        cur->vx = -cur->vx;
+                        cur->counter = 32;
+                    }
+                
+                    if (gfx_CheckRectangleHotspot(oiram.x, oiram.y, OIRAM_HITBOX_WIDTH, oiram.hitbox.height, x, y, 16, 11)) {
+                        eat_leaf();
+                        add_score_no_sprite(4);
+                        cur->type = SCORE_TYPE;
+                        cur->counter = 16;
+                        cur->sprite = score_1000;
+                        goto start_boo_check;
+                    }
                     break;
             }
         }
     }
     
+    start_boo_check:
+    
     if (num_boos) {
         for(i = 0; i < num_boos; i++) {
             boo_t *cur = boo[i];
             gfx_image_t *img;
-            int prev_x;
-            
-            prev_x = x = cur->x;
+            int prev_x = x = cur->x;
             y = cur->y;
             
             if (!in_viewport(x, y)) {
                 continue;
             }
             
-            rel_x = x - mario.scrollx;
-            rel_y = y - mario.scrolly;
+            rel_x = x - oiram.scrollx;
+            rel_y = y - oiram.scrolly;
             
-            if (mario.x < x) {
-                if (mario.direction == FACE_RIGHT) {
+            if (oiram.x < x) {
+                if (oiram.direction == FACE_RIGHT) {
                     img = boo_left_hide;
                 } else {
                     img = boo_left;
                     x--;
                 }
             } else {
-                if (mario.direction == FACE_LEFT) {
+                if (oiram.direction == FACE_LEFT) {
                     img = boo_right_hide;
                 } else {
                     img = boo_right;
@@ -729,7 +886,7 @@ continue_loop:
                 if (cur->count < 6) {
                     cur->count++;
                 } else {
-                    if (mario.y < y) {
+                    if (oiram.y < y) {
                         cur->vy = -1;
                     } else {
                         cur->vy = 1;
@@ -748,11 +905,12 @@ continue_loop:
                     
             gfx_TransparentSprite(img, rel_x, rel_y);
             
-            if (gfx_CheckRectangleHotspot(mario.x, mario.y, mario.hitbox.width, mario.hitbox.height, x, y, 15, 15)) {
-                if (!shrink_mario()) {
-                    add_score(200);
-                    add_poof(mario.x, mario.y + 2);
+            if (gfx_CheckRectangleHotspot(oiram.x, oiram.y, OIRAM_HITBOX_WIDTH, oiram.hitbox.height, x, y, 15, 15)) {
+                if (!shrink_oiram()) {
+                    add_score(1, x, y);
+                    add_poof(oiram.x, oiram.y + 2);
                     remove_boo(i--);
+                    continue;
                 }
             }
             
@@ -777,8 +935,9 @@ continue_loop:
             tmp_vy = cur->vy;
             
             if (y < cur->start_y) {
-                gfx_image_t *img = tmp_vy < 0 ? flame_sprite_up : flame_sprite_down;
-                gfx_TransparentSprite(img, x - mario.scrollx, y - mario.scrolly);
+                gfx_image_t *img;
+                if (tmp_vy < 0) { img = flame_sprite_up; } else { img = flame_sprite_down; }
+                gfx_TransparentSprite(img, x - oiram.scrollx, y - oiram.scrolly);
             }
             
             if (cur->count) {
@@ -793,11 +952,12 @@ continue_loop:
                 }
             }
             
-            if (gfx_CheckRectangleHotspot(mario.x, mario.y, mario.hitbox.width, mario.hitbox.height, x, y, 14, 16)) {
-                if (!shrink_mario()) {
-                    add_score(200);
-                    add_poof(mario.x, mario.y + 2);
+            if (gfx_CheckRectangleHotspot(oiram.x, oiram.y, OIRAM_HITBOX_WIDTH, oiram.hitbox.height, x, y, 14, 16)) {
+                if (!shrink_oiram()) {
+                    add_score(1, x, y);
+                    add_poof(oiram.x, oiram.y + 2);
                     remove_flame(i--);
+                    continue;
                 }
             }
             
@@ -810,7 +970,8 @@ continue_loop:
         for(i = 0; i < num_poofs; i++) {
             poof_t *cur = poof[i];
             
-            if (!cur->count--) {
+            cur->count--;
+            if (!cur->count) {
                 if (cur->second) {
                     remove_poof(i--);
                     continue;
@@ -820,7 +981,7 @@ continue_loop:
                 }
             }
             
-            gfx_TransparentSprite((cur->second) ? poof_1 : poof_0, cur->x - mario.scrollx, cur->y - mario.scrolly);
+            gfx_TransparentSprite((cur->second) ? poof_1 : poof_0, cur->x - oiram.scrollx, cur->y - oiram.scrolly);
         }
     }
     
@@ -830,37 +991,39 @@ continue_loop:
         
         for(i = 0; i < num_fireballs; i++) {
             fireball_t *cur = fireball[i];
+            uint8_t cur_type = cur->mover->type;
             tmp_vx = cur->mover->vx;
             
-            if (cur->type == MARIO_FIREBALL) {
+            if (cur_type == OIRAM_FIREBALL) {
                 simple_move_handler(cur->mover);
             } else {
-                cur->mover->x += cur->mover->vx;
+                cur->mover->x += tmp_vx;
                 cur->mover->y += cur->mover->vy;
             }
             
             x = cur->mover->x;
             y = cur->mover->y;
             
-            rel_x = x - mario.scrollx;
-            rel_y = y - mario.scrolly;
+            rel_x = x - oiram.scrollx;
+            rel_y = y - oiram.scrolly;
             
             if (tmp_vx != cur->mover->vx || !cur->count-- || rel_x < -20 || rel_x > 350) {
                 add_poof(x + 2, y + 2);
+    remove_fireball_continue:
                 remove_fireball(i--);
+                continue;
             }
             
-            if (cur->type == MARIO_FIREBALL) {
+            if (cur_type == OIRAM_FIREBALL) {
                 for(j = 0; j < num_simple_movers; j++) {
                     simple_move_t *hit = simple_mover[j];
                     
                     if (hit->type > HITABLE_TYPES) {
-                        if (gfx_CheckRectangleHotspot(hit->x, hit->y, hit->hitbox.width, hit->hitbox.height, x, y, 8, 8)) {
-                            add_score(200);
+                        if (gfx_CheckRectangleHotspot(hit->x, hit->y, hit->hitbox.width, hit->hitbox.height, x, y, 7, 7)) {
+                            add_score(1, x,y );
                             add_poof(hit->x + 4, hit->y + 4);
-                            remove_fireball(i--);
                             remove_simple_mover(j);
-                            goto done_checks_fireball;
+                            goto remove_fireball_continue;
                         }
                     }
                 }
@@ -868,167 +1031,129 @@ continue_loop:
                 for(j = 0; j < num_chompers; j++) {
                     chomper_t *hit = chomper[j];
                     
-                    if (gfx_CheckRectangleHotspot(hit->x, hit->y, 15, 30, x, y, 8, 8)) {
-                        add_score(200);
+                    if (gfx_CheckRectangleHotspot(hit->x, hit->y, 15, 29, x, y, 7, 7)) {
+                        add_score(1, x, y);
                         add_poof(hit->x + 4, y);
                         remove_chomper(j);
-                        remove_fireball(i--);
-                        break;
+                        goto remove_fireball_continue;
                     }
                 }
                 
-            // the type that can hit mario
+            // the type that can hit oiram
             } else {
-                if (gfx_CheckRectangleHotspot(mario.x, mario.y, mario.hitbox.width, mario.hitbox.height, x, y, 8, 8)) {
-                    shrink_mario();
+                if (gfx_CheckRectangleHotspot(oiram.x, oiram.y, OIRAM_HITBOX_WIDTH, oiram.hitbox.height, x, y, 8, 8)) {
+                    shrink_oiram();
                     add_poof(x + 4, y + 4);
-                    remove_fireball(i--);
+                    goto remove_fireball_continue;
                 }
             }
-done_checks_fireball:    
             gfx_TransparentSprite(fireball_sprite, rel_x, rel_y);
         }
     }
 
-    // draw the mario sprite
-    if (in_quicksand) {
-        gfx_SetClipRegion(0, 0, X_PXL_MAX, quicksand_clip_y - mario.scrolly);
-        goto draw_mario_clipped;
-    } else if (mario.in_pipe) {
-        if (!mario.enter_pipe) {
-            switch (mario.in_pipe) {
+    // draw the oiram sprite
+    if (oiram.failed) {
+        gfx_TransparentSprite(oiram_fail, oiram.fail_x - oiram.scrollx, oiram.fail_y - oiram.scrolly);
+    } else if (in_quicksand) {
+        gfx_SetClipRegion(0, 0, X_PXL_MAX, quicksand_clip_y - oiram.scrolly);
+        goto draw_oiram;
+    } else if (oiram.in_pipe) {
+        if (!oiram.enter_pipe) {
+            switch (oiram.in_pipe) {
                 case PIPE_DOWN:
-                    gfx_SetClipRegion(0, mario.pipe_clip_y, X_PXL_MAX, Y_PXL_MAX);
+                pipe_oiram_down:
+                    gfx_SetClipRegion(0, oiram.pipe_clip_y - oiram.scrolly, X_PXL_MAX, Y_PXL_MAX);
                     break;
                 case PIPE_LEFT:
-                    gfx_SetClipRegion(mario.rel_x + mario.pipe_counter, 0, X_PXL_MAX, Y_PXL_MAX);
+                pipe_oiram_left:
+                    gfx_SetClipRegion(oiram.pipe_clip_x - oiram.scrollx, 0, X_PXL_MAX, Y_PXL_MAX);
                     break;
                 case PIPE_RIGHT:
-                    gfx_SetClipRegion(mario.rel_x, 0, mario.rel_x + mario.hitbox.width - mario.pipe_counter + 1, Y_PXL_MAX);
+                pipe_oiram_right:
+                    gfx_SetClipRegion(0, 0, oiram.pipe_clip_x - oiram.scrollx, Y_PXL_MAX);
                     break;
                 case PIPE_UP:
-                    gfx_SetClipRegion(0, 0, X_PXL_MAX, mario.pipe_clip_y);
+                pipe_oiram_up:
+                    gfx_SetClipRegion(0, 0, X_PXL_MAX, oiram.pipe_clip_y - oiram.scrolly);
                     break;
             }
         } else {
-            switch (mario.in_pipe) {
+            switch (oiram.in_pipe) {
                 case PIPE_DOWN:
-                    gfx_SetClipRegion(0, 0, X_PXL_MAX, mario.rel_y + mario.pipe_counter + 1);
-                    break;
+                    goto pipe_oiram_up;
                 case PIPE_LEFT:
-                    gfx_SetClipRegion(mario.rel_x, 0, mario.x + mario.pipe_counter + 1, Y_PXL_MAX);
-                    break;
+                    goto pipe_oiram_right;
                 case PIPE_RIGHT:
-                    gfx_SetClipRegion(mario.rel_x + mario.hitbox.width - mario.pipe_counter - 1, 0, X_PXL_MAX, Y_PXL_MAX);
-                    break;
+                    goto pipe_oiram_left;
                 case PIPE_UP:
-                    gfx_SetClipRegion(0, mario.rel_y + mario.hitbox.height - mario.pipe_counter - 1, X_PXL_MAX, Y_PXL_MAX);
-                    break;
+                    goto pipe_oiram_down;
             }
         }
-draw_mario_clipped:
-        gfx_TransparentSprite(mario.curr_sprite, mario.rel_x, mario.rel_y);
-        gfx_SetClipRegion(0, 0, X_PXL_MAX, Y_PXL_MAX);
-    } else if (mario.invincible) {
-        if (mario.invincible-- & 1) {
-            goto draw_mario;
+        goto draw_oiram;
+    } else if (oiram.invincible) {
+        oiram.invincible--;
+        if (oiram.invincible & 1) {
+            goto draw_oiram;
+        } else {
+            if (!oiram.invincible) { oiram.flags &= ~FLAG_OIRAM_INVINCIBLE; }
         }
-        if (!mario.invincible) { mario.flags &= ~FLAG_MARIO_INVINCIBLE; }
-    } else if (shrink_counter) {
-        if (shrink_counter-- & 1) {
-            goto draw_mario;
+    } else if (oiram.shrink_counter) {
+        oiram.shrink_counter--;
+        if (oiram.shrink_counter & 1) {
+            goto draw_oiram;
         }
     } else {
-draw_mario:
-        gfx_TransparentSprite(mario.curr_sprite, mario.rel_x, mario.rel_y);
+draw_oiram:
+        gfx_TransparentSprite(oiram.curr_sprite, oiram.rel_x, oiram.rel_y);
     }
     
-    if (mario.has_shell) {
-        gfx_TransparentSprite(mario.has_red_shell ? koopa_red_shell_0 : koopa_green_shell_0, (mario.direction == FACE_LEFT) ? mario.rel_x - 10 : mario.rel_x + mario.hitbox.width - 6, (mario.flags & FLAG_MARIO_BIG) ? mario.rel_y + 26/2 - 4: mario.rel_y);
+    if (oiram.has_shell) {
+        gfx_image_t *shell;
+        int shell_x, shell_y;
+        if (oiram.has_red_shell) {
+            shell = koopa_red_shell_0;
+        } else {
+            shell = koopa_green_shell_0;
+        }
+        if (oiram.direction == FACE_LEFT) {
+            shell_x = oiram.rel_x - 10;
+        } else {
+            shell_x = oiram.rel_x + 15 - 6;
+        }
+        if ((oiram.flags & FLAG_OIRAM_BIG)) {
+            shell_y = oiram.rel_y + 26/2 - 4;
+        } else {
+            shell_y = oiram.rel_y;
+        }
+        gfx_TransparentSprite(shell, shell_x, shell_y);
     }
+    
+    if ((oiram.flags & FLAG_OIRAM_RACOON) && !oiram.on_vine) {
+        gfx_image_t *tail_img;
+        int tail_x, tail_y = oiram.rel_y + 17;
+        if (oiram.spin_count) {
+            if (oiram.curr_sprite == oiram_0_buffer_right) {
+                goto set_tail_right;
+            }
+            goto set_tail_left;
+        } else {
+            if (oiram.direction == FACE_LEFT) {
+    set_tail_left:
+                tail_img = tail_left_0;
+                tail_x = oiram.rel_x + OIRAM_HITBOX_WIDTH;
+            } else {
+    set_tail_right:
+                tail_img = tail_right_0;
+                tail_x = oiram.rel_x - 5;
+            }
+        }
+        if (oiram.crouched) {
+            tail_y -= 7;
+        }
+        gfx_TransparentSprite(tail_img, tail_x, tail_y);
+    }
+    
+    gfx_SetClipRegion(0, 0, X_PXL_MAX, Y_PXL_MAX);
     
     handling_events = false;
-}
-
-void remove_poof(uint8_t i) {
-    poof_t *free_me = poof[i];
-    uint8_t num_poofs_less = num_poofs--;
-    
-    for(; i < num_poofs_less; i++) {
-        poof[i] = poof[i+1];
-    }
-    
-    free(free_me);
-}
-
-void add_poof(int x, int y) {
-    poof_t *fluff;
-    
-   if (num_poofs >= MAX_POOFS - 1) {
-        remove_poof(0);
-    }
-    
-    fluff = poof[num_poofs] = malloc(sizeof(poof_t));
-    num_poofs++;
-    fluff->x = x;
-    fluff->y = y;
-    fluff->count = 3;
-    fluff->second = false;
-}
-
-void remove_fireball(uint8_t i) {
-    fireball_t *free_me = fireball[i];
-    uint8_t num_fireballs_less = num_fireballs--;
-    
-    for(; i < num_fireballs_less; i++) {
-        fireball[i] = fireball[i+1];
-    }
-    
-    if (free_me->type == MARIO_FIREBALL) {
-        mario.fireballs--;
-    }
-    
-    free(free_me->mover);
-    free(free_me);
-}
-
-// add a fireball
-fireball_t *add_fireball(int x, int y, uint8_t dir) {
-    fireball_t *ball;
-    simple_move_t *mover;
-    
-    if (num_fireballs >= MAX_FIREBALLS - 1) {
-        remove_fireball(0);
-    }
-    
-    ball = fireball[num_fireballs] = malloc(sizeof(fireball_t));
-    mover = ball->mover = malloc(sizeof(simple_move_t));
-    mover->x = x;
-    mover->y = y;
-    
-    // handle DOWN_RIGHT by default
-    mover->vy = 3;
-    mover->vx = 3;
-    
-    switch(dir) {
-        case UP_LEFT:
-            mover->vx = -3;
-            mover->vy = -3;
-            break;
-        case UP_RIGHT:
-            mover->vy = -3;
-            break;
-        case DOWN_LEFT:
-            mover->vx = -3;
-            break;
-        default:
-            break;
-    }
-    mover->is_bouncer = true;
-    mover->hitbox.height = mover->hitbox.width = 7;
-    mover->type = FIREBALL_TYPE;
-    mover->is_flyer = false;
-    ball->count = 127;
-    num_fireballs++;
-    return ball;
 }

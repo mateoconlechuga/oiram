@@ -67,6 +67,7 @@ typedef struct {
     int8_t vx;
     uint8_t type;
     uint8_t counter;
+    gfx_image_t *sprite;
 } enemy_t;
 
 enum simple_enemy_type {
@@ -76,7 +77,10 @@ enum simple_enemy_type {
     CANNONBALL_UP_CREATOR_TYPE,
     BULLET_TYPE,
     CANNONBALL_TYPE,
-    FISH_TYPE
+    FISH_TYPE,
+    NOT_ENEMY_TYPE,
+    LEAF_TYPE,     /* not technically an enemy but treated as one */
+    SCORE_TYPE     /* also not an enemy, used to raise the score */
 };
 
 extern enemy_t *simple_enemy[MAX_SIMPLE_ENEMY];

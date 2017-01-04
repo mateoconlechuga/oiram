@@ -5,6 +5,7 @@
 #include <string.h>
 #include <stdint.h>
 #include "defines.h"
+#include "simple_mover.h"
  
 #define MAX_TILE_BUMPS      100
 
@@ -42,6 +43,9 @@ enum tile_interaction {
     TILE_BOTTOM,
     TILE_X,
     TILE_TEST_PIPE_DOWN,
+    TILE_RACOON_POWER,
+    TILE_RESWOB_DOWN,
+    TILE_SOLID,
 };
 extern uint8_t move_side;
 
@@ -63,6 +67,13 @@ uint8_t moveable_tile_right_bottom(int x, int y);
 #define TILE_EMPTY          27
 #define TILE_COIN_0         150
 
+#define TILE_COIN_QUESTIONBOX          225
+#define TILE_1UP_QUESTIONBOX           226
+#define TILE_MUSHROOM_QUESTIONBOX      227
+#define TILE_STAR_QUESTIONBOX          228
+#define TILE_FIREFLOWER_QUESTIONBOX    229
+#define TILE_LEAF_QUESTIONBOX          230
+
 // animation functions
 void animate(void);
 void draw_tile_grid(void);
@@ -70,5 +81,47 @@ void reset_3_animations(void);
 void reset_4_animations(void);
 
 void tile_to_abs_xy_pos(uint8_t *tile, unsigned int *x, unsigned int *y);
+
+// misc
+#define MAX_POOFS     11
+#define MAX_FIREBALLS 25
+
+typedef struct {
+    int x, y;
+    uint8_t count;
+    bool second;
+} poof_t;
+
+extern poof_t *poof[MAX_POOFS];
+extern uint8_t num_poofs;
+
+typedef struct {
+    uint8_t count;
+    simple_move_t *mover;
+} fireball_t;
+
+extern fireball_t *fireball[MAX_FIREBALLS];
+extern uint8_t num_fireballs;
+
+enum fireball_directions {
+    UP_LEFT=0,
+    UP_RIGHT,
+    DOWN_LEFT,
+    DOWN_RIGHT
+};
+
+enum fireball_type {
+    OIRAM_FIREBALL=1,
+    CHOMPER_FIREBALL,
+};
+
+void remove_poof(uint8_t i);
+void add_poof(int x, int y);
+void remove_fireball(uint8_t i);
+void add_fireball(int x, int y, uint8_t dir, uint8_t type);
+
+// common.asm
+uint8_t empty_tile_handler(uint8_t *tile);
+uint8_t solid_tile_handler(uint8_t *tile);
 
 #endif
