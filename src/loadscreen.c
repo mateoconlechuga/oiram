@@ -267,9 +267,9 @@ void set_load_screen(void) {
     
     gfx_PrintStringXY("Controls", 5, 187);
     gfx_PrintStringXY("[on]", 9, 199);
-    gfx_PrintStringXY("[Y=]", 9, 209);
+    gfx_PrintStringXY("[2nd]", 9, 209);
     gfx_PrintStringXY("[up]", 9, 219);
-    gfx_PrintStringXY("[2nd]", 9, 229);
+    gfx_PrintStringXY("[alpha]", 9, 229);
     gfx_PrintStringXY("Quit", 60, 199);
     gfx_PrintStringXY("Run", 60, 209);
     gfx_PrintStringXY("Jump", 60, 219);

@@ -56,55 +56,49 @@ void missing_appvars(void) {
     exit(0);
 }
 
-/* This interrupt is called every second -- maybe you can do important things with it */
+// this interrupt is called every second
 void interrupt isr_timer1(void) {
     
     game.seconds++;
     draw_time();
    
-    // ack in the controller
+    // ack
     int_Acknowledge = INT_TIMER1;
-    
-    // ack in the timer
     timer_IntAcknowledge = TIMER1_RELOADED;
 }
 
-/* Interrupt routine to run when the [ON] key is pressed */
+// interrupt routine to run when the [ON] key is pressed
 void interrupt isr_on(void) {
-    /* Exit the "infinite" loop */
     if (!oiram.failed) {
         game.exit = true;
         game.fastexit = true;
     }
     
-    /* Must acknowledge that the interrupt occured to clear the flag */
     int_Acknowledge = INT_ON;
 }
 
 void interrupt isr_keyboard(void) {
     /* Read the keypad data */
     kb_key_t g1_key = kb_Data[kb_group_1];
+    kb_key_t g2_key = kb_Data[kb_group_2];
     kb_key_t g7_key = kb_Data[kb_group_7];
     
-    pressed_yequ  = (g1_key & kb_Yequ);
-    pressed_2nd   = (g1_key & kb_2nd);
+    pressed_alpha   = (g2_key & kb_Alpha);
+    pressed_2nd     = (g1_key & kb_2nd);
     
-    pressed_down  = (g7_key & kb_Down);
-    pressed_up    = (g7_key & kb_Up);
-    pressed_left  = (g7_key & kb_Left);
-    pressed_right = (g7_key & kb_Right);
+    pressed_down    = (g7_key & kb_Down);
+    pressed_up      = (g7_key & kb_Up);
+    pressed_left    = (g7_key & kb_Left);
+    pressed_right   = (g7_key & kb_Right);
     
-    /* Must acknowledge that the interrupt occured to clear the flag */
     int_Acknowledge = INT_KEYBOARD;
-    
-    /* Acknowledge in the keypad controller (Not technically required because interrupt controller handles signal) */
     kb_IntAcknowledge = KB_DATA_CHANGED;
 }
 
 void black_circles(void) {
     uint8_t radius;
     for(radius = 5; radius < 255; radius += 5) {
-            gfx_FillCircle(160,60,radius);
+            gfx_FillCircle(160, 60, radius);
             gfx_BlitBuffer();
     }
 }

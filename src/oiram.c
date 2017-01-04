@@ -28,8 +28,8 @@ bool pressed_left = false;
 bool pressed_right = false;
 bool pressed_up = false;
 bool pressed_down = false;
+bool pressed_alpha = false;
 bool pressed_2nd = false;
-bool pressed_yequ = false;
 
 void compute_oiram_start_location(void) {
     int new_x_left = oiram.x;
@@ -351,7 +351,7 @@ void move_oiram(void) {
             goto handle_other_reduced_speed;
         } else { 
             if (pressed_left || pressed_right) {
-                if (pressed_yequ) {
+                if (pressed_2nd) {
                     if (!oiram.force_fall) {
                         gfx_FillRectangle_NoClip(118, 146, abs(mm)*2, 2);
     handle_down:
@@ -407,7 +407,7 @@ void move_oiram(void) {
         }
         
         // drop a shell or throw a fireball
-        if (pressed_2nd) {
+        if (pressed_alpha) {
             if (oiram.has_shell) {
                 drop_shell();
             } else
@@ -449,7 +449,7 @@ void move_oiram(void) {
                     oiram.fireballs++;
                 }
             }
-            pressed_2nd = false;
+            pressed_alpha = false;
         }
         
     check_triggers:
@@ -681,7 +681,7 @@ void move_oiram(void) {
             oiram.curr_sprite = oiram_0_buffer_right;
         }
         if (!oiram.spin_count) {
-            pressed_2nd = false;
+            pressed_alpha = false;
         }
     }
 }
