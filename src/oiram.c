@@ -187,11 +187,11 @@ static void spin_racoon_mario(int x, int y) {
         simple_move_t *hit = simple_mover[j];
         
         if (hit->type > HITABLE_TYPES) {
-            if (gfx_CheckRectangleHotspot(hit->x, hit->y, hit->hitbox.width, hit->hitbox.height, x, y, 8, 14)) {
+            if (gfx_CheckRectangleHotspot(x, y, 8, 14, hit->x, hit->y, hit->hitbox.width, hit->hitbox.height)) {
                 add_score(1, x, y);
                 add_poof(hit->x + 4, hit->y + 4);
                 remove_simple_mover(j);
-                j = 0;
+                j = -1;
             }
         }
     }
@@ -199,7 +199,7 @@ static void spin_racoon_mario(int x, int y) {
     for(j = 0; j < num_chompers; j++) {
         chomper_t *hit = chomper[j];
         if (y + 13 < hit->start_y) {
-            if (gfx_CheckRectangleHotspot(hit->x, hit->y, 15, 25, x, y, 8, 14)) {
+            if (gfx_CheckRectangleHotspot(x, y, 8, 14, hit->x, hit->y, 15, 30)) {
                 add_score(1, x, y);
                 add_poof(hit->x + 4, y);
                 remove_chomper(j);
@@ -210,6 +210,13 @@ static void spin_racoon_mario(int x, int y) {
     
     move_side = TILE_RACOON_POWER;
     moveable_tile(x, y);
+}
+
+static void spin(int x, int y) {
+    int tycoon = y + 13;
+    spin_racoon_mario(x - 8, tycoon);
+    spin_racoon_mario(x + 16, tycoon);
+    oiram.spin_count = 3;
 }
 
 // move oiram around on the screen, checking for bounds
@@ -336,12 +343,18 @@ void move_oiram(void) {
             oiram.force_fall = false;
         }
         
-        gfx_SetColor(252);
-        gfx_FillRectangle_NoClip(119, 146, 79, 2);
-        gfx_SetColor(WHITE_INDEX);
+        if (oiram.on_vine) {
+            oiram.vy = 0;
+        }
         
-        if (oiram.on_vine) { oiram.vy = 0; }
-        if (oiram.is_flying) { gfx_FillRectangle_NoClip(118, 146, 80, 2); mm = 0; new_vx = 4; } else {
+        if (oiram.is_flying) {
+            gfx_SetColor(WHITE_INDEX);
+            gfx_FillRectangle_NoClip(118, 146, 79, 2);
+            new_vx = 5;
+        } else {
+            gfx_SetColor(252);
+            gfx_FillRectangle_NoClip(119, 146, 79, 2);
+            gfx_SetColor(WHITE_INDEX);
             new_vx = 2;
         }
         
@@ -352,27 +365,25 @@ void move_oiram(void) {
         } else { 
             if (pressed_left || pressed_right) {
                 if (pressed_2nd) {
-                    if (!oiram.force_fall) {
-                        gfx_FillRectangle_NoClip(118, 146, abs(mm)*2, 2);
+                    gfx_FillRectangle_NoClip(118, 146, abs(mm)*2, 2);
     handle_down:
-                        on_slope = TEST_NONE;
-                        
-                        // increase momentum in the x direction
-                        if (oiram.direction == FACE_RIGHT) {
-                            if (mm < 0)   { mm = 0; add_poof(new_x_left, new_y_bot); }
-                            if (mm < 5)   { new_vx = 2; } else
-                            if (mm > 20)  { new_vx = 5; oiram.sprite_index ^= 1; } else
-                            if (mm > 10)  { new_vx = 4; oiram.sprite_index ^= 1; } else
-                            if (mm > 5)   { new_vx = 3; }
-                            if (mm < 40)  { mm++; }
-                        } else {
-                            if (mm > 0)   { mm = 0; add_poof(new_x_right, new_y_bot); }
-                            if (mm > -5)  { new_vx = 2; } else
-                            if (mm < -20) { new_vx = 5; oiram.sprite_index ^= 1; } else
-                            if (mm < -10) { new_vx = 4; oiram.sprite_index ^= 1; } else
-                            if (mm < -5)  { new_vx = 3; }
-                            if (mm > -40) { mm--; }
-                        }
+                    on_slope = TEST_NONE;
+                    
+                    // increase momentum in the x direction
+                    if (oiram.direction == FACE_RIGHT) {
+                        if (mm < 0)   { mm = 0; add_poof(new_x_left, new_y_bot); }
+                        if (mm < 5)   { new_vx = 2; } else
+                        if (mm > 20)  { new_vx = 5; oiram.sprite_index ^= 1; } else
+                        if (mm > 10)  { new_vx = 4; oiram.sprite_index ^= 1; } else
+                        if (mm > 5)   { new_vx = 3; }
+                        if (mm < 40)  { mm++; }
+                    } else {
+                        if (mm > 0)   { mm = 0; add_poof(new_x_right, new_y_bot); }
+                        if (mm > -5)  { new_vx = 2; } else
+                        if (mm < -20) { new_vx = 5; oiram.sprite_index ^= 1; } else
+                        if (mm < -10) { new_vx = 4; oiram.sprite_index ^= 1; } else
+                        if (mm < -5)  { new_vx = 3; }
+                        if (mm > -40) { mm--; }
                     }
                 } else {
                     if (oiram.direction == FACE_RIGHT) {
@@ -383,7 +394,6 @@ void move_oiram(void) {
                         if (mm > 0)   { mm = 0; }
                     }
     handle_other_reduced_speed:
-                    oiram.is_flying = false;
                     goto handle_reduced_speed;
                 }
             } else {
@@ -413,42 +423,27 @@ void move_oiram(void) {
             } else
             if (!pickup_shell()) {
                 if ((oiram.flags & FLAG_OIRAM_RACOON) && !oiram.on_vine) {
-                    if (!oiram.is_flying) {
-                        if (abs(mm) > 35) {
-                            oiram.is_flying = true;
-                            oiram.force_fall = true;
-                            oiram.fly_count = 8;
-                            mm = 0;
-                            oiram.vy = -9;
+                    if (!oiram.spin_count) {
+                        spin(new_x_left, new_y_top);
+                    }
+                } else {
+                    if ((oiram.flags & FLAG_OIRAM_FIRE) && oiram.fireballs < 2) {
+                        int add_x, add_y;
+                        uint8_t add_dir;
+                        
+                        if (oiram.direction == FACE_LEFT) {
+                            add_x = 0;
+                            add_dir = DOWN_LEFT;
                         } else {
-                            if (oiram.vy > 2) {
-                                oiram.vy = 1;
-                            }
-                            if (!oiram.spin_count) {
-                                int tycoon = new_y_top + 13;
-                                spin_racoon_mario(new_x_left - 8, tycoon);
-                                spin_racoon_mario(new_x_right + 2, tycoon);
-                                oiram.spin_count = 3;
-                            }
-                            goto check_triggers;
+                            add_x = OIRAM_HITBOX_WIDTH - 1;
+                            add_dir = DOWN_RIGHT;
                         }
+                        
+                        add_fireball(new_x_left + add_x, new_y_top + oiram.hitbox.height/2, add_dir, OIRAM_FIREBALL);
+                        oiram.fireballs++;
                     }
-                } else if ((oiram.flags & FLAG_OIRAM_FIRE) && oiram.fireballs < 2) {
-                    int add_x, add_y;
-                    uint8_t add_dir;
-                    
-                    if (oiram.direction == FACE_LEFT) {
-                        add_x = 0;
-                        add_dir = DOWN_LEFT;
-                    } else {
-                        add_x = OIRAM_HITBOX_WIDTH - 1;
-                        add_dir = DOWN_RIGHT;
-                    }
-                    
-                    add_fireball(new_x_left + add_x, new_y_top + oiram.hitbox.height/2, add_dir, OIRAM_FIREBALL);
-                    oiram.fireballs++;
                 }
-            }
+            }        
             pressed_alpha = false;
         }
         
@@ -474,18 +469,37 @@ void move_oiram(void) {
         }
         
         if (pressed_up) {
-            if (oiram.is_flying) {
-                oiram.vy = -7;
-                if (oiram.fly_count) {
-                    oiram.fly_count--;
-                } else {
-                    oiram.is_flying = false;
-                }
-                pressed_up = false;
-            } else
             if (oiram.on_vine) {
                 oiram.vy = -2;
-            } else {
+            } else  {
+                if ((oiram.flags & FLAG_OIRAM_RACOON)) {
+                    if (oiram.vy > 1) {
+                        spin(new_x_left, new_y_top);
+                        oiram.vy = 1;
+                    }
+                    if (oiram.is_flying) {
+                        oiram.vy = -7;
+                        if (oiram.fly_count) {
+                            oiram.fly_count--;
+                        } else {
+                            oiram.is_flying = false;
+                        }
+                    } else {
+                        if (abs(mm) > 38) {
+                            oiram.is_flying = true;
+                            oiram.force_fall = true;
+                            oiram.fly_count = 8;
+                            oiram.vy = -9;
+                        } else {
+                            goto normal_jump;
+                        }
+                    }
+                    
+                    pressed_up = false;
+                    goto skip_up;
+                }
+                
+        normal_jump:
                 // if forced jump added from bouncing on music blocks
                 if (force_jump) {
                     if (oiram.vy <= 1) {

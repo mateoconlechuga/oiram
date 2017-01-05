@@ -266,7 +266,7 @@ void set_load_screen(void) {
     gfx_TransparentSprite(mushroom, 5, selected_pack*10 + 103);
     
     gfx_PrintStringXY("Controls", 5, 187);
-    gfx_PrintStringXY("[on]", 9, 199);
+    gfx_PrintStringXY("[del]", 9, 199);
     gfx_PrintStringXY("[2nd]", 9, 209);
     gfx_PrintStringXY("[up]", 9, 219);
     gfx_PrintStringXY("[alpha]", 9, 229);
@@ -321,9 +321,12 @@ void set_load_screen(void) {
     
     gfx_BlitBuffer();
     
-    while(true) {
+    // debounce
+    while (kb_ScanGroup(kb_group_1) & kb_Del);
+    
+    while (true) {
         key = os_GetCSC();
-        if (key == sk_Clear || key == sk_Del) {
+        if (key == sk_Del) {
             save_progress();
             exit(0);
         }

@@ -58,23 +58,12 @@ void missing_appvars(void) {
 
 // this interrupt is called every second
 void interrupt isr_timer1(void) {
-    
     game.seconds++;
     draw_time();
    
     // ack
     int_Acknowledge = INT_TIMER1;
     timer_IntAcknowledge = TIMER1_RELOADED;
-}
-
-// interrupt routine to run when the [ON] key is pressed
-void interrupt isr_on(void) {
-    if (!oiram.failed) {
-        game.exit = true;
-        game.fastexit = true;
-    }
-    
-    int_Acknowledge = INT_ON;
 }
 
 void interrupt isr_keyboard(void) {
@@ -90,6 +79,13 @@ void interrupt isr_keyboard(void) {
     pressed_up      = (g7_key & kb_Up);
     pressed_left    = (g7_key & kb_Left);
     pressed_right   = (g7_key & kb_Right);
+    
+    if (g1_key & kb_Del) {
+        if (!oiram.failed) {
+            game.exit = true;
+            game.fastexit = true;
+        }
+    }
     
     int_Acknowledge = INT_KEYBOARD;
     kb_IntAcknowledge = KB_DATA_CHANGED;
@@ -274,21 +270,20 @@ void main(void) {
     timer_Control = TIMER1_ENABLE | TIMER1_32K | TIMER1_0INT | TIMER1_DOWN;
     
     // setup the int vectors
-    int_SetVector(ON_IVECT, isr_on);
     int_SetVector(KEYBOARD_IVECT, isr_keyboard);
     int_SetVector(TIMER1_IVECT, isr_timer1);
     
     // tell the interrupt controller that the ON flag should latch and be enabled
-    int_EnableConfig = INT_ON | INT_KEYBOARD | INT_TIMER1;
+    int_EnableConfig = INT_KEYBOARD | INT_TIMER1;
     int_LatchConfig = INT_TIMER1;
-    kb_EnableInt = KB_DATA_CHANGED;
     
     // configure the keypad to be continously scanning
     kb_SetMode(MODE_3_CONTINUOUS);
+    kb_EnableInt = KB_DATA_CHANGED;
     
     // interrupts can now generate after this
     int_Enable();
-   
+    
     // wait until the clear key is pressed
     while(!game.exit) {
         

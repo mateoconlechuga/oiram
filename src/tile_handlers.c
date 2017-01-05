@@ -408,7 +408,11 @@ uint8_t num_poofs = 0;
 
 void remove_poof(uint8_t i) {
     poof_t *free_me = poof[i];
-    uint8_t num_poofs_less = num_poofs--;
+    uint8_t num_poofs_less;
+    
+    if (!num_poofs) { return; }
+    
+    num_poofs_less = num_poofs--;
     
     for(; i < num_poofs_less; i++) {
         poof[i] = poof[i+1];
@@ -434,8 +438,12 @@ void add_poof(int x, int y) {
 
 void remove_fireball(uint8_t i) {
     fireball_t *free_me = fireball[i];
-    uint8_t num_fireballs_less = num_fireballs--;
+    uint8_t num_fireballs_less;
     
+    if (!num_fireballs) { return; }
+    
+    num_fireballs_less = num_fireballs--;
+     
     if (free_me->mover->type == OIRAM_FIREBALL) {
         oiram.fireballs--;
     }
@@ -777,12 +785,13 @@ bumped_tile_t *add_bumped(uint8_t *tile, uint8_t dir) {
     return bump;
 }
 
-bool remove_bumped_tile(uint8_t i) {
+void remove_bumped_tile(uint8_t i) {
     bumped_tile_t *free_me = bumped_tile[i];
+    uint8_t num_bumped_tiles_less;
     
-    if (!num_bumped_tiles) {
-        return false;
-    }
+    if (!num_bumped_tiles) { return; }
+    
+    num_bumped_tiles_less = num_bumped_tiles--;
     
     if (free_me->tile_ptr) {
         *free_me->tile_ptr = free_me->tile;
@@ -792,15 +801,11 @@ bool remove_bumped_tile(uint8_t i) {
         *free_me->tile_ptr = TILE_EMPTY;
     }
     
-    for(; i < num_bumped_tiles - 1; i++) {
+    for(; i < num_bumped_tiles_less; i++) {
         bumped_tile[i] = bumped_tile[i+1];
     }
     
     free(free_me);
-    
-    num_bumped_tiles--;
-    
-    return true;
 }
 
 #define MASK_PIPE_DOWN   (0)

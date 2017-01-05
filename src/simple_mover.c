@@ -137,10 +137,12 @@ void simple_move_handler(simple_move_t *this) {
     // this is a flying simple one... which means we can pretty much go anywhere
     } else {
         if (this->fly_counter <= 0) {
-            if (this->fly_counter-- < -9) { this->fly_counter = 1; tmp_vy = -tmp_vy; }
+            this->fly_counter--;
+            if (this->fly_counter < -9) { this->fly_counter = 1; tmp_vy = -tmp_vy; }
         } else {
             new_y += tmp_vy;
-            if (this->fly_counter++ > 64) { this->fly_counter = 0; }
+            this->fly_counter++;
+            if (this->fly_counter > 64) { this->fly_counter = 0; }
         }
     }
     

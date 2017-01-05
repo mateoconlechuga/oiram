@@ -20,7 +20,7 @@ typedef struct {
 extern bumped_tile_t *bumped_tile[MAX_TILE_BUMPS];
 bumped_tile_t *add_bumped(uint8_t *tile, uint8_t dir);
 bumped_tile_t *add_bumped_sprite(uint8_t *tile, gfx_image_t *sprite, uint8_t dir);
-bool remove_bumped_tile(uint8_t i);
+void remove_bumped_tile(uint8_t i);
 extern uint8_t num_bumped_tiles;
 
 extern int test_y;

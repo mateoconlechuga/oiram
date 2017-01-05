@@ -57,7 +57,11 @@ void add_boo(uint8_t *tile) {
 
 void remove_boo(uint8_t i) {
     boo_t *free_me = boo[i];
-    uint8_t num_boos_less = num_boos--;
+    uint8_t num_boos_less;
+    
+    if (!num_boos) { return; }
+    
+    num_boos_less = num_boos--;
     
     for(; i < num_boos_less; i++) {
         boo[i] = boo[i+1];
@@ -130,7 +134,11 @@ void add_chomper(uint8_t *tile, bool throws_fire) {
 
 void remove_chomper(uint8_t i) {
     chomper_t *free_me = chomper[i];
-    uint8_t num_chompers_less = num_chompers--;
+    uint8_t num_chompers_less;
+    
+    if (!num_chompers) { return; }
+    
+    num_chompers_less = num_chompers--;
     
     for(; i < num_chompers_less; i++) {
         chomper[i] = chomper[i+1];
@@ -165,7 +173,11 @@ void add_flame(uint8_t *tile) {
 
 void remove_flame(uint8_t i) {
     flame_t *free_me = flame[i];
-    uint8_t num_flames_less = num_flames--;
+    uint8_t num_flames_less;
+    
+    if (!num_flames) { return; }
+    
+    num_flames_less = num_flames--;
     
     for(; i < num_flames_less; i++) {
         flame[i] = flame[i+1];
@@ -199,7 +211,11 @@ void add_thwomp(uint8_t *tile) {
 
 void remove_thwomp(uint8_t i) {
     thwomp_t *free_me = thwomp[i];
-    uint8_t num_thowmps_less = num_thwomps--;
+    uint8_t num_thowmps_less;
+    
+    if (!num_thwomps) { return; }
+    
+    num_thowmps_less = num_thwomps--;
     
     for(; i < num_thowmps_less; i++) {
         thwomp[i] = thwomp[i+1];
@@ -260,7 +276,11 @@ enemy_t *add_simple_enemy(uint8_t *tile, uint8_t type) {
 
 void remove_simple_enemy(uint8_t i) {
     enemy_t *free_me = simple_enemy[i];
-    uint8_t num_simple_enemies_less = num_simple_enemies--;
+    uint8_t num_simple_enemies_less;
+    
+    if (!num_simple_enemies) { return; }
+    
+    num_simple_enemies_less = num_simple_enemies--;
     
     for(; i < num_simple_enemies_less; i++) {
         simple_enemy[i] = simple_enemy[i+1];

@@ -127,6 +127,7 @@ void handle_pending_events(void) {
                 if (!shrink_oiram()) {
                     add_poof(oiram.x, oiram.y + 2);
                     remove_thwomp(i--);
+                    continue;
                 }
             }
             
@@ -184,9 +185,8 @@ void handle_pending_events(void) {
                 switch(type) {
                     case GOOMBA_TYPE:
                         add_poof(x + 4, y + 4);
-                        remove_simple_mover(i--);
                         add_score(0, x, y);
-                        continue;
+                        goto continue_loop_fail;
                     case KOOPA_RED_TYPE: case KOOPA_GREEN_TYPE: case KOOPA_BONES_TYPE: case SPIKE_TYPE:
                         add_score(0, x, y);
                         goto create_shell;
@@ -525,7 +525,7 @@ kick_shell:
                                 } else {
                                     cur->vx = -4;
                                 }
-                                add_next_chain_score(x, y);
+                                add_score(0, x, y);
                                 cur->counter = -1;
                             }
                         }
