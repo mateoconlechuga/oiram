@@ -689,11 +689,13 @@ skip_draw:
             }
             
             if (gfx_CheckRectangleHotspot(oiram.x, oiram.y, OIRAM_HITBOX_WIDTH, oiram.hitbox.height, x, y, 15, 30)) {
-                if (!shrink_oiram()) {
-                    add_score(1, x, y);
-                    add_poof(oiram.x, oiram.y + 2);
-                    remove_chomper(i--);
-                    continue;
+                if (!oiram.in_pipe) {
+                    if (!shrink_oiram()) {
+                        add_score(1, x, y);
+                        add_poof(oiram.x, oiram.y + 2);
+                        remove_chomper(i--);
+                        continue;
+                    }
                 }
             }
             

@@ -9,7 +9,7 @@
 // Simple movers
 // -----------------------------
 
-#define MAX_SIMPLE_MOVERS 256
+#define MAX_SIMPLE_MOVERS 252
 
 typedef struct simple_move {
     int x, y;      // x and y absolute posistions on screen
@@ -32,7 +32,6 @@ enum simple_move_type {
     MUSHROOM_TYPE,
     MUSHROOM_1UP_TYPE,
     FIRE_FLOWER_TYPE,
-    LEAF_TYPE,
     FLAT_GOOMBA_TYPE,
     FIREBALL_TYPE,
     KOOPA_BONES_TYPE,

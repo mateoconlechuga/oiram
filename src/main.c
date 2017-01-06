@@ -94,8 +94,8 @@ void interrupt isr_keyboard(void) {
 void black_circles(void) {
     uint8_t radius;
     for(radius = 5; radius < 255; radius += 5) {
-            gfx_FillCircle(160, 60, radius);
-            gfx_BlitBuffer();
+        gfx_FillCircle(160, 60, radius);
+        gfx_BlitBuffer();
     }
 }
 
@@ -125,18 +125,18 @@ static void extract_images(void) {
     // extract palette and tiles -- this is also where palette information is stored
     extract_tiles();
     
+    // extract sprites from sprite file
+    extract_sprites();
+    
     gfx_palette[BLACK_INDEX] = gfx_RGBTo1555( 0, 0, 0 );
     gfx_palette[WHITE_INDEX] = gfx_RGBTo1555( 255, 255, 255 );
     gfx_palette[DARK_BLUE_INDEX] = gfx_RGBTo1555( 24, 120, 184 );
     if (oiram.less2) {
         unsigned int j;
         for (j=0; j<256; j++) {
-            lcd_Palette[j] = ~lcd_Palette[j];
+            gfx_palette[j] = ~gfx_palette[j];
         }
     }
-    
-    // extract sprites from sprite file
-    extract_sprites();
 }
 
 void main(void) {
@@ -208,11 +208,13 @@ void main(void) {
     oiram.has_shell = false;
     oiram.in_pipe = false;
     oiram.is_flying = false;
+    oiram.invincible = 0;
     oiram.scrollx = 0;
     oiram.scrolly = 0;
     oiram.x = 0;
     oiram.y = 0;
     oiram.fireballs = 0;
+    oiram.fly_count = 9;
     
     // init the system
     tiles.animation_4_counter = 0;
@@ -283,6 +285,7 @@ void main(void) {
     
     // interrupts can now generate after this
     int_Enable();
+
     
     // wait until the clear key is pressed
     while(!game.exit) {
@@ -335,8 +338,6 @@ void main(void) {
                 if (pack->progress < game.level) { pack->progress = game.level; }
                 if (game.level == game.end_level) {
                     goto pack_finish;
-                } else {
-                    set_level(game.pack, game.level);
                 }
                 goto draw_level;
             } else {
@@ -366,7 +367,7 @@ game_over:
     gfx_SetClipRegion(0, 0, LCD_WIDTH, LCD_HEIGHT);
     gfx_SetTextBGColor(BLACK_INDEX);
     memset(pack, 0, sizeof(pack_info_t));
-    pack->lives = 10;
+    pack->lives = 15;
     gfx_PrintStringXY("GAME      OVER", 120, 55);
     gfx_BlitBuffer();
     for(delay=0; delay<700010; delay++);

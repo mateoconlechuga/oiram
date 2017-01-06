@@ -46,7 +46,11 @@ simple_move_t *add_simple_mover(uint8_t *spawing_tile) {
 
 void remove_simple_mover(uint8_t i) {
     simple_move_t *mover = simple_mover[i];
-    uint8_t num_simple_movers_less = num_simple_movers--;
+    uint8_t num_simple_movers_less;
+    
+    if (!num_simple_movers) { return; }
+    
+    num_simple_movers_less = num_simple_movers--;
     
     for(; i < num_simple_movers_less; i++) {
         simple_mover[i] = simple_mover[i+1];

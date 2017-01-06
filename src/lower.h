@@ -4,8 +4,6 @@
 extern const unsigned int oiram_score_chain[9];
 extern gfx_image_t *oiram_score_chain_sprites[9];
 
-void draw_lower_information(void);
-
 void draw_coins(void);
 void draw_lives(void);
 void draw_level(void);

@@ -151,13 +151,6 @@ gfx_image_t *oiram_left[] = {
     oiram_0_buffer_left, oiram_1_buffer_left
 };
 
-static void invert_palette(void) {
-    unsigned int j;
-    for (j=0; j<256; j++) {
-        lcd_Palette[j] = ~lcd_Palette[j];
-    }
-}
-
 void extract_tiles(void) {
     uint8_t slot;
     gfx_image_t *tile_0;
@@ -176,7 +169,6 @@ void extract_tiles(void) {
         
         // set up the palette
         gfx_SetPalette( pal_ptr, pal_size, 0 );
-        if (oiram.less2) { invert_palette(); }
         tmp_ptr = (uint8_t*)pal_ptr;
         tmp_ptr += pal_size;
         

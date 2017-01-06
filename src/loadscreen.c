@@ -69,7 +69,7 @@ void load_progress(void) {
     
     memset(pack_info, 0, sizeof(pack_info));
     for(j=0; j<256; j++) {
-        pack_info[j].lives = 10;
+        pack_info[j].lives = 15;
     }
     
     num_packs = 0;
@@ -147,7 +147,7 @@ void set_level(uint8_t abs_pack, uint8_t level) {
         abs_pack--;
     }
     
-    if (slot = ti_Open((char*)var_name, "r")) {
+    if ((slot = ti_Open((char*)var_name, "r"))) {
         uint8_t *pack_data = ((uint8_t*)ti_GetDataPtr(slot)) + 2;
         uint8_t num_pipes;
         
@@ -203,9 +203,7 @@ void set_level(uint8_t abs_pack, uint8_t level) {
 
 void set_load_screen(void) {
     ti_var_t slot;
-    uint8_t j;
     int y;
-    ti_var_t level_progress_var;
     
     gfx_image_t *tile_208 = tileset_tiles[208];
     gfx_image_t *tile_145 = tileset_tiles[145];
@@ -270,12 +268,12 @@ void set_load_screen(void) {
     gfx_PrintStringXY("[2nd]", 9, 209);
     gfx_PrintStringXY("[up]", 9, 219);
     gfx_PrintStringXY("[alpha]", 9, 229);
-    gfx_PrintStringXY("Quit", 60, 199);
-    gfx_PrintStringXY("Run", 60, 209);
-    gfx_PrintStringXY("Jump", 60, 219);
-    gfx_PrintStringXY("Special", 60, 229);
+    gfx_PrintStringXY("Quit", 65, 199);
+    gfx_PrintStringXY("Run", 65, 209);
+    gfx_PrintStringXY("Jump", 65, 219);
+    gfx_PrintStringXY("Special", 65, 229);
     
-    gfx_PrintStringXY("Press <> to select level", 140, 209);
+    gfx_PrintStringXY("Press <> to select level", 143, 209);
     
     tmp = 0;
     num_packs = 0;
@@ -324,24 +322,42 @@ void set_load_screen(void) {
     // debounce
     while (kb_ScanGroup(kb_group_1) & kb_Del);
     
+    // reset the mode
+    kb_SetMode(MODE_0_IDLE);
+    kb_EnableInt = 0;
+    
     while (true) {
-        key = os_GetCSC();
-        if (key == sk_Del) {
+        unsigned int delay;
+        kb_key_t grp7;
+        kb_key_t grp1;
+        kb_key_t grp6;
+        
+        // scan the keypad
+        kb_Scan();
+        
+        // debounce
+        for (delay=0; delay<30000; delay++);
+        
+        grp7 = kb_Data[kb_group_7];
+        grp6 = kb_Data[kb_group_6];
+        grp1 = kb_Data[kb_group_1];
+        
+        if (grp1 == kb_Del) {
             save_progress();
             exit(0);
         }
-        if (key == sk_Enter || key == sk_2nd) {
+        if (grp6 == kb_Enter || grp1 == kb_2nd) {
             break;
         }
-        if (key == sk_Down || key == sk_Up) {
-            if (key == sk_Down && ((selected_pack + scroll_amt + 1) < num_packs)) {
+        if (grp7 == kb_Down || grp7 == kb_Up) {
+            if (grp7 == kb_Down && ((selected_pack + scroll_amt + 1) < num_packs)) {
                 if (selected_pack == MAX_SHOW-1) {
                     scroll_amt++;
                 } else {
                     selected_pack++;
                 }
             }
-            if (key == sk_Up && ((selected_pack + scroll_amt) != 0)) {
+            if (grp7 == kb_Up && ((selected_pack + scroll_amt) != 0)) {
                 if (selected_pack == 0) {
                     scroll_amt--;
                 } else {
@@ -350,13 +366,12 @@ void set_load_screen(void) {
             }
             goto redraw_screen;
         }
-        if (key == sk_Left || key == sk_Right) {
-            if (key == sk_Left) {
+        if (grp7 == kb_Left || grp7 == kb_Right) {
+            if (grp7 == kb_Left) {
                 if (selected_level) {
                     selected_level--;
                 }
-            } else
-            if (key == sk_Right) {
+            } else {
                 if (selected_level != max_select_level[selected_pack]) {
                     selected_level++;
                 }

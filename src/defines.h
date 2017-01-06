@@ -42,12 +42,6 @@ enum directions {
     FACE_RIGHT=1
 };
 
-enum power_ups {
-    PWR_NONE=0,
-    PWR_MUSHROOM,
-    PWR_FIRE,
-};
-
 #define FLAG_OIRAM_RESET      0
 #define FLAG_OIRAM_BIG        1
 #define FLAG_OIRAM_FIRE       2
@@ -99,7 +93,6 @@ typedef struct {
     bool is_flying;
     uint8_t fly_count;
     uint8_t spin_count;
-    bool force_fall;
     bool started_fail;
     unsigned int coins;
     uint8_t shrink_counter;

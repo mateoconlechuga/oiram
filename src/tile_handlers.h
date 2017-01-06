@@ -19,7 +19,6 @@ typedef struct {
 
 extern bumped_tile_t *bumped_tile[MAX_TILE_BUMPS];
 bumped_tile_t *add_bumped(uint8_t *tile, uint8_t dir);
-bumped_tile_t *add_bumped_sprite(uint8_t *tile, gfx_image_t *sprite, uint8_t dir);
 void remove_bumped_tile(uint8_t i);
 extern uint8_t num_bumped_tiles;
 
@@ -74,11 +73,8 @@ uint8_t moveable_tile_right_bottom(int x, int y);
 #define TILE_FIREFLOWER_QUESTIONBOX    229
 #define TILE_LEAF_QUESTIONBOX          230
 
-// animation functions
+// animation function
 void animate(void);
-void draw_tile_grid(void);
-void reset_3_animations(void);
-void reset_4_animations(void);
 
 void tile_to_abs_xy_pos(uint8_t *tile, unsigned int *x, unsigned int *y);
 

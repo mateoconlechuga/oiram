@@ -24,7 +24,6 @@ int test_x;
 int *test_y_ptr;
 int test_y_height;
 uint8_t testing_side;
-bool handled_slope = false; 
 uint8_t on_slope = 0;
 
 uint8_t handle_warp_pipe(uint8_t *tile);
@@ -68,7 +67,15 @@ static uint8_t brick_tile_handler(uint8_t *tile) {
 static uint8_t upspk_tile_handler(uint8_t *tile) {
     if (!handling_events) {
         if (move_side == TILE_TOP) {
-            shrink_oiram();
+            static uint8_t test_sides = 0;
+            if (testing_side == TEST_RIGHT && test_sides == 0) {
+                test_sides = 1;
+            } else if (testing_side == TEST_LEFT && test_sides == 1) {
+                shrink_oiram();
+                test_sides = 0;
+            } else {
+                test_sides = 0;
+            }
         }
     }
     return 0;
@@ -86,7 +93,17 @@ static uint8_t plant_tile_handler(uint8_t *tile) {
 
 static uint8_t lavas_tile_handler(uint8_t *tile) {
     if (!handling_events) {
-        oiram.failed = true;
+        if (move_side == TILE_TOP) {
+            static uint8_t test_sides = 0;
+            
+            if (testing_side == TEST_RIGHT && test_sides == 0) {
+                test_sides = 1;
+            } else if (testing_side == TEST_LEFT && test_sides == 1) {
+                oiram.failed = true;
+            } else {
+                test_sides = 0;
+            }
+        }
     }
     return 1;
 }
@@ -250,38 +267,41 @@ bool in_quicksand;
 unsigned int quicksand_clip_y;
 
 static uint8_t quicksand_handler(uint8_t *tile) {
-    unsigned int x, y;
     
-    tile_to_abs_xy_pos(tile, &x, &y);
+    if (handling_events) {
+        something_died = true;
+    } else {
+        unsigned int x, y;
     
-    if (move_side == TILE_TOP) {
-        static uint8_t test_sides = 0;
-        static uint8_t adder = 0;
+        tile_to_abs_xy_pos(tile, &x, &y);
         
-        if (testing_side == TEST_RIGHT && test_sides == 0) {
-            test_sides = 1;
-        } else if (testing_side == TEST_LEFT && test_sides == 1) {
-            if (!adder) {
-                *test_y_ptr += 1;
+        if (move_side == TILE_TOP) {
+            static uint8_t test_sides = 0;
+            static uint8_t adder = 0;
+            
+            if (testing_side == TEST_RIGHT && test_sides == 0) {
+                test_sides = 1;
+            } else if (testing_side == TEST_LEFT && test_sides == 1) {
+                if (!adder) {
+                    *test_y_ptr += 1;
+                }
+                adder = (adder+1) & 5;
+                in_quicksand = true;
+                pressed_right = false;
+                pressed_left = false;
+                test_sides = 0;
+            } else {
+                test_sides = 0;
             }
-            adder = (adder+1) & 5;
+        }
+        
+        if (move_side == TILE_SOLID) {
             in_quicksand = true;
             pressed_right = false;
             pressed_left = false;
-            test_sides = 0;
-        } else {
-            test_sides = 0;
+            return 1;
         }
     }
-    
-    if (move_side == TILE_SOLID) {
-        in_quicksand = true;
-        pressed_right = false;
-        pressed_left = false;
-        return 1;
-    }
-    
-    if (handling_events) { something_died = true;}
     
     return 0;
 }
@@ -729,6 +749,33 @@ uint8_t (*tile_handler[])(uint8_t*) = {
     star_quest_handler, // 228
     fireflower_quest_handler, // 229
     leaf_quest_handler, // 230
+    empty_tile_handler,
+    empty_tile_handler,
+    empty_tile_handler,
+    empty_tile_handler,
+    empty_tile_handler,
+    empty_tile_handler,
+    empty_tile_handler,
+    empty_tile_handler,
+    empty_tile_handler,
+    empty_tile_handler,
+    empty_tile_handler,
+    empty_tile_handler,
+    empty_tile_handler,
+    empty_tile_handler,
+    empty_tile_handler,
+    empty_tile_handler,
+    empty_tile_handler,
+    empty_tile_handler,
+    empty_tile_handler,
+    empty_tile_handler,
+    empty_tile_handler,
+    empty_tile_handler,
+    empty_tile_handler,
+    empty_tile_handler,
+    empty_tile_handler,
+    empty_tile_handler,
+    empty_tile_handler, // prevent a crash caused by jumping to invalid code -- lol totes forgot about that
 };
 
 bumped_tile_t *bumped_tile[MAX_TILE_BUMPS];

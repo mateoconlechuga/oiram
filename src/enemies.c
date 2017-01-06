@@ -1,16 +1,12 @@
 // standard headers
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <stdbool.h>
-#include <stddef.h>
 #include <stdint.h>
-#include <tice.h>
 
 #include "simple_mover.h"
 #include "enemies.h"
 #include "tile_handlers.h"
-#include "defines.h"
 #include "loadscreen.h"
 #include "images.h"
 
@@ -290,7 +286,7 @@ void remove_simple_enemy(uint8_t i) {
 }
 
 void get_enemies(void) {
-    unsigned int j;
+    unsigned int j, delay;
     unsigned int loop = tilemap.width * tilemap.height;
     
     for(j = 0; j < loop; j++) {

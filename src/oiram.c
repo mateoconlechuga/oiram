@@ -340,7 +340,7 @@ void move_oiram(void) {
         } else {
             oiram.score_counter = 0;
             oiram.is_flying = false;
-            oiram.force_fall = false;
+            oiram.fly_count = 9;
         }
         
         if (oiram.on_vine) {
@@ -356,6 +356,7 @@ void move_oiram(void) {
             gfx_FillRectangle_NoClip(119, 146, 79, 2);
             gfx_SetColor(WHITE_INDEX);
             new_vx = 2;
+            if (!oiram.fly_count) { pressed_2nd = false; }
         }
         
         // make sure we aren't crouching
@@ -428,7 +429,7 @@ void move_oiram(void) {
                     }
                 } else {
                     if ((oiram.flags & FLAG_OIRAM_FIRE) && oiram.fireballs < 2) {
-                        int add_x, add_y;
+                        int add_x;
                         uint8_t add_dir;
                         
                         if (oiram.direction == FACE_LEFT) {
@@ -443,12 +444,10 @@ void move_oiram(void) {
                         oiram.fireballs++;
                     }
                 }
-            }        
+            }
             pressed_alpha = false;
         }
         
-    check_triggers:
-    
         move_side = TILE_SOLID;
         
         // pressing up triggers a jump
@@ -487,8 +486,7 @@ void move_oiram(void) {
                     } else {
                         if (abs(mm) > 38) {
                             oiram.is_flying = true;
-                            oiram.force_fall = true;
-                            oiram.fly_count = 8;
+                            oiram.fly_count = 9;
                             oiram.vy = -9;
                         } else {
                             goto normal_jump;
