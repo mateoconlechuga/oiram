@@ -502,7 +502,7 @@ void move_oiram(void) {
                 // if forced jump added from bouncing on music blocks
                 if (force_jump) {
                     if (oiram.vy <= 1) {
-                        oiram.vy = -10;
+                        oiram.vy = -11;
                     } else {
                         oiram.vy += -5;
                     }
@@ -512,7 +512,7 @@ void move_oiram(void) {
                     if (in_quicksand || in_water) { 
                         oiram.vy = -6;
                     } else if (oiram.vy <= 1) {
-                        oiram.vy = -10;
+                        oiram.vy = -11;
                     }
                 }
             }
