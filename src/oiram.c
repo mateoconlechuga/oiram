@@ -489,6 +489,7 @@ void move_oiram(void) {
                             oiram.fly_count = 9;
                             oiram.vy = -9;
                         } else {
+                            pressed_up = false;
                             goto normal_jump;
                         }
                     }
@@ -514,7 +515,6 @@ void move_oiram(void) {
                         oiram.vy = -10;
                     }
                 }
-                pressed_up = false;
             }
         }
 	

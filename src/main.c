@@ -66,8 +66,8 @@ void interrupt isr_timer1(void) {
     timer_IntAcknowledge = TIMER1_RELOADED;
 }
 
-void interrupt isr_keyboard(void) {
-    /* Read the keypad data */
+// called when user presses or releases a key
+void interrupt isr_keyboard_alternate(void) {
     kb_key_t g1_key = kb_Data[kb_group_1];
     kb_key_t g2_key = kb_Data[kb_group_2];
     kb_key_t g7_key = kb_Data[kb_group_7];
@@ -79,6 +79,34 @@ void interrupt isr_keyboard(void) {
     pressed_up      = (g7_key & kb_Up);
     pressed_left    = (g7_key & kb_Left);
     pressed_right   = (g7_key & kb_Right);
+    
+    if (g1_key & kb_Del) {
+        if (!oiram.failed) {
+            game.exit = true;
+            game.fastexit = true;
+        }
+    }
+    
+    int_Acknowledge = INT_KEYBOARD;
+    kb_IntAcknowledge = KB_DATA_CHANGED;
+}
+
+// called when user presses or releases a key
+void interrupt isr_keyboard(void) {
+    /* Read the keypad data */
+    kb_key_t g1_key = kb_Data[kb_group_1];
+    kb_key_t g2_key = kb_Data[kb_group_2];
+    kb_key_t g7_key = kb_Data[kb_group_7];
+    
+    pressed_2nd     = (g2_key & kb_Alpha);
+    
+    pressed_down    = (g7_key & kb_Down);
+    pressed_left    = (g7_key & kb_Left);
+    pressed_right   = (g7_key & kb_Right);
+    
+    pressed_alpha   = (g7_key & kb_Up);
+    
+    pressed_up      = (g1_key & kb_2nd);
     
     if (g1_key & kb_Del) {
         if (!oiram.failed) {
@@ -195,6 +223,7 @@ void main(void) {
     game.end_counter = 10;
     game.entered_end_pipe = false;
     game.seconds = 0;
+    game.alternate_keypad = false;
     
     oiram.failed = false;
     oiram.started_fail = false;
@@ -285,11 +314,9 @@ void main(void) {
     
     // interrupts can now generate after this
     int_Enable();
-
     
     // wait until the clear key is pressed
     while(!game.exit) {
-        
         // move oiram if required
         move_oiram();
         

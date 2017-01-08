@@ -264,16 +264,24 @@ void set_load_screen(void) {
     gfx_TransparentSprite(mushroom, 5, selected_pack*10 + 103);
     
     gfx_PrintStringXY("Controls", 5, 187);
+    
+    if (game.alternate_keypad) {
+        gfx_PrintStringXY("[2nd]", 9, 209);
+        gfx_PrintStringXY("[up]", 9, 219);
+        gfx_PrintStringXY("[alpha]", 9, 229);
+    } else {
+        gfx_PrintStringXY("[alpha]", 9, 209);
+        gfx_PrintStringXY("[2nd]", 9, 219);
+        gfx_PrintStringXY("[up]", 9, 229);
+    }
+    
     gfx_PrintStringXY("[del]", 9, 199);
-    gfx_PrintStringXY("[2nd]", 9, 209);
-    gfx_PrintStringXY("[up]", 9, 219);
-    gfx_PrintStringXY("[alpha]", 9, 229);
     gfx_PrintStringXY("Quit", 65, 199);
     gfx_PrintStringXY("Run", 65, 209);
     gfx_PrintStringXY("Jump", 65, 219);
-    gfx_PrintStringXY("Special", 65, 229);
+    gfx_PrintStringXY("Special, pickup shells", 65, 229);
     
-    gfx_PrintStringXY("Press <> to select level", 143, 209);
+    gfx_PrintStringXY("Press <> to select level", 150, 199);
     
     tmp = 0;
     num_packs = 0;
@@ -319,6 +327,10 @@ void set_load_screen(void) {
     
     gfx_BlitBuffer();
     
+    // freeze bug
+    asm("call 0004F4h");
+    int_Disable();
+    
     // debounce
     while (kb_ScanGroup(kb_group_1) & kb_Del);
     
@@ -348,6 +360,15 @@ void set_load_screen(void) {
         }
         if (grp6 == kb_Enter || grp1 == kb_2nd) {
             break;
+        }
+        if (grp1 == kb_Mode) {
+            game.alternate_keypad ^= true;
+            if (game.alternate_keypad) {
+                int_SetVector(KEYBOARD_IVECT, isr_keyboard_alternate);
+            } else {
+                int_SetVector(KEYBOARD_IVECT, isr_keyboard);
+            }
+            goto redraw_screen;
         }
         if (grp7 == kb_Down || grp7 == kb_Up) {
             if (grp7 == kb_Down && ((selected_pack + scroll_amt + 1) < num_packs)) {

@@ -5,6 +5,9 @@
 #include <stdint.h>
 #include "stdlib.h"
 
+void interrupt isr_keyboard_alternate(void);
+void interrupt isr_keyboard(void);
+
 extern bool handling_events;
 extern bool something_died;
 
@@ -119,6 +122,7 @@ typedef struct {
     uint8_t end_level;
     uint8_t pack;
     unsigned int seconds;
+    bool alternate_keypad;
 } game_t;
 
 extern game_t game;
