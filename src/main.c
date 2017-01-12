@@ -94,6 +94,9 @@ void interrupt isr_keyboard_alternate(void) {
         pressed_up = press_up;
     } else if (!press_up) {
         allow_up_press = true;
+        if (oiram.vy < -5) {
+            oiram.vy = -5;
+        }
     }
     
     if (g1_key & kb_Del) {
@@ -130,6 +133,9 @@ void interrupt isr_keyboard(void) {
         pressed_up = press_up;
     } else if (!press_up) {
         allow_up_press = true;
+        if (oiram.vy < -5) {
+            oiram.vy = -5;
+        }
     }
     
     if (g1_key & kb_Del) {
