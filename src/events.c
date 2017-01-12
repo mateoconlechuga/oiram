@@ -64,6 +64,9 @@ void handle_pending_events(void) {
     
     handling_events = true;
     
+    oiram.rel_x = oiram.x - oiram.scrollx;
+    oiram.rel_y = oiram.y - oiram.scrolly;
+    
     if (num_thwomps) {
         for(i = 0; i < num_thwomps; i++) {
             thwomp_t *cur = thwomp[i];
@@ -498,7 +501,7 @@ create_shell:
                         }
                         break;
                     case KOOPA_RED_SHELL_TYPE: case KOOPA_GREEN_SHELL_TYPE:
-                        if (oiram.y + oiram.hitbox.height - 8 < y) {
+                        if (cur->vy > 0 || oiram.y + oiram.hitbox.height - 8 < y) {
                             oiram.vy = -8;
                             if (!cur->vx && (oiram.x != x)) {
                                 goto kick_shell;
@@ -521,9 +524,9 @@ create_shell:
                             } else {
 kick_shell:
                                 if ((oiram.x + OIRAM_HITBOX_WIDTH/2) < x) {
-                                    cur->vx = 4;
+                                    cur->vx = 5;
                                 } else {
-                                    cur->vx = -4;
+                                    cur->vx = -5;
                                 }
                                 add_score(0, x, y);
                                 cur->counter = -1;
@@ -573,9 +576,6 @@ skip_draw:
             continue;
         }
     }
-    
-    oiram.rel_x = oiram.x - oiram.scrollx;
-    oiram.rel_y = oiram.y - oiram.scrolly;
         
     if (num_bumped_tiles) {
         for(i = 0; i < num_bumped_tiles; i++) {
@@ -596,25 +596,32 @@ skip_draw:
                 case TILE_TOP:
                     y -= 2;
                     break;
-                case TILE_RIGHT:
-                    x += 2;
-                    break;
-                case TILE_LEFT:
-                    x -= 2;
+                default:
                     break;
             }
             
-            cur->x = x;
+            cur->count--;
+            
+            if (tile_img == TILE_VANISH) {
+                if (cur->count > 8) {
+                    goto skip_new_bump_y;
+                } else {
+                    if (cur->count & 1) {
+                        y--;
+                    } else {
+                        y++;
+                    }
+                }
+            }
+            
             cur->y = y;
-           
-            // draw the tile
-            if (tile_img == TILE_COIN_0) {
-                gfx_TransparentSprite(tileset_tiles[tile_img], x - oiram.scrollx, y - oiram.scrolly);
-            } else {
-                gfx_Sprite(tileset_tiles[tile_img], x - oiram.scrollx, y - oiram.scrolly);
-            }
             
-            if (!(cur->count--)) {
+    skip_new_bump_y:
+    
+            // draw the tile
+            gfx_TransparentSprite(tileset_tiles[tile_img], x - oiram.scrollx, y - oiram.scrolly);
+
+            if (!cur->count) {
                 remove_bumped_tile(i);
                 i = -1;
             }
@@ -1043,7 +1050,7 @@ skip_draw:
                 
             // the type that can hit oiram
             } else {
-                if (gfx_CheckRectangleHotspot(oiram.x, oiram.y, OIRAM_HITBOX_WIDTH, oiram.hitbox.height, x, y, 8, 8)) {
+                if (gfx_CheckRectangleHotspot(oiram.x, oiram.y, OIRAM_HITBOX_WIDTH, oiram.hitbox.height, x, y, 7, 7)) {
                     shrink_oiram();
                     add_poof(x + 4, y + 4);
                     goto remove_fireball_continue;

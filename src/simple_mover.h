@@ -37,6 +37,7 @@ enum simple_move_type {
     KOOPA_BONES_TYPE,
     KOOPA_BONES_DEAD_TYPE,
     STAR_TYPE,
+    RESWOB_TYPE,
     HITABLE_TYPES,      // divider
     GOOMBA_TYPE,
     KOOPA_RED_TYPE,
@@ -44,7 +45,6 @@ enum simple_move_type {
     KOOPA_RED_FLY_TYPE,
     KOOPA_GREEN_FLY_TYPE,
     SPIKE_TYPE,
-    RESWOB_TYPE,
     SHELL_TYPES,       // divider
     KOOPA_RED_SHELL_TYPE,
     KOOPA_GREEN_SHELL_TYPE,

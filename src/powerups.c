@@ -130,7 +130,7 @@ void eat_fire_flower(void) {
 }
 
 void eat_star(void) {
-    oiram.invincible = 200;
+    oiram.invincible = 250;
     oiram.flags |= FLAG_OIRAM_INVINCIBLE;
 }
 

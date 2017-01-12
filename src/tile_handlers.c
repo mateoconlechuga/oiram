@@ -412,8 +412,8 @@ static uint8_t vanish_tile_handler(uint8_t *tile) {
     if (!handling_events) {
         if (move_side == TILE_TOP) {
             bumped_tile_t *bump_tile = add_bumped(tile, TILE_BOTTOM);
-            bump_tile->count = 6;
-            bump_tile->y = tile_y_loc(tile);
+            bump_tile->count = 15;
+            bump_tile->y += TILE_HEIGHT/2 - 2;
             *tile = TILE_SOLID_EMPTY;
         }
     }
@@ -802,13 +802,7 @@ bumped_tile_t *add_bumped(uint8_t *tile, uint8_t dir) {
             bump->x = x;
             bump->y = y + TILE_HEIGHT/2;
             break;
-        case TILE_RIGHT:
-            bump->x = x - TILE_HEIGHT/2;
-            bump->y = y;
-            break;
-        case TILE_LEFT:
-            bump->x = x - TILE_HEIGHT/2;
-            bump->y = y;
+        default:
             break;
     }
     

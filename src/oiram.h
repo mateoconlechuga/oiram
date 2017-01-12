@@ -12,6 +12,8 @@ extern bool pressed_down;
 extern bool pressed_alpha;
 extern bool pressed_2nd;
 
+extern bool allow_up_press;
+
 void compute_oiram_start_location(void);
 void set_normal_oiram_sprites(void);
 

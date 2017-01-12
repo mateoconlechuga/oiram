@@ -58,9 +58,15 @@ void missing_appvars(void) {
 
 // this interrupt is called every second
 void interrupt isr_timer1(void) {
-    game.seconds++;
+    game.seconds--;
     draw_time();
    
+    // if no more time, fail -- only need to trigger keypad interrupt now
+    if (!game.seconds) {
+        oiram.failed = true;
+        int_EnableConfig = INT_KEYBOARD;
+    }
+    
     // ack
     int_Acknowledge = INT_TIMER1;
     timer_IntAcknowledge = TIMER1_RELOADED;
@@ -68,6 +74,9 @@ void interrupt isr_timer1(void) {
 
 // called when user presses or releases a key
 void interrupt isr_keyboard_alternate(void) {
+    bool press_up;
+    
+    // read keypad data
     kb_key_t g1_key = kb_Data[kb_group_1];
     kb_key_t g2_key = kb_Data[kb_group_2];
     kb_key_t g7_key = kb_Data[kb_group_7];
@@ -76,9 +85,16 @@ void interrupt isr_keyboard_alternate(void) {
     pressed_2nd     = (g1_key & kb_2nd);
     
     pressed_down    = (g7_key & kb_Down);
-    pressed_up      = (g7_key & kb_Up);
     pressed_left    = (g7_key & kb_Left);
     pressed_right   = (g7_key & kb_Right);
+    
+    press_up        = (g7_key & kb_Up);
+    
+    if (allow_up_press) {
+        pressed_up = press_up;
+    } else if (!press_up) {
+        allow_up_press = true;
+    }
     
     if (g1_key & kb_Del) {
         if (!oiram.failed) {
@@ -93,7 +109,9 @@ void interrupt isr_keyboard_alternate(void) {
 
 // called when user presses or releases a key
 void interrupt isr_keyboard(void) {
-    /* Read the keypad data */
+    bool press_up;
+    
+    // read keypad data
     kb_key_t g1_key = kb_Data[kb_group_1];
     kb_key_t g2_key = kb_Data[kb_group_2];
     kb_key_t g7_key = kb_Data[kb_group_7];
@@ -106,7 +124,13 @@ void interrupt isr_keyboard(void) {
     
     pressed_alpha   = (g7_key & kb_Up);
     
-    pressed_up      = (g1_key & kb_2nd);
+    press_up        = (g1_key & kb_2nd);
+    
+    if (allow_up_press) {
+        pressed_up = press_up;
+    } else if (!press_up) {
+        allow_up_press = true;
+    }
     
     if (g1_key & kb_Del) {
         if (!oiram.failed) {
@@ -179,6 +203,8 @@ void main(void) {
     
     gfx_SetDrawBuffer();
     
+    game.alternate_keypad = false;
+    
     // walrus mode!
     if(!ti_RclVar(TI_REAL_TYPE, ti_Ans, &real_in)) {
         int in = os_RealToInt24(real_in);
@@ -222,8 +248,7 @@ void main(void) {
     game.fastexit = false;
     game.end_counter = 10;
     game.entered_end_pipe = false;
-    game.seconds = 0;
-    game.alternate_keypad = false;
+    game.seconds = 600;
     
     oiram.failed = false;
     oiram.started_fail = false;
@@ -301,8 +326,12 @@ void main(void) {
     timer_Control = TIMER1_ENABLE | TIMER1_32K | TIMER1_0INT | TIMER1_DOWN;
     
     // setup the int vectors
-    int_SetVector(KEYBOARD_IVECT, isr_keyboard);
     int_SetVector(TIMER1_IVECT, isr_timer1);
+    if (game.alternate_keypad) {
+        int_SetVector(KEYBOARD_IVECT, isr_keyboard_alternate);
+    } else {
+        int_SetVector(KEYBOARD_IVECT, isr_keyboard);
+    }
     
     // tell the interrupt controller that the ON flag should latch and be enabled
     int_EnableConfig = INT_KEYBOARD | INT_TIMER1;

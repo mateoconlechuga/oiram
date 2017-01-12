@@ -363,11 +363,6 @@ void set_load_screen(void) {
         }
         if (grp1 == kb_Mode) {
             game.alternate_keypad ^= true;
-            if (game.alternate_keypad) {
-                int_SetVector(KEYBOARD_IVECT, isr_keyboard_alternate);
-            } else {
-                int_SetVector(KEYBOARD_IVECT, isr_keyboard);
-            }
             goto redraw_screen;
         }
         if (grp7 == kb_Down || grp7 == kb_Up) {

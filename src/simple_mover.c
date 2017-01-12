@@ -72,6 +72,8 @@ void simple_move_handler(simple_move_t *this) {
     
     bool test_right_bottom, test_left_bottom;
     
+    int tx, ty, tb, tvx;
+    
     tmp_x = new_x;
     tmp_y = new_y + add_bottom + 1;
     
@@ -90,7 +92,7 @@ void simple_move_handler(simple_move_t *this) {
         // if nothing below, start accelerating
         if (test_left_bottom || test_right_bottom) {
             if (test_left_bottom && test_right_bottom) {
-                if (tmp_vy < 8) { tmp_vy += 1; }
+                if (tmp_vy < 7) { tmp_vy += 1; }
             } else if (this->smart) {
                 if ((tmp_vx < 0 && test_left_bottom) || (tmp_vx >= 0 && test_right_bottom)) {
                     tmp_vx = -tmp_vx;
@@ -128,7 +130,7 @@ void simple_move_handler(simple_move_t *this) {
                     move_side = TILE_TOP;
                     
                     for(; tmp_vy > 0; tmp_vy--) {
-                        int ty = tmp_y + tmp_vy;
+                        ty = tmp_y + tmp_vy;
                         if (moveable_tile_right_bottom(tmp_x + add_right, ty) & moveable_tile_left_bottom(tmp_x, ty)) {
                             break;
                         }
@@ -151,27 +153,37 @@ void simple_move_handler(simple_move_t *this) {
     }
     
     if (tmp_vx > 0) {
-        tmp_x = new_x + add_right + tmp_vx;
-
+        tb = new_y + add_bottom;
+        tmp_x = new_x + add_right;
+        tvx = tmp_vx;
+        
         // check left of tile
         move_side = TILE_LEFT;
         
-        if (moveable_tile_right_bottom(tmp_x, new_y + add_bottom) && moveable_tile(tmp_x, new_y)) {
-            new_x += tmp_vx;
-        } else {
-            tmp_vx = -tmp_vx;
+        for(; tvx != 0; tvx--) {
+            tx = tmp_x + tvx;
+            if (moveable_tile_right_bottom(tx, tb) && moveable_tile(tx, new_y)) {
+                goto set_new_left_right;
+            }
         }
+        tmp_vx = -tmp_vx;
+set_new_left_right:
+        new_x += tvx;
     } else {
-        tmp_x = new_x + tmp_vx;
-    
+        tb = new_y + add_bottom;
+        tmp_x = new_x;
+        tvx = tmp_vx;
+        
         // check right of tile
         move_side = TILE_RIGHT;
-        
-        if (moveable_tile_left_bottom(tmp_x, new_y + add_bottom) && moveable_tile(tmp_x, new_y)) {
-            new_x += tmp_vx;
-        } else {
-            tmp_vx = -tmp_vx;
+            
+        for(; tvx != 0; tvx++) {
+            tx = tmp_x + tvx;
+            if (moveable_tile_left_bottom(tx, tb) && moveable_tile(tx, new_y)) {
+                goto set_new_left_right;
+            }
         }
+        tmp_vx = -tmp_vx;
     }
     
     this->x = new_x;

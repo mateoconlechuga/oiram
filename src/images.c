@@ -176,8 +176,6 @@ void extract_tiles(void) {
             tileset_tiles[i] = (gfx_image_t*)tmp_ptr;
             tmp_ptr += TILE_DATA_SIZE;
         }
-        // now the order should be the same as in convpng.ini
-        
     } else {
         missing_appvars();
     }

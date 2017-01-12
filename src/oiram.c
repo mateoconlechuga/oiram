@@ -30,6 +30,7 @@ bool pressed_up = false;
 bool pressed_down = false;
 bool pressed_alpha = false;
 bool pressed_2nd = false;
+bool allow_up_press = true;
 
 void compute_oiram_start_location(void) {
     int new_x_left = oiram.x;
@@ -409,6 +410,7 @@ void move_oiram(void) {
             gfx_BlitLines(gfx_buffer, 146, 2);
         }
         
+        // check if no momentum and set sprites
         if (!mm) {
             if (oiram.direction == FACE_RIGHT) {
                 oiram.curr_sprite = oiram_0_buffer_right; 
@@ -449,24 +451,22 @@ void move_oiram(void) {
         }
         
         move_side = TILE_SOLID;
-        
-        // pressing up triggers a jump
-        if (!moveable_tile(new_x_right, new_y_top)) {
+
+        // if inside a tile, force us out of it
+        if (!moveable_tile(new_x_right, new_y_top) || !moveable_tile(new_x_left, new_y_top)) {
             if (!in_quicksand) {
-                new_x_right--;
-                new_x_left--;
-                goto skip_up;
-            }
-        }
-	
-        if (!moveable_tile(new_x_left, new_y_top)) {
-            if (!in_quicksand) {
-                new_x_right++;
-                new_x_left++;
+                if (oiram.direction == FACE_LEFT) {
+                    new_x_right--;
+                    new_x_left--;
+                } else {
+                    new_x_right++;
+                    new_x_left++;
+                }
                 goto skip_up;
             }
         }
         
+        // an up event was triggered
         if (pressed_up) {
             if (oiram.on_vine) {
                 oiram.vy = -2;
@@ -489,13 +489,11 @@ void move_oiram(void) {
                             oiram.fly_count = 9;
                             oiram.vy = -9;
                         } else {
-                            pressed_up = false;
                             goto normal_jump;
                         }
                     }
                     
-                    pressed_up = false;
-                    goto skip_up;
+                    goto skip_force_up;
                 }
                 
         normal_jump:
@@ -515,9 +513,12 @@ void move_oiram(void) {
                         oiram.vy = -10;
                     }
                 }
+        skip_force_up:
+                pressed_up = false;
+                allow_up_press = false;
             }
         }
-	
+	    
         skip_up:
         
         if (pressed_down) {

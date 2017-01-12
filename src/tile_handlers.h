@@ -65,6 +65,7 @@ uint8_t moveable_tile_right_bottom(int x, int y);
 #define TILE_WATER          26
 #define TILE_EMPTY          27
 #define TILE_COIN_0         150
+#define TILE_VANISH         161
 
 #define TILE_COIN_QUESTIONBOX          225
 #define TILE_1UP_QUESTIONBOX           226
