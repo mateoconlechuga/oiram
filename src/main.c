@@ -59,13 +59,14 @@ void missing_appvars(void) {
 // this interrupt is called every second
 void interrupt isr_timer1(void) {
     game.seconds--;
-    draw_time();
    
     // if no more time, fail -- only need to trigger keypad interrupt now
     if (!game.seconds) {
         oiram.failed = true;
         int_EnableConfig = INT_KEYBOARD;
     }
+    
+    update_timer = true;
     
     // ack
     int_Acknowledge = INT_TIMER1;
@@ -364,6 +365,11 @@ void main(void) {
         // swap the draw buffer
         gfx_BlitLines(gfx_buffer, 0, 146);
         
+        if (update_timer) {
+            draw_time();
+            update_timer = false;
+        }
+	
         // animate the things
         animate();
     }

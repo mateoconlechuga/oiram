@@ -1,6 +1,7 @@
 #ifndef LOWER_H
 #define LOWER_H
 
+extern bool update_timer;
 extern const unsigned int oiram_score_chain[9];
 extern gfx_image_t *oiram_score_chain_sprites[9];
 
