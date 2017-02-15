@@ -1143,8 +1143,9 @@ draw_oiram:
         if (oiram.spin_count) {
             if (oiram.curr_sprite == oiram_0_buffer_right) {
                 goto set_tail_right;
+            } else {
+                goto set_tail_left;
             }
-            goto set_tail_left;
         } else {
             if (oiram.direction == FACE_LEFT) {
     set_tail_left:
@@ -1159,7 +1160,14 @@ draw_oiram:
         if (oiram.crouched) {
             tail_y -= 7;
         }
-        gfx_TransparentSprite(tail_img, tail_x, tail_y);
+        if (oiram.invincible) {
+            if (oiram.invincible & 1) {
+                goto draw_tail;
+            }
+        } else {
+    draw_tail:
+            gfx_TransparentSprite(tail_img, tail_x, tail_y);
+        }
     }
     
     gfx_SetClipRegion(0, 0, X_PXL_MAX, Y_PXL_MAX);

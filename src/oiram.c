@@ -535,6 +535,8 @@ void move_oiram(void) {
                 oiram.sprite_index = 0;
                 oiram.flags |= FLAG_OIRAM_SLIDE;
                 goto handle_down;
+            } else {
+                oiram.flags &= ~FLAG_OIRAM_SLIDE;
             }
             if (!(oiram.flags & FLAG_OIRAM_SLIDE)) {
                 if (oiram.on_vine) {
