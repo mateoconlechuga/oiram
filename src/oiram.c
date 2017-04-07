@@ -10,9 +10,9 @@
 #include <debug.h>
 
 // shared libraries
-#include <lib/graphx.h>
-#include <lib/keypadc.h>
-#include <lib/fileioc.h>
+#include <graphx.h>
+#include <keypadc.h>
+#include <fileioc.h>
 
 // oiram stuffs
 #include "tile_handlers.h"

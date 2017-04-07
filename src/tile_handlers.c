@@ -2,7 +2,7 @@
 #include <tice.h>
 #include <debug.h>
 #include <stdio.h>
-#include <lib/graphx.h>
+#include <graphx.h>
 
 #include "defines.h"
 #include "powerups.h"

@@ -1,7 +1,7 @@
 #include <stdlib.h>
 
-#include <lib/graphx.h>
-#include <lib/fileioc.h>
+#include <graphx.h>
+#include <fileioc.h>
 
 #include "images.h"
 #include "lower.h"

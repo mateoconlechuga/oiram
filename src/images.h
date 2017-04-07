@@ -1,7 +1,7 @@
 #ifndef IMAGES_H
 #define IMAGES_H
 
-#include <lib/graphx.h>
+#include <graphx.h>
 
 extern gfx_image_t oiram_0_buffer_left[27*27 + 2];
 extern gfx_image_t oiram_1_buffer_left[27*27 + 2];
