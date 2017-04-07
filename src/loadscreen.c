@@ -11,9 +11,9 @@
 #include <debug.h>
 
 // shared libraries
-#include <lib/ce/graphx.h>
-#include <lib/ce/keypadc.h>
-#include <lib/ce/fileioc.h>
+#include <lib/graphx.h>
+#include <lib/keypadc.h>
+#include <lib/fileioc.h>
 
 // oiram stuffs
 #include "tile_handlers.h"

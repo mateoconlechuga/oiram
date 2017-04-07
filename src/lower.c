@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include <lib/ce/graphx.h>
+#include <lib/graphx.h>
 
 #include "images.h"
 #include "defines.h"

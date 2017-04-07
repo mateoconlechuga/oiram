@@ -39,4 +39,4 @@ STACK_HIGH := D1A87E
 INIT_LOC := D1A87F
 #----------------------------
 
-include $(CEDEV)/bin/main_makefile
+include $(CEDEV)/include/.makefile

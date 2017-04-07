@@ -1,7 +1,7 @@
 #ifndef DEFINES_H
 #define DEFINES_H
 
-#include <lib/ce/graphx.h>
+#include <lib/graphx.h>
 #include <stdint.h>
 #include "stdlib.h"
 
