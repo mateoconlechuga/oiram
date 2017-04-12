@@ -15,3 +15,4 @@ void handle_pending_events(void);
 bool in_viewport(int x, int y);
 
 #endif
+

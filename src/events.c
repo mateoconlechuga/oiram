@@ -30,25 +30,25 @@ const unsigned int shell_score_chain[] = { 500, 800, 1000, 2000, 4000, 5000, 800
 
 // only handle if somewhat within view; otherwise we can just ignore it
 bool in_viewport(int x, int y) {
-    int test_x, test_y;
+    int t_x, t_y;
     
     if (oiram.failed) {
-        test_x = oiram.fail_x;
-        test_y = oiram.fail_y;
+        t_x = oiram.fail_x;
+        t_y = oiram.fail_y;
     } else {
-        test_x = oiram.x;
-        test_y = oiram.y;
+        t_x = oiram.x;
+        t_y = oiram.y;
     }
-    if (x - 360 >= test_x) {
+    if (x - 360 >= t_x) {
         return false;
     } else
-    if (x + 360 <= test_x) {
+    if (x + 360 <= t_x) {
         return false;
     }
-    if (y - 160 >= test_y) {
+    if (y - 160 >= t_y) {
         return false;
     } else
-    if (y + 160 <= test_y) {
+    if (y + 160 <= t_y) {
         return false;
     }
     return true;
@@ -156,15 +156,15 @@ void handle_pending_events(void) {
                    unsigned int chk = 0;
                    unsigned int max = tilemap.width * tilemap.height;
                    for (; chk < max; chk++) {
-                       if (tilemap_data[chk] == 175) {
-                           tilemap_data[chk] = TILE_EMPTY;
+                       if (tilemap.map[chk] == 175) {
+                           tilemap.map[chk] = TILE_EMPTY;
                        }
                    }
                }
     continue_loop_fail:
                remove_simple_mover(i);
                i = -1;
-               continue;  
+               continue;
             }
             
             simple_move_handler(cur);
@@ -1174,3 +1174,4 @@ draw_oiram:
     
     handling_events = false;
 }
+

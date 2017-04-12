@@ -3,6 +3,8 @@
 
 #include <graphx.h>
 
+extern gfx_image_t *tileset_tiles[256];
+
 extern gfx_image_t oiram_0_buffer_left[27*27 + 2];
 extern gfx_image_t oiram_1_buffer_left[27*27 + 2];
 extern gfx_image_t oiram_0_buffer_right[27*27 + 2];
@@ -147,3 +149,4 @@ void extract_sprites(void);
 void extract_tiles(void);
 
 #endif
+

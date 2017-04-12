@@ -40,11 +40,10 @@ _test_against:
 	jp	p,_l__2
 	jp	pe,_l_2
 	ret
-_l__2:
-	jp	po,_l_2
+_l__2:	jp	po,_l_2
 	ret
-_l_2:
-	ld	bc,(_level_map+14)
+
+_l_2:	ld	bc,(_level_map+14)
 	or	a,a
 	sbc	hl,bc
 	jr	c,not_at_max_x
@@ -59,13 +58,11 @@ not_at_max_x:
 	jp	p,_l__4
 	jp	pe,_l_3
 	jr	_l__5
-_l__4:
-	jp	po,_l_3
-_l__5:
-	ld	a,1
+_l__4:	jp	po,_l_3
+_l__5:	ld	a,1
 	ret
-_l_3:
-	ld	(_test_x),de
+
+_l_3:	ld	(_test_x),de
 	ld	bc,(_level_map+11)
 	or	a,a
 	sbc	hl,bc
@@ -443,3 +440,4 @@ l_199:
 	.ref __frameset0
 	.ref __frameset
 	.def _animate
+

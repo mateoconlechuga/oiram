@@ -27,7 +27,7 @@ extern int test_x;
 extern int *test_y_ptr;
 extern uint8_t on_slope;
 extern int test_y_height;
-extern uint8_t (*tile_handler[])(uint8_t*);
+extern uint8_t (*tile_handler[256])(uint8_t*);
 extern bool force_jump;
 extern bool in_quicksand;
 extern bool in_water;

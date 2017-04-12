@@ -17,3 +17,4 @@ void add_next_chain_score(int x, int y);
 void add_coin(int x, int y);
 
 #endif
+

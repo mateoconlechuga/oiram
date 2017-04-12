@@ -517,7 +517,7 @@ void add_fireball(int x, int y, uint8_t dir, uint8_t type) {
     num_fireballs++;
 }
 
-uint8_t (*tile_handler[])(uint8_t*) = {
+uint8_t (*tile_handler[256])(uint8_t*) = {
     solid_tile_handler, // 0   question box 0
     solid_tile_handler, // 1   question box 1
     solid_tile_handler, // 2   question box 2
@@ -773,8 +773,6 @@ uint8_t (*tile_handler[])(uint8_t*) = {
     empty_tile_handler,
     empty_tile_handler,
     empty_tile_handler,
-    empty_tile_handler,
-    empty_tile_handler,
     empty_tile_handler, // prevent a crash caused by jumping to invalid code -- lol totes forgot about that
 };
 
@@ -857,7 +855,7 @@ void remove_bumped_tile(uint8_t i) {
 uint8_t handle_warp_pipe(uint8_t *tile) {
     unsigned int i;
     unsigned int offset, x, y;
-    
+
     if (handling_events || oiram.vy > 0) {
         return 0;
     }
@@ -890,7 +888,7 @@ uint8_t handle_warp_pipe(uint8_t *tile) {
                     }
                     break;
                 case TILE_TEST_PIPE_DOWN:
-                    if (oiram.x < x + 2) {
+                    if (oiram.x < (int)x + 2) {
                         return 0;
                     }
                     oiram.in_pipe = PIPE_DOWN;
@@ -900,7 +898,7 @@ uint8_t handle_warp_pipe(uint8_t *tile) {
                     break;
                 case TILE_BOTTOM:
                     if (pipe_enter & MASK_PIPE_UP) {
-                        if (oiram.x < x + 2) {
+                        if (oiram.x < (int)x + 2) {
                             return 0;
                         }
                         oiram.in_pipe = PIPE_UP;
@@ -977,3 +975,4 @@ void tile_to_abs_xy_pos(uint8_t *tile, unsigned int *x, unsigned int *y) {
     *x = (offset % tilemap.width) * TILE_WIDTH;
 }
 */
+

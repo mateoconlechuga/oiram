@@ -90,3 +90,4 @@ enemy_t *add_simple_enemy(uint8_t *tile, uint8_t type);
 void remove_simple_enemy(uint8_t i);
 
 #endif
+

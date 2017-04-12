@@ -288,9 +288,9 @@ void remove_simple_enemy(uint8_t i) {
 void get_enemies(void) {
     unsigned int j, delay;
     unsigned int loop = tilemap.width * tilemap.height;
-    
+
     for(j = 0; j < loop; j++) {
-        uint8_t *this = tilemap_data + j;
+        uint8_t *this = tilemap.map + j;
         uint8_t tile = *this;
         
         // f0 = oriam start
@@ -361,3 +361,4 @@ set_empty_tile:
         }
     }
 }
+

@@ -21,3 +21,4 @@ bool shrink_oiram(void);
 void set_left_oiram_sprites(void);
 
 #endif
+

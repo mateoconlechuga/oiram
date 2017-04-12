@@ -60,3 +60,4 @@ void remove_simple_mover(uint8_t index);
 void simple_move_handler(simple_move_t *this);
 
 #endif
+

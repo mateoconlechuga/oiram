@@ -18,3 +18,4 @@ void compute_oiram_start_location(void);
 void set_normal_oiram_sprites(void);
 
 #endif
+

@@ -27,7 +27,6 @@
 #include "lower.h"
 #include "simple_mover.h"
 
-uint8_t *tilemap_data;
 unsigned int *warp_pipe_info;
 unsigned int pipe_max_tests;
 
@@ -91,23 +90,22 @@ void load_progress(void) {
     }
 }
 
-static void init_level(gfx_tilemap_t *tilemap, map_t *map, gfx_image_t **img_tiles, uint8_t *data, uint8_t width, uint8_t height) {
-    map->max_y = height * TILE_HEIGHT;
-    map->max_x = width * TILE_WIDTH;
-    map->max_x_scroll = map->max_x - ((TILEMAP_DRAW_WIDTH-1) * TILE_WIDTH);
-    map->max_y_scroll = map->max_y - ((TILEMAP_DRAW_HEIGHT-1) * TILE_HEIGHT);
-    tilemap->map = data;
-    tilemap->tiles = img_tiles;
-    tilemap->type_width = gfx_tile_16_pixel;
-    tilemap->type_height = gfx_tile_16_pixel;
-    tilemap->tile_height = TILE_HEIGHT;
-    tilemap->tile_width = TILE_WIDTH;
-    tilemap->draw_height = TILEMAP_DRAW_HEIGHT;
-    tilemap->draw_width = TILEMAP_DRAW_WIDTH;
-    tilemap->width = width;
-    tilemap->height = height;
-    tilemap->y_loc = 0;
-    tilemap->x_loc = 0;
+static void init_level(uint8_t width, uint8_t height) {
+    level_map.max_y = height * TILE_HEIGHT;
+    level_map.max_x = width * TILE_WIDTH;
+    level_map.max_x_scroll = level_map.max_x - ((TILEMAP_DRAW_WIDTH-1) * TILE_WIDTH);
+    level_map.max_y_scroll = level_map.max_y - ((TILEMAP_DRAW_HEIGHT-1) * TILE_HEIGHT);
+    tilemap.tiles = tileset_tiles;
+    tilemap.type_width = gfx_tile_16_pixel;
+    tilemap.type_height = gfx_tile_16_pixel;
+    tilemap.tile_height = TILE_HEIGHT;
+    tilemap.tile_width = TILE_WIDTH;
+    tilemap.draw_height = TILEMAP_DRAW_HEIGHT;
+    tilemap.draw_width = TILEMAP_DRAW_WIDTH;
+    tilemap.width = width;
+    tilemap.height = height;
+    tilemap.y_loc = 0;
+    tilemap.x_loc = 0;
 }
 
 static void decode(uint8_t *in, uint8_t *out) {
@@ -135,18 +133,19 @@ static void decode(uint8_t *in, uint8_t *out) {
 }
 
 void set_level(uint8_t abs_pack, uint8_t level) {
+    uint8_t *tilemap_data = NULL;
     ti_var_t slot = 0;
     uint8_t level_width = 0, level_height = 0;
     uint16_t color = 0;
     
     game.end_level = 0;
     search_pos = NULL;
-    
+
     ti_CloseAll();
     while(((var_name = ti_Detect( &search_pos, search_string )) != NULL) && abs_pack) {
         abs_pack--;
     }
-    
+
     if ((slot = ti_Open((char*)var_name, "r"))) {
         uint8_t *pack_data = ((uint8_t*)ti_GetDataPtr(slot)) + 2;
         uint8_t num_pipes;
@@ -185,8 +184,8 @@ void set_level(uint8_t abs_pack, uint8_t level) {
         pack_data++;
         
         // allocate and decompress the level
-        tilemap_data = safe_malloc(level_width * level_height);
-        decode(pack_data, tilemap_data);
+        tilemap.map = safe_malloc(level_width * level_height);
+        decode(pack_data, tilemap.map);
     }
     
     if (!level_width || !level_height) {
@@ -195,7 +194,7 @@ void set_level(uint8_t abs_pack, uint8_t level) {
     }
     
     // init the tilemap structure
-    init_level(&tilemap, &level_map, tileset_tiles, tilemap_data, level_width, level_height);
+    init_level(level_width, level_height);
     gfx_palette[BACKGROUND_COLOR_INDEX] = color;
 }
 
@@ -218,7 +217,7 @@ void set_load_screen(void) {
     uint8_t end_level;
     uint8_t max_select_level[MAX_SHOW];
     uint8_t tmp;
-    
+
     gfx_SetClipRegion(0, 0, LCD_WIDTH, LCD_HEIGHT);
     
     redraw_screen:
@@ -228,11 +227,11 @@ void set_load_screen(void) {
     
     y = 103;
     slot = 0;
-    
+
     gfx_palette[BACKGROUND_COLOR_INDEX] = 0xD77E;
     gfx_FillScreen(BLACK_INDEX);
     gfx_ScaledTransparentSprite_NoClip(oiram_logo, 150, 32, 2, 2);
-    
+
     gfx_TransparentSprite(tile_194, 24, 52);
     gfx_TransparentSprite(tile_195, 40, 52);
     
@@ -288,14 +287,14 @@ void set_load_screen(void) {
     search_pos = NULL;
     while((var_name = ti_Detect( &search_pos, search_string )) != NULL) {
         ti_Close(slot);
-        
+
         if (scroll_amt <= num_packs && y < (103 + 10*MAX_SHOW)) {
             uint8_t max_select;
             uint8_t progress;
-            
+
             slot = ti_Open((char*)var_name, "r");
             pack_data = ((uint8_t*)ti_GetDataPtr(slot)) + 2;
-        
+
             gfx_PrintStringXY((char*)pack_data, 23, y + 4);
             
             pack_data += strlen((char*)pack_data) + 1;
@@ -312,7 +311,7 @@ void set_load_screen(void) {
             gfx_PrintUInt(max_select, 3);
             gfx_SetMonospaceFont(0);
             
-            max_select_level[num_packs] = max_select - 1;
+            max_select_level[num_packs-scroll_amt] = max_select - 1;
             
             if (selected_pack == tmp) {
                 selected_level = max_select - 1;
@@ -338,7 +337,7 @@ void set_load_screen(void) {
     kb_SetMode(MODE_0_IDLE);
     kb_EnableInt = 0;
     
-    while (true) {
+    for (;;) {
         unsigned int delay;
         kb_key_t grp7;
         kb_key_t grp1;
@@ -407,3 +406,4 @@ void set_load_screen(void) {
     
     gfx_SetClipRegion(0, 0, X_PXL_MAX, Y_PXL_MAX);
 }
+

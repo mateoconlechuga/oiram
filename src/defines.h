@@ -11,8 +11,6 @@ void interrupt isr_keyboard(void);
 extern bool handling_events;
 extern bool something_died;
 
-extern gfx_image_t *tileset_tiles[256];
-
 typedef struct {
     uint8_t animation_counter;
     uint8_t animation_3_counter;
@@ -151,3 +149,4 @@ extern game_t game;
 #define OIRAM_SMALL_SPRITE_SIZE ((16*16) + 2)
 
 #endif
+

@@ -7,6 +7,8 @@
 #include "lower.h"
 #include "defines.h"
 
+gfx_image_t *tileset_tiles[256];
+
 gfx_image_t oiram_0_buffer_left[27*27 + 2];
 gfx_image_t oiram_1_buffer_left[27*27 + 2];
 gfx_image_t oiram_0_buffer_right[27*27 + 2];
@@ -416,3 +418,4 @@ void extract_sprites(void) {
     
     ti_CloseAll();
 }
+

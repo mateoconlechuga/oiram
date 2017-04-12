@@ -1,5 +1,3 @@
-// standard headers
-#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,9 +29,6 @@ map_t level_map;
 tiles_struct_t tiles;
 gfx_tilemap_t tilemap;
 oiram_t oiram;
-
-/* Place to hold decompressed tile pointers */
-gfx_image_t *tileset_tiles[256];
 game_t game;
 
 void *safe_malloc(size_t bytes) {
@@ -44,6 +39,19 @@ void *safe_malloc(size_t bytes) {
         exit(0);
     }
     return (void*)data;
+}
+
+static void init_settings(void) {
+    real_t *real_in;
+    game.alternate_keypad = false;
+    tilemap.map = NULL;
+
+    // walrus mode!
+    if(!ti_RclVar(TI_REAL_TYPE, ti_Ans, &real_in)) {
+        int in = os_RealToInt24(real_in);
+        if (in == 1337) { oiram.less = true; }
+        if (in == 505)  { oiram.less2 = true; }
+    }
 }
 
 void missing_appvars(void) {
@@ -202,22 +210,14 @@ void main(void) {
     unsigned int delay;
     size_t pack_author_len;
     char end_str[100];
-    real_t *real_in;
     pack_info_t *pack;
-    
+
     // initialize the 8bpp graphics
     gfx_Begin( gfx_8bpp );
-    
     gfx_SetDrawBuffer();
     
-    game.alternate_keypad = false;
-    
-    // walrus mode!
-    if(!ti_RclVar(TI_REAL_TYPE, ti_Ans, &real_in)) {
-        int in = os_RealToInt24(real_in);
-        if (in == 1337) { oiram.less = true; }
-        if (in == 505)  { oiram.less2 = true; }
-    }
+    // initialize settings
+    init_settings();
     
     // init the state of the levels
     load_progress();
@@ -387,7 +387,7 @@ void main(void) {
     while(num_poofs)          { remove_poof(0);         }
     while(num_fireballs)      { remove_fireball(0);     }
     while(num_bumped_tiles)   { remove_bumped_tile(0);  }
-    free(tilemap_data);
+    free(tilemap.map);
     
     gfx_SetColor(BLACK_INDEX);
     
@@ -465,3 +465,4 @@ exit:
     // save the pack states
     save_progress();
 }
+

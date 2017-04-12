@@ -700,3 +700,4 @@ void move_oiram(void) {
         }
     }
 }
+
