@@ -468,6 +468,9 @@ void move_oiram(void) {
         
         // an up event was triggered
         if (pressed_up) {
+            // check if there is a door we can go through
+            if (false) {
+            }
             if (oiram.on_vine) {
                 oiram.vy = -2;
             } else  {

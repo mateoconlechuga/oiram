@@ -45,7 +45,9 @@ enum tile_interaction {
     TILE_RACOON_POWER,
     TILE_RESWOB_DOWN,
     TILE_SOLID,
+    TILE_TEST_DOOR_UP,
 };
+
 extern uint8_t move_side;
 
 uint8_t moveable_tile(int x, int y);
@@ -66,6 +68,12 @@ uint8_t moveable_tile_right_bottom(int x, int y);
 #define TILE_EMPTY          27
 #define TILE_COIN_0         150
 #define TILE_VANISH         161
+
+#define TILE_BLUE_BRICK_0   233
+#define TILE_BLUE_BRICK_1   234
+#define TILE_BLUE_BRICK_2   235
+#define TILE_BLUE_BRICK_3   236
+#define TILE_BLUE_BRICK_X   238
 
 #define TILE_COIN_QUESTIONBOX          225
 #define TILE_1UP_QUESTIONBOX           226

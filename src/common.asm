@@ -314,6 +314,10 @@ l_192:
 	add	hl,bc
 	ld	(_tileset_tiles+438),hl
 
+	ld	hl,(_tileset_tiles+699)
+	add	hl,bc
+	ld	(_tileset_tiles+699),hl
+
 	ld	hl,_tiles+1
 	ld	a,(hl)
 	cp	a,2

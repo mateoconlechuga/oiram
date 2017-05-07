@@ -6,6 +6,7 @@
 #include "images.h"
 #include "lower.h"
 #include "defines.h"
+#include "tile_handlers.h"
 
 gfx_image_t *tileset_tiles[256];
 
@@ -155,7 +156,7 @@ gfx_image_t *oiram_left[] = {
 
 void extract_tiles(void) {
     uint8_t slot;
-    gfx_image_t *tile_0;
+    gfx_image_t *tile_question_box;
     
     ti_CloseAll();
     slot = ti_Open("OiramT", "r");
@@ -170,11 +171,11 @@ void extract_tiles(void) {
         pal_ptr++;
         
         // set up the palette
-        gfx_SetPalette( pal_ptr, pal_size, 0 );
+        gfx_SetPalette(pal_ptr, pal_size, 0);
         tmp_ptr = (uint8_t*)pal_ptr;
         tmp_ptr += pal_size;
         
-        for(i = 0; i < 224; i++) {
+        for(i = 0; i < 240; i++) {
             tileset_tiles[i] = (gfx_image_t*)tmp_ptr;
             tmp_ptr += TILE_DATA_SIZE;
         }
@@ -182,16 +183,17 @@ void extract_tiles(void) {
         missing_appvars();
     }
     
-    coin_sprite = tileset_tiles[150];
+    coin_sprite = tileset_tiles[TILE_COIN_0];
     
-    tile_0 = tileset_tiles[0];
-    tileset_tiles[225] = tile_0;
-    tileset_tiles[226] = tile_0;
-    tileset_tiles[227] = tile_0;
-    tileset_tiles[228] = tile_0;
-    tileset_tiles[229] = tile_0;
-    tileset_tiles[230] = tile_0;
-    
+    tile_question_box = tileset_tiles[0];
+    tileset_tiles[225] = tile_question_box;
+    tileset_tiles[226] = tile_question_box;
+    tileset_tiles[227] = tile_question_box;
+    tileset_tiles[228] = tile_question_box;
+    tileset_tiles[229] = tile_question_box;
+    tileset_tiles[230] = tile_question_box;
+    tileset_tiles[TILE_BLUE_BRICK_X] = tileset_tiles[TILE_EMPTY];
+
     ti_CloseAll();
 }
     

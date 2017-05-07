@@ -96,7 +96,7 @@ flying_type:
             special->type = KOOPA_BONES_TYPE;
             special->smart = true;
             break;
-        case 5:
+        default:
             special->hitbox.height = 15;
             special->smart = false;
             special->type = SPIKE_TYPE;

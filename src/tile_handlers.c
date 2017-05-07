@@ -26,7 +26,7 @@ int test_y_height;
 uint8_t testing_side;
 uint8_t on_slope = 0;
 
-uint8_t handle_warp_pipe(uint8_t *tile);
+static uint8_t warp_tile_handler(uint8_t *tile);
 
 static uint8_t brick_tile_handler(uint8_t *tile) {
     unsigned int x, y;
@@ -106,6 +106,21 @@ static uint8_t lavas_tile_handler(uint8_t *tile) {
         }
     }
     return 1;
+}
+
+static uint8_t p_block_handler(uint8_t *tile) {
+    if (!handling_events) {
+        if (move_side == TILE_TOP) {
+            unsigned int x, y;
+            *tile = TILE_EMPTY;
+            tile_to_abs_xy_pos(tile, &x, &y);
+            add_poof(x + 2, y + 2);
+            oiram.vy = -2;
+            game.blue_block_counter = 10;
+            show_blue_blocks(true);
+        }
+    }
+    return 0;
 }
 
 static uint8_t lava_tile_handler(uint8_t *tile) {
@@ -532,13 +547,13 @@ uint8_t (*tile_handler[256])(uint8_t*) = {
     solid_tile_handler, // 11  solid box
     solid_tile_handler, // 12  solid wood
     solid_tile_handler, // 13  solid empty
-    handle_warp_pipe,   // 14  pipe green up top left
-    handle_warp_pipe,   // 15  pipe green up top right
-    handle_warp_pipe,   // 16  pipe gray up top left
-    handle_warp_pipe,   // 17  pipe gray up top right
-    solid_tile_handler,   // 18  pipe green left left top
+    warp_tile_handler,  // 14  pipe green up top left
+    warp_tile_handler,  // 15  pipe green up top right
+    warp_tile_handler,  // 16  pipe gray up top left
+    warp_tile_handler,  // 17  pipe gray up top right
+    solid_tile_handler, // 18  pipe green left left top
     solid_tile_handler, // 19  pipe green left mid top
-    solid_tile_handler,   // 20  pipe gray left left top
+    solid_tile_handler, // 20  pipe gray left left top
     solid_tile_handler, // 21  pipe gray left mid top
     solid_tile_handler, // 22  solid grass
     solid_tile_handler, // 23  solid grass
@@ -550,9 +565,9 @@ uint8_t (*tile_handler[256])(uint8_t*) = {
     solid_tile_handler, // 29  pipe green up right mid
     solid_tile_handler, // 30  pipe gray up left mid
     solid_tile_handler, // 31  pipe gray up right mid
-    handle_warp_pipe,   // 32  pipe green left left bottom
+    warp_tile_handler,  // 32  pipe green left left bottom
     solid_tile_handler, // 33  pipe green left right bottom
-    handle_warp_pipe,   // 34  pipe gray left left bottom
+    warp_tile_handler,  // 34  pipe gray left left bottom
     solid_tile_handler, // 35  pipe gray left right bottom
     solid_tile_handler, // 36  solid grass
     solid_tile_handler, // 37  solid grass
@@ -749,13 +764,13 @@ uint8_t (*tile_handler[256])(uint8_t*) = {
     star_quest_handler, // 228
     fireflower_quest_handler, // 229
     leaf_quest_handler, // 230
-    empty_tile_handler,
-    empty_tile_handler,
-    empty_tile_handler,
-    empty_tile_handler,
-    empty_tile_handler,
-    empty_tile_handler,
-    empty_tile_handler,
+    warp_tile_handler, // 231
+    warp_tile_handler, // 232
+    brick_tile_handler, // 233
+    brick_tile_handler, // 234
+    brick_tile_handler, // 235
+    brick_tile_handler, // 236
+    p_block_handler, // 237
     empty_tile_handler,
     empty_tile_handler,
     empty_tile_handler,
@@ -851,8 +866,11 @@ void remove_bumped_tile(uint8_t i) {
 #define MASK_PIPE_UP     (1<<23)
 #define MASK_PIPE_LEFT   (1<<22)
 #define MASK_PIPE_RIGHT  (1<<21)
+#define MASK_DOOR_E      (1<<20)
+#define MASK_DOOR_X      (1<<19)
+#define MASK_PIPE_DOOR   (MASK_PIPE_UP | MASK_PIPE_DOWN | MASK_PIPE_LEFT | MASK_PIPE_RIGHT | MASK_DOOR_E | MASK_DOOR_X)
 
-uint8_t handle_warp_pipe(uint8_t *tile) {
+uint8_t warp_tile_handler(uint8_t *tile) {
     unsigned int i;
     unsigned int offset, x, y;
 
@@ -867,7 +885,7 @@ uint8_t handle_warp_pipe(uint8_t *tile) {
     
     for(i = 0; i < pipe_max_tests; i += 2) {
         unsigned int pipe_enter = warp_pipe_info[i];
-        unsigned int pipe_enter_masked = pipe_enter & ~(MASK_PIPE_UP | MASK_PIPE_LEFT | MASK_PIPE_RIGHT /* | MASK_PIPE_DOWN */ );
+        unsigned int pipe_enter_masked = pipe_enter & ~MASK_PIPE_DOOR;
 
         if (offset == pipe_enter_masked) {
             switch (move_side) {
@@ -914,7 +932,7 @@ uint8_t handle_warp_pipe(uint8_t *tile) {
         
         if (oiram.enter_pipe) {
             unsigned int not_masked = warp_pipe_info[i+1];
-            oiram.exit_pipe_loc = not_masked & ~(MASK_PIPE_UP | MASK_PIPE_LEFT | MASK_PIPE_RIGHT /* | MASK_PIPE_DOWN */ );
+            oiram.exit_pipe_loc = not_masked & ~MASK_PIPE_DOOR;
             
             if (not_masked & MASK_PIPE_UP) {
                 oiram.exit_pipe_dir = PIPE_UP;

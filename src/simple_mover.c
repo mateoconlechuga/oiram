@@ -191,3 +191,4 @@ set_new_left_right:
     this->vy = tmp_vy;
     this->vx = tmp_vx;
 }
+

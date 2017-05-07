@@ -2,8 +2,10 @@ SPASM ?= spasm
 
 ifeq ($(OS),Windows_NT)
 MV = move
+MKDIR = mkdir
 else
 MV = mv
+MKDIR = mkdir -p
 endif
 
 all: cv sp
@@ -16,7 +18,7 @@ sp:
 
 cv:
 	convpng
-	mkdir ../bin
+	$(MKDIR) ../bin
 
 clean:
 	$(RM) *.asm *.inc main_pal.png convpng.log

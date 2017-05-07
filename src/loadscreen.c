@@ -72,7 +72,7 @@ void load_progress(void) {
     }
     
     num_packs = 0;
-    while((var_name = ti_Detect( &search_pos, search_string )) != NULL) {
+    while((var_name = ti_Detect(&search_pos, search_string))) {
         pack_info_t *pack = &pack_info[num_packs];
         for(j=0; j<num_packs_in_var; j++) {
             pack_info_t *pack_in_var = (pack_info_t*)((uint8_t*)((uint8_t*)(pack_info_in_var) + (j*sizeof(pack_info_t))));
@@ -178,10 +178,8 @@ void set_level(uint8_t abs_pack, uint8_t level) {
         pack_data += num_pipes * 6;
         
         // get level width and height
-        level_width = *pack_data;
-        pack_data++;
-        level_height = *pack_data;
-        pack_data++;
+        level_width = *pack_data++;
+        level_height = *pack_data++;
         
         // allocate and decompress the level
         tilemap.map = safe_malloc(level_width * level_height);

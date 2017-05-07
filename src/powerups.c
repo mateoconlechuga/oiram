@@ -176,3 +176,21 @@ bool shrink_oiram(void) {
     return true;
 }
 
+void show_blue_blocks(bool state) {
+    unsigned int j, loop = tilemap.width * tilemap.height;
+
+    for(j = 0; j < loop; j++) {
+        uint8_t *this = tilemap.map + j;
+        uint8_t tile = *this;
+        if (state) {
+            if (tile == TILE_BLUE_BRICK_X) {
+                *this = TILE_BLUE_BRICK_0;
+            }
+        } else {
+            if (tile >= TILE_BLUE_BRICK_0 && tile <= TILE_BLUE_BRICK_3) {
+                *this = TILE_BLUE_BRICK_X;
+            }
+        }
+    }
+}
+

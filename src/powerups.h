@@ -20,5 +20,7 @@ void eat_leaf(void);
 bool shrink_oiram(void);
 void set_left_oiram_sprites(void);
 
+void show_blue_blocks(bool);
+
 #endif
 

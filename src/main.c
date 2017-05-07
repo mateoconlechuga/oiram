@@ -74,6 +74,13 @@ void interrupt isr_timer1(void) {
         int_EnableConfig = INT_KEYBOARD;
     }
     
+    if (game.blue_block_counter) {
+        game.blue_block_counter--;
+        if (!game.blue_block_counter) {
+            show_blue_blocks(false);
+        }
+    }
+
     update_timer = true;
     
     // ack

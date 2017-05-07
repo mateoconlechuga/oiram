@@ -119,8 +119,9 @@ typedef struct {
     uint8_t level;
     uint8_t end_level;
     uint8_t pack;
-    unsigned int seconds;
+    uint24_t seconds;
     bool alternate_keypad;
+    uint8_t blue_block_counter;
 } game_t;
 
 extern game_t game;
