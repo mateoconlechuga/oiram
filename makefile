@@ -9,12 +9,12 @@
 
 #----------------------------
 TARGET ?= OIRAM
-DEBUGMODE ?= NDEBUG
+DEBUGMODE ?= DEBUG
 ARCHIVED ?= NO
 APPVAR ?= NO
 #----------------------------
 ICONPNG ?= iconc.png
-DESCRIPTION ?= "Oiram v1.0"
+DESCRIPTION ?= "Oiram v1.2"
 #----------------------------
 
 #Add shared library names to the L varible, for instance:
