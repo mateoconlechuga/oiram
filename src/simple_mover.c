@@ -98,10 +98,8 @@ void simple_move_handler(simple_move_t *this) {
                     tmp_vx = -tmp_vx;
                 }
             }
-        } else {
-            if (this->is_bouncer) {
-                tmp_vy = -6;
-            }
+        } else if (this->is_bouncer) {
+            tmp_vy = -6;
         }
         
         // check if velocity change
@@ -129,7 +127,7 @@ void simple_move_handler(simple_move_t *this) {
                     // check top of tile
                     move_side = TILE_TOP;
                     
-                    for(; tmp_vy > 0; tmp_vy--) {
+                    for(; (unsigned)tmp_vy > 0; tmp_vy--) {
                         ty = tmp_y + tmp_vy;
                         if (moveable_tile_right_bottom(tmp_x + add_right, ty) & moveable_tile_left_bottom(tmp_x, ty)) {
                             break;

@@ -234,11 +234,16 @@ static uint8_t coin_tile_handler(uint8_t *tile) {
 }
 
 static uint8_t top_tile_handler(uint8_t *tile) {
-    if (move_side == TILE_TOP) {
+    if (move_side == TILE_TOP || move_side == TILE_X) {
+        uint8_t m = test_y & 15;
         if (!handling_events) {
-            if ((test_y & 15) < 8) { return 0; }
+            if (m < 8) {
+                return 0;
+            }
         } else {
-            if ((test_y & 15) < 5) { return 0; }
+            if (m < 8) {
+                return 0;
+            }
         }
     }
     return 1;

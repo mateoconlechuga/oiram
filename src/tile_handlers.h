@@ -116,6 +116,7 @@ enum fireball_directions {
 };
 
 enum fireball_type {
+    NO_FIREBALL,
     OIRAM_FIREBALL=1,
     CHOMPER_FIREBALL,
 };

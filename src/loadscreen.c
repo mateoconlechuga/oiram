@@ -46,11 +46,11 @@ void save_progress(void) {
     if ((variable = ti_Open(save_name, "w"))) {
         ti_PutC((char)num_packs, variable);
         ti_Write(&pack_info, sizeof(pack_info_t), num_packs, variable);
-	ti_SetArchiveStatus(true, variable);
+        ti_PutC((char)game.alternate_keypad, variable);
+        ti_SetArchiveStatus(true, variable);
     }
     ti_CloseAll();
     gfx_End();
-    prgm_CleanUp();
 }
 
 void load_progress(void) {
@@ -58,15 +58,15 @@ void load_progress(void) {
     pack_info_t **pack_info_in_var = NULL;
     uint8_t num_packs_in_var = 0;
     unsigned int j;
-    
+    size_t size;
+
     ti_CloseAll();
     if ((variable = ti_Open(save_name, "r"))) {
         num_packs_in_var = (uint8_t)ti_GetC(variable);
-        pack_info_in_var = (pack_info_t**)ti_GetDataPtr(variable);
+        pack_info_in_var = ti_GetDataPtr(variable);
     }
-    ti_CloseAll();
     
-    memset(pack_info, 0, sizeof(pack_info));
+    memset(pack_info, 0, sizeof pack_info);
     for(j=0; j<256; j++) {
         pack_info[j].lives = 15;
     }
@@ -88,6 +88,11 @@ void load_progress(void) {
         }
         num_packs++;
     }
+    
+    // go to the end of the file
+    ti_Seek(-1, SEEK_END, variable);
+    game.alternate_keypad = (bool)ti_GetC(variable);
+    ti_CloseAll();
 }
 
 static void init_level(uint8_t width, uint8_t height) {
@@ -182,7 +187,7 @@ void set_level(uint8_t abs_pack, uint8_t level) {
         level_height = *pack_data++;
         
         // allocate and decompress the level
-        tilemap.map = safe_malloc(level_width * level_height);
+        tilemap.map = malloc(level_width * level_height);
         decode(pack_data, tilemap.map);
     }
     
@@ -201,6 +206,13 @@ void set_level(uint8_t abs_pack, uint8_t level) {
 void set_load_screen(void) {
     ti_var_t slot;
     int y;
+    
+    const char *str_2nd = "[2nd]";
+    const char *str_up = "[up]";
+    const char *str_alpha = "[alpha]";
+    char *str_1;
+    char *str_2;
+    char *str_3;
     
     gfx_image_t *tile_208 = tileset_tiles[208];
     gfx_image_t *tile_145 = tileset_tiles[145];
@@ -263,15 +275,18 @@ void set_load_screen(void) {
     gfx_PrintStringXY("Controls", 5, 187);
     
     if (game.alternate_keypad) {
-        gfx_PrintStringXY("[2nd]", 9, 209);
-        gfx_PrintStringXY("[up]", 9, 219);
-        gfx_PrintStringXY("[alpha]", 9, 229);
+        str_1 = str_2nd;
+        str_2 = str_up;
+        str_3 = str_alpha;
     } else {
-        gfx_PrintStringXY("[alpha]", 9, 209);
-        gfx_PrintStringXY("[2nd]", 9, 219);
-        gfx_PrintStringXY("[up]", 9, 229);
+        str_1 = str_alpha;
+        str_2 = str_2nd;
+        str_3 = str_up;
     }
     
+    gfx_PrintStringXY(str_1, 9, 209);
+    gfx_PrintStringXY(str_2, 9, 219);
+    gfx_PrintStringXY(str_3, 9, 229);
     gfx_PrintStringXY("[del]", 9, 199);
     gfx_PrintStringXY("Quit", 65, 199);
     gfx_PrintStringXY("Run", 65, 209);
@@ -283,7 +298,7 @@ void set_load_screen(void) {
     tmp = 0;
     num_packs = 0;
     search_pos = NULL;
-    while((var_name = ti_Detect( &search_pos, search_string )) != NULL) {
+    while((var_name = ti_Detect(&search_pos, search_string))) {
         ti_Close(slot);
 
         if (scroll_amt <= num_packs && y < (103 + 10*MAX_SHOW)) {
@@ -359,7 +374,7 @@ void set_load_screen(void) {
             break;
         }
         if (grp1 == kb_Mode) {
-            game.alternate_keypad ^= true;
+            game.alternate_keypad = !game.alternate_keypad;
             goto redraw_screen;
         }
         if (grp7 == kb_Down || grp7 == kb_Up) {

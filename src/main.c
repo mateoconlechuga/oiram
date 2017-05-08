@@ -32,18 +32,17 @@ oiram_t oiram;
 game_t game;
 
 void *safe_malloc(size_t bytes) {
-    uint8_t *data = malloc(bytes);
+    void *data = malloc(bytes);
     if (!data) {
         save_progress();
         int_Reset();
         exit(0);
     }
-    return (void*)data;
+    return data;
 }
 
 static void init_settings(void) {
     real_t *real_in;
-    game.alternate_keypad = false;
     tilemap.map = NULL;
 
     // walrus mode!
@@ -290,6 +289,7 @@ void main(void) {
     tiles.animation_counter = 0;
     
     pack = &pack_info[game.pack];
+    
     oiram.flags = pack->flags;
     oiram.lives = pack->lives;
     oiram.score = pack->score;

@@ -453,7 +453,7 @@ void move_oiram(void) {
                             add_dir = DOWN_RIGHT;
                         }
                         
-                        add_fireball(new_x_left + add_x, new_y_top + oiram.hitbox.height/2, add_dir, OIRAM_FIREBALL);
+                        add_fireball(new_x_left + add_x, new_y_top + oiram.hitbox.height/2 - 2, add_dir, OIRAM_FIREBALL);
                         oiram.fireballs++;
                     }
                 }
@@ -600,7 +600,7 @@ void move_oiram(void) {
                 // check the top of the tile
                 move_side = TILE_TOP;
                 
-                for(; oiram.vy > 0; oiram.vy--) {
+                for(; (unsigned)oiram.vy > 0; oiram.vy--) {
                     ty = new_y_bot + oiram.vy;
                     if (moveable_tile_right_bottom(new_x_right, ty) & moveable_tile_left_bottom(new_x_left, ty)) {
                         break;
