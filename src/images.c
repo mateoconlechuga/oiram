@@ -146,6 +146,9 @@ gfx_image_t *reswob_right_0;
 gfx_image_t *reswob_right_1;
 gfx_image_t *reswob_down;
 
+gfx_image_t *door_top;
+gfx_image_t *door_bot;
+
 gfx_image_t *oiram_right[] = {
     oiram_0_buffer_right, oiram_1_buffer_right
 };
@@ -186,6 +189,8 @@ void extract_tiles(void) {
     coin_sprite = tileset_tiles[TILE_COIN_0];
     
     tile_question_box = tileset_tiles[0];
+    door_top = tileset_tiles[224];
+    door_bot = tileset_tiles[225];
     tileset_tiles[225] = tile_question_box;
     tileset_tiles[226] = tile_question_box;
     tileset_tiles[227] = tile_question_box;

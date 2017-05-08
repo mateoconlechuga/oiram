@@ -145,6 +145,9 @@ extern gfx_image_t *reswob_right_0;
 extern gfx_image_t *reswob_right_1;
 extern gfx_image_t *reswob_down;
 
+extern gfx_image_t *door_top;
+extern gfx_image_t *door_bot;
+
 void extract_sprites(void);
 void extract_tiles(void);
 

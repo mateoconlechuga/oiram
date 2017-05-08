@@ -1085,6 +1085,11 @@ skip_draw:
                 pipe_oiram_up:
                     gfx_SetClipRegion(0, 0, X_PXL_MAX, oiram.pipe_clip_y - oiram.scrolly);
                     break;
+                case DOOR_WARP:
+                pipe_door:
+                    gfx_Sprite(door_top, oiram.door_x, oiram.door_y);
+                    gfx_Sprite(door_bot, oiram.door_x, oiram.door_y + 16);
+                    break;
             }
         } else {
             switch (oiram.in_pipe) {
@@ -1096,6 +1101,8 @@ skip_draw:
                     goto pipe_oiram_left;
                 case PIPE_UP:
                     goto pipe_oiram_down;
+                case DOOR_WARP:
+                    goto pipe_door;
             }
         }
         goto draw_oiram;

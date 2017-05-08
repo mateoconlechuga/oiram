@@ -173,7 +173,10 @@ void compute_oiram_location_from_offset(unsigned int offset) {
     if (oiram.exit_pipe_dir == PIPE_DOWN || oiram.exit_pipe_dir == PIPE_UP) {
         x += 8;
     }
-    
+    if (oiram.exit_pipe_dir == DOOR_WARP && (oiram.flags & (FLAG_OIRAM_BIG | FLAG_OIRAM_FIRE))) {
+        y += 3;
+    }
+
     oiram.x = x;
     oiram.y = y;
     
@@ -268,6 +271,7 @@ void move_oiram(void) {
     }
     
     if (oiram.in_pipe) {
+        unsigned int x, y;
         oiram.vy = 0;
         switch (oiram.in_pipe) {
             case PIPE_DOWN:
@@ -282,6 +286,8 @@ void move_oiram(void) {
             case PIPE_UP:
                 oiram.y--;
                 break;
+            default:
+                break;
         }
         
         oiram.pipe_counter--;
@@ -295,6 +301,11 @@ void move_oiram(void) {
                 oiram.exit_pipe = true;
                 oiram.in_pipe = oiram.exit_pipe_dir;
                 compute_oiram_location_from_offset(oiram.exit_pipe_loc);
+                if (oiram.exit_pipe_dir == DOOR_WARP) {
+                    oiram.exit_pipe = false;
+                    oiram.in_pipe = WARP_NONE;
+                    oiram.vy = 0;
+                }
                 if (oiram.exit_pipe_dir == PIPE_DOWN) {
                     oiram.pipe_counter = TILE_HEIGHT;
                     oiram.pipe_clip_y += TILE_HEIGHT;
@@ -313,7 +324,7 @@ void move_oiram(void) {
             // exiting a pipe
             } else {
                 oiram.exit_pipe = false;
-                oiram.in_pipe = 0;
+                oiram.in_pipe = WARP_NONE;
             }
         }
         new_y_top = oiram.y;
@@ -469,8 +480,11 @@ void move_oiram(void) {
         // an up event was triggered
         if (pressed_up) {
             // check if there is a door we can go through
-            if (false) {
-            }
+            move_side = TILE_TEST_DOOR_UP;
+            moveable_tile(new_x_left + 4, new_y_top - 1);
+            if (oiram.in_pipe) {
+                oiram.vy = 0;
+            } else
             if (oiram.on_vine) {
                 oiram.vy = -2;
             } else  {

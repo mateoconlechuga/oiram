@@ -27,6 +27,7 @@ uint8_t testing_side;
 uint8_t on_slope = 0;
 
 static uint8_t warp_tile_handler(uint8_t *tile);
+static uint8_t door_tile_handler(uint8_t *tile);
 
 static uint8_t brick_tile_handler(uint8_t *tile) {
     unsigned int x, y;
@@ -764,8 +765,8 @@ uint8_t (*tile_handler[256])(uint8_t*) = {
     star_quest_handler, // 228
     fireflower_quest_handler, // 229
     leaf_quest_handler, // 230
-    warp_tile_handler, // 231
-    warp_tile_handler, // 232
+    door_tile_handler, // 231
+    door_tile_handler, // 232
     brick_tile_handler, // 233
     brick_tile_handler, // 234
     brick_tile_handler, // 235
@@ -870,6 +871,11 @@ void remove_bumped_tile(uint8_t i) {
 #define MASK_DOOR_X      (1<<19)
 #define MASK_PIPE_DOOR   (MASK_PIPE_UP | MASK_PIPE_DOWN | MASK_PIPE_LEFT | MASK_PIPE_RIGHT | MASK_DOOR_E | MASK_DOOR_X)
 
+uint8_t door_tile_handler(uint8_t *tile) {
+    warp_tile_handler(tile);
+    return 1;
+}
+
 uint8_t warp_tile_handler(uint8_t *tile) {
     unsigned int i;
     unsigned int offset, x, y;
@@ -925,6 +931,15 @@ uint8_t warp_tile_handler(uint8_t *tile) {
                         oiram.pipe_counter = oiram.hitbox.height;
                     }
                     break;
+                case TILE_TEST_DOOR_UP:
+                    if (pipe_enter & MASK_DOOR_E) {
+                        oiram.in_pipe = DOOR_WARP;
+                        oiram.enter_pipe = true;
+                        oiram.pipe_counter = 4;
+                        oiram.door_x = x - oiram.scrollx;
+                        oiram.door_y = y - oiram.scrolly;
+                    }
+                    break;
                 default:
                     break;
             }
@@ -947,6 +962,12 @@ uint8_t warp_tile_handler(uint8_t *tile) {
                 oiram.exit_pipe_dir = PIPE_LEFT;
                 if (oiram.flags & (FLAG_OIRAM_BIG | FLAG_OIRAM_FIRE)) {
                     oiram.exit_pipe_loc -= tilemap.width;
+                }
+            } else
+            if (not_masked & MASK_DOOR_X) {
+                oiram.exit_pipe_dir = DOOR_WARP;
+                if (!(oiram.flags & (FLAG_OIRAM_BIG | FLAG_OIRAM_FIRE))) {
+                    oiram.exit_pipe_loc += tilemap.width;
                 }
             } else {
                 oiram.exit_pipe_dir = PIPE_DOWN;

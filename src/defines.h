@@ -98,14 +98,18 @@ typedef struct {
     unsigned int coins;
     uint8_t shrink_counter;
     bool less2;
+    unsigned int door_x;
+    uint8_t door_y;
 } oiram_t;
 extern oiram_t oiram;
 
-enum pipe_types {
+enum warp_types {
+    WARP_NONE,
     PIPE_DOWN=1,
     PIPE_LEFT,
     PIPE_RIGHT,
     PIPE_UP,
+    DOOR_WARP,
 };
 
 extern gfx_image_t *oiram_left[];
