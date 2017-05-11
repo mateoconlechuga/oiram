@@ -40,10 +40,12 @@ _test_against:
 	jp	p,_l__2
 	jp	pe,_l_2
 	ret
-_l__2:	jp	po,_l_2
+_l__2:
+	jp	po,_l_2
 	ret
 
-_l_2:	ld	bc,(_level_map+14)
+_l_2:
+	ld	bc,(_level_map+14)
 	or	a,a
 	sbc	hl,bc
 	jr	c,not_at_max_x
@@ -58,10 +60,11 @@ not_at_max_x:
 	jp	p,_l__4
 	jp	pe,_l_3
 	jr	_l__5
-_l__4:	jp	po,_l_3
-_l__5:	ld	a,1
+_l__4:
+	jp	po,_l_3
+_l__5:
+	ld	a,1
 	ret
-
 _l_3:	ld	(_test_x),de
 	ld	bc,(_level_map+11)
 	or	a,a
@@ -73,13 +76,25 @@ not_at_max_y:
 	add	hl,bc
 	ld	(_test_y),hl
 	push	hl
-	push	de
-	ld	de,_tilemap
-	push	de
-	call	_gfx_TilePtr
-	pop	de
-	pop	de
-	pop	de
+	ex	de,hl
+	ld	iy,_tilemap
+	ld	b,(iy+10)
+divloop1:
+	srl	h
+	rr	l
+	djnz	divloop1
+	ex	de,hl
+	pop	hl
+	ld	b,(iy+11)
+divloop2:
+	srl	h
+	rr	l
+	djnz	divloop2
+	ld	h,(iy+13)
+	mlt	hl
+	add	hl,de
+	ld	de,(iy+0)
+	add	hl,de
 	push	hl
 	ld	l,(hl)
 	ld	h,3
@@ -90,7 +105,6 @@ not_at_max_y:
 	call	__indcall
 	pop	de
 	ret
-	
 
 _solid_tile_handler:
 	xor	a,a
