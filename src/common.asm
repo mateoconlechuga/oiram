@@ -1,16 +1,7 @@
     .assume adl=1
     
-    .ref _test_x
-    .ref _test_y
-    .ref _gfx_TilePtr
-    .ref __indcall
-    .ref _testing_side
-    .ref _tilemap
-    .ref _tile_handler
-    .ref __idvrmu
-    .ref __frameset0
-    
 ; tile_handlers.h
+    .def _animate
     .def _moveable_tile
     .def _moveable_tile_left_bottom
     .def _moveable_tile_right_bottom
@@ -341,8 +332,6 @@ l_194:
 l_199:
 	ret
 	
-	.ref _level_map
-	.ref _add_coin
 	.ref _fish_right_sprite
 	.ref _fish_left_sprite
 	.ref _flame_sprite_down
@@ -400,40 +389,15 @@ l_199:
 	.ref _koopa_red_right_0
 	.ref _goomba_1
 	.ref _goomba_0
-	.ref _oiram_fail
-	.ref _oiram_1_buffer_right
-	.ref _oiram_0_buffer_right
-	.ref _pressed_up
-	.ref _pressed_right
-	.ref _pressed_left
-	.ref _add_poof
-	.ref _simple_mover
-	.ref _num_simple_movers
-	.ref _simple_mover_type
-	.ref _memcpy
-	.ref _free
-	.ref _malloc
-	.ref _set_left_oiram_sprites
-	.ref _shrink_oiram
-	.ref _add_star
-	.ref _add_fire_flower
-	.ref _add_mushroom
-	.ref _add_mushroom_1up
-	.ref _pipe_max_tests
-	.ref _warp_pipe_info
-	.ref _game
 	.ref _oiram
+	.ref _level_map
 	.ref _tilemap
 	.ref _tiles
 	.ref _tileset_tiles
-	.ref _something_died
-	.ref _handling_events
-	.ref _gfx_BlitLines
-	.ref _gfx_FillRectangle_NoClip
-	.ref _gfx_SetColor
-	.ref __idivu
-	.ref __iand
+    .ref _test_x
+    .ref _test_y
+    .ref _testing_side
+    .ref _tile_handler
+	.ref __indcall
+    .ref __idvrmu
 	.ref __frameset0
-	.ref __frameset
-	.def _animate
-
