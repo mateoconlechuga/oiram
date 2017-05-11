@@ -246,7 +246,7 @@ draw_sprite:
                             }
                         } else {
                             if (cur->vy == 0) {
-                                reswob_force_fall ^= 1;
+                                reswob_force_fall = !reswob_force_fall;
                                 if (!reswob_force_fall) {
                                     reswob_is_jumping = false;
                                     if (oiram.x < x) {
@@ -696,7 +696,7 @@ skip_draw:
             }
             
             if (gfx_CheckRectangleHotspot(oiram.x, oiram.y, OIRAM_HITBOX_WIDTH, oiram.hitbox.height, x, y, 15, 30)) {
-                if (!oiram.in_pipe) {
+                if (!oiram.in_warp) {
                     if (!shrink_oiram()) {
                         add_score(1, x, y);
                         add_poof(oiram.x, oiram.y + 2);
@@ -1004,7 +1004,14 @@ skip_draw:
             tmp_vx = cur->mover->vx;
             
             if (cur_type == OIRAM_FIREBALL) {
+                cur->mover->type = FIREBALL_TYPE;
                 simple_move_handler(cur->mover);
+                cur->mover->type = cur_type;
+                if (something_died) {
+                    something_died = false;
+                    add_poof(cur->mover->x + 4, cur->mover->y + 4);
+                    goto remove_fireball_continue;
+                }
             } else {
                 cur->mover->x += tmp_vx;
                 cur->mover->y += cur->mover->vy;
@@ -1066,9 +1073,9 @@ skip_draw:
     } else if (in_quicksand) {
         gfx_SetClipRegion(0, 0, X_PXL_MAX, quicksand_clip_y - oiram.scrolly);
         goto draw_oiram;
-    } else if (oiram.in_pipe) {
+    } else if (oiram.in_warp) {
         if (!oiram.enter_pipe) {
-            switch (oiram.in_pipe) {
+            switch (oiram.in_warp) {
                 case PIPE_DOWN:
                 pipe_oiram_down:
                     gfx_SetClipRegion(0, oiram.pipe_clip_y - oiram.scrolly, X_PXL_MAX, Y_PXL_MAX);
@@ -1092,7 +1099,7 @@ skip_draw:
                     break;
             }
         } else {
-            switch (oiram.in_pipe) {
+            switch (oiram.in_warp) {
                 case PIPE_DOWN:
                     goto pipe_oiram_up;
                 case PIPE_LEFT:

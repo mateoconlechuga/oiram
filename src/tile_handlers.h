@@ -6,8 +6,48 @@
 #include <stdint.h>
 #include "defines.h"
 #include "simple_mover.h"
- 
-#define MAX_TILE_BUMPS      100
+
+/* Tile index definitions */
+#define TILE_QUESTION_BOX         0
+#define TILE_BRICK                4
+#define TILE_SOLID_BOX            11
+#define TILE_SOLID_EMPTY          13
+#define TILE_WATER                26
+#define TILE_EMPTY                27
+#define TILE_LAVA                 55
+#define TILE_LAVA_TOP             122
+#define TILE_WATER_TOP            126
+#define TILE_COIN                 150
+#define TILE_WATER_COIN           151
+#define TILE_ICE_COIN             152
+#define TILE_VANISH               161
+
+#define TILE_COIN_BOX             225
+#define TILE_1UP_BOX              226
+#define TILE_MUSHROOM_BOX         227
+#define TILE_STAR_BOX             228
+#define TILE_FIREFLOWER_BOX       229
+#define TILE_LEAF_BOX             230
+
+#define TILE_BLUE_BRICK           233
+#define TILE_BLUE_BRICK_X         238
+#define TILE_ICE                  239
+
+#define TILE_E_ORIAM_START        240
+#define TILE_E_RESWOB             241
+#define TILE_E_SPIKE              242
+#define TILE_E_FISH               243
+#define TILE_E_GOOMBA             244
+#define TILE_E_GREEN_KOOPA        245
+#define TILE_E_RED_KOOPA          246
+#define TILE_E_GREEN_FLY_KOOPA    247
+#define TILE_E_RED_FLY_KOOPA      248
+#define TILE_E_BONES_KOOPA        249
+#define TILE_E_THWOMP             250
+#define TILE_E_LAVA_FIREBALL      251
+#define TILE_E_CHOMPER            252
+#define TILE_E_FIRE_CHOMPER       253
+#define TILE_E_BOO                254
 
 typedef struct {
     int x,y;
@@ -16,6 +56,8 @@ typedef struct {
     uint8_t dir;
     uint8_t count;
 } bumped_tile_t;
+
+#define MAX_TILE_BUMPS 100
 
 extern bumped_tile_t *bumped_tile[MAX_TILE_BUMPS];
 bumped_tile_t *add_bumped(uint8_t *tile, uint8_t dir);
@@ -31,6 +73,7 @@ extern uint8_t (*tile_handler[256])(uint8_t*);
 extern bool force_jump;
 extern bool in_quicksand;
 extern bool in_water;
+extern bool on_ice;
 extern unsigned int quicksand_clip_y;
 
 enum testing_side_enum { TEST_RIGHT=0, TEST_LEFT=1, TEST_NONE=2 };
@@ -53,34 +96,6 @@ extern uint8_t move_side;
 uint8_t moveable_tile(int x, int y);
 uint8_t moveable_tile_left_bottom(int x, int y);
 uint8_t moveable_tile_right_bottom(int x, int y);
-
-#define TILE_QUESTIONBOX_0  0
-#define TILE_QUESTIONBOX_1  1
-#define TILE_QUESTIONBOX_2  2
-#define TILE_QUESTIONBOX_3  3
-#define TILE_BRICK_0        4
-#define TILE_BRICK_1        5
-#define TILE_BRICK_2        6
-#define TILE_BRICK_3        7
-#define TILE_SOLID_BOX      11
-#define TILE_SOLID_EMPTY    13
-#define TILE_WATER          26
-#define TILE_EMPTY          27
-#define TILE_COIN_0         150
-#define TILE_VANISH         161
-
-#define TILE_BLUE_BRICK_0   233
-#define TILE_BLUE_BRICK_1   234
-#define TILE_BLUE_BRICK_2   235
-#define TILE_BLUE_BRICK_3   236
-#define TILE_BLUE_BRICK_X   238
-
-#define TILE_COIN_QUESTIONBOX          225
-#define TILE_1UP_QUESTIONBOX           226
-#define TILE_MUSHROOM_QUESTIONBOX      227
-#define TILE_STAR_QUESTIONBOX          228
-#define TILE_FIREFLOWER_QUESTIONBOX    229
-#define TILE_LEAF_QUESTIONBOX          230
 
 // animation function
 void animate(void);

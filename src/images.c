@@ -2,6 +2,7 @@
 
 #include <graphx.h>
 #include <fileioc.h>
+#include <debug.h>
 
 #include "images.h"
 #include "lower.h"
@@ -158,50 +159,61 @@ gfx_image_t *oiram_left[] = {
 };
 
 void extract_tiles(void) {
-    uint8_t slot;
+    uint8_t slot, i;
     gfx_image_t *tile_question_box;
+    gfx_image_t *empty;
+    uint16_t pal_size;
+    uint16_t *pal_ptr;
+    uint8_t *tmp_ptr;
     
     ti_CloseAll();
     slot = ti_Open("OiramT", "r");
-    if (slot) {
-        uint8_t i;
-        uint16_t pal_size;
-        uint16_t *pal_ptr;
-        uint8_t *tmp_ptr;
-
-        pal_ptr = (uint16_t*)ti_GetDataPtr(slot);
-        pal_size = *pal_ptr;
-        pal_ptr++;
-        
-        // set up the palette
-        gfx_SetPalette(pal_ptr, pal_size, 0);
-        tmp_ptr = (uint8_t*)pal_ptr;
-        tmp_ptr += pal_size;
-        
-        for(i = 0; i < 240; i++) {
-            tileset_tiles[i] = (gfx_image_t*)tmp_ptr;
-            tmp_ptr += TILE_DATA_SIZE;
-        }
-    } else {
+    if (!slot) {
         missing_appvars();
     }
-    
-    coin_sprite = tileset_tiles[TILE_COIN_0];
-    
-    tile_question_box = tileset_tiles[0];
-    door_top = tileset_tiles[224];
-    door_bot = tileset_tiles[225];
-    tileset_tiles[225] = tile_question_box;
-    tileset_tiles[226] = tile_question_box;
-    tileset_tiles[227] = tile_question_box;
-    tileset_tiles[228] = tile_question_box;
-    tileset_tiles[229] = tile_question_box;
-    tileset_tiles[230] = tile_question_box;
-    tileset_tiles[TILE_BLUE_BRICK_X] = tileset_tiles[TILE_EMPTY];
 
-    ti_CloseAll();
-}
+    pal_ptr = (uint16_t*)ti_GetDataPtr(slot);
+    pal_size = *pal_ptr;
+    pal_ptr++;
     
+    // set up the palette
+    gfx_SetPalette(pal_ptr, pal_size, 0);
+    tmp_ptr = (uint8_t*)pal_ptr;
+    tmp_ptr += pal_size;
+    
+    for(i = 0;i++;) {
+        tileset_tiles[i] = (gfx_image_t*)tmp_ptr;
+    }
+    
+    for(i = 0; i < 238; i++) {
+        tileset_tiles[i] = (gfx_image_t*)tmp_ptr;
+        tmp_ptr += TILE_DATA_SIZE;
+    }
+    
+    // close the open file
+    ti_CloseAll();
+    
+    // extract common sprite tiles
+    empty             = tileset_tiles[TILE_EMPTY];
+    coin_sprite       = tileset_tiles[TILE_COIN];
+    door_top          = tileset_tiles[228];
+    door_bot          = tileset_tiles[229];
+    tile_question_box = tileset_tiles[TILE_QUESTION_BOX];
+    
+    // handling ice coins is rather odd...
+    tileset_tiles[TILE_ICE_COIN] = (gfx_image_t*)tmp_ptr;
+    tileset_tiles[TILE_ICE]      = tileset_tiles[230];
+    
+    // handle the question boxes
+    tileset_tiles[TILE_COIN_BOX]       = tile_question_box;
+    tileset_tiles[TILE_1UP_BOX]        = tile_question_box;
+    tileset_tiles[TILE_MUSHROOM_BOX]   = tile_question_box;
+    tileset_tiles[TILE_STAR_BOX]       = tile_question_box;
+    tileset_tiles[TILE_FIREFLOWER_BOX] = tile_question_box;
+    tileset_tiles[TILE_LEAF_BOX]       = tile_question_box;
+    tileset_tiles[TILE_BLUE_BRICK_X]   = tileset_tiles[TILE_EMPTY];
+}
+
 void extract_sprites(void) {
     uint8_t slot;
     

@@ -92,6 +92,24 @@ static uint8_t plant_tile_handler(uint8_t *tile) {
     return 1;
 }
 
+static uint8_t ice_block_handler(uint8_t *tile) {
+    if (handling_events) {
+        if (simple_mover_type == FIREBALL_TYPE) {
+            something_died = true;
+            if (*tile == TILE_ICE_COIN) {
+                *tile = TILE_COIN;
+            } else {
+                *tile = TILE_EMPTY;
+            }
+        }
+    } else {
+        if (move_side == TILE_TOP) {
+            on_ice = true;
+        }
+    }
+    return 0;
+}
+
 static uint8_t lavas_tile_handler(uint8_t *tile) {
     if (!handling_events) {
         if (move_side == TILE_TOP) {
@@ -202,7 +220,7 @@ static uint8_t star_quest_handler(uint8_t *tile) {
     if (quest_tile_handler(tile)) { add_star(tile); }
     return 0;
 }
-static uint8_t fireflower_quest_handler(uint8_t *tile) {
+static uint8_t fire_quest_handler(uint8_t *tile) {
     if (quest_tile_handler(tile)) { if ((oiram.flags & FLAG_OIRAM_BIG)) { add_fire_flower(tile); } else { add_mushroom(tile); } }
     return 0;
 }
@@ -228,22 +246,24 @@ static uint8_t coin_tile_handler(uint8_t *tile) {
         unsigned int x, y;
         tile_to_abs_xy_pos(tile, &x, &y);
         add_coin(x, y);
-        *tile = TILE_EMPTY;
+        if (*tile == TILE_WATER_COIN) {
+            *tile = TILE_WATER;
+        } else {
+            *tile = TILE_EMPTY;
+        }
     }
     return 1;
 }
 
 static uint8_t top_tile_handler(uint8_t *tile) {
-    if (move_side == TILE_TOP || move_side == TILE_X) {
-        uint8_t m = test_y & 15;
-        if (!handling_events) {
-            if (m < 8) {
-                return 0;
-            }
-        } else {
-            if (m < 8) {
-                return 0;
-            }
+    bool m = (test_y & 15) < 8;
+    if (!handling_events) {
+        if ((move_side == TILE_TOP) && m) {
+            return 0;
+        }
+    } else {
+        if ((move_side == TILE_TOP || move_side == TILE_X) && m) {
+            return 0;
         }
     }
     return 1;
@@ -275,10 +295,8 @@ static uint8_t vine_tile_handler(uint8_t *tile) {
             }
             return 1;
         }
-        if (oiram.on_vine) {
-            if (move_side == TILE_TOP) {
-                return 3;
-            }
+        if (oiram.on_vine && move_side == TILE_TOP) {
+            return 3;
         }
     }
     return 1;
@@ -293,7 +311,7 @@ static uint8_t quicksand_handler(uint8_t *tile) {
         something_died = true;
     } else {
         unsigned int x, y;
-    
+        
         tile_to_abs_xy_pos(tile, &x, &y);
         
         if (move_side == TILE_TOP) {
@@ -328,6 +346,7 @@ static uint8_t quicksand_handler(uint8_t *tile) {
 }
 
 bool in_water;
+bool on_ice;
 
 static uint8_t water_tile_hander(uint8_t *tile) {
     if (move_side == TILE_TOP) {
@@ -420,7 +439,7 @@ static uint8_t jelly_tile_handler(uint8_t *tile) {
 static uint8_t end_pipe_handler(uint8_t *tile) {
     if (move_side == TILE_TEST_PIPE_DOWN) {
         
-        oiram.in_pipe = PIPE_DOWN;
+        oiram.in_warp = PIPE_DOWN;
         oiram.enter_pipe = true;
         oiram.pipe_counter = oiram.hitbox.height + 2;
         oiram.pipe_clip_y = tile_y_loc(tile);
@@ -529,272 +548,276 @@ void add_fireball(int x, int y, uint8_t dir, uint8_t type) {
         default:
             break;
     }
+    mover->is_flyer = false;
     mover->is_bouncer = true;
     mover->hitbox.height = 7;
     mover->hitbox.width = 7;
     mover->type = type;
-    mover->is_flyer = false;
     ball->count = 127;
     num_fireballs++;
 }
 
+/*
+ * this array specifies what tile should do what
+ * Indexes defined as ** unused are available for collisions. Note that graphics must be manually configured though.
+ */
 uint8_t (*tile_handler[256])(uint8_t*) = {
-    solid_tile_handler, // 0   question box 0
-    solid_tile_handler, // 1   question box 1
-    solid_tile_handler, // 2   question box 2
-    solid_tile_handler, // 3   question box 3
-    brick_tile_handler, // 4   brick block 0
-    brick_tile_handler, // 5   brick block 1
-    brick_tile_handler, // 6   brick block 2
-    brick_tile_handler, // 7   brick block 3
-    jump_tile_handler,  // 8   jump block 0
-    jump_tile_handler,  // 9   jump block 1
-    jump_tile_handler,  // 10  jump block 2
-    solid_tile_handler, // 11  solid box
-    solid_tile_handler, // 12  solid wood
-    solid_tile_handler, // 13  solid empty
-    warp_tile_handler,  // 14  pipe green up top left
-    warp_tile_handler,  // 15  pipe green up top right
-    warp_tile_handler,  // 16  pipe gray up top left
-    warp_tile_handler,  // 17  pipe gray up top right
-    solid_tile_handler, // 18  pipe green left left top
-    solid_tile_handler, // 19  pipe green left mid top
-    solid_tile_handler, // 20  pipe gray left left top
-    solid_tile_handler, // 21  pipe gray left mid top
-    solid_tile_handler, // 22  solid grass
-    solid_tile_handler, // 23  solid grass
-    solid_tile_handler, // 24  solid grass
-    solid_tile_handler, // 25  solid ball
-    water_tile_hander,  // 26  water
-    empty_tile_handler, // 27  empty
-    solid_tile_handler, // 28  pipe green up left mid
-    solid_tile_handler, // 29  pipe green up right mid
-    solid_tile_handler, // 30  pipe gray up left mid
-    solid_tile_handler, // 31  pipe gray up right mid
-    warp_tile_handler,  // 32  pipe green left left bottom
-    solid_tile_handler, // 33  pipe green left right bottom
-    warp_tile_handler,  // 34  pipe gray left left bottom
-    solid_tile_handler, // 35  pipe gray left right bottom
-    solid_tile_handler, // 36  solid grass
-    solid_tile_handler, // 37  solid grass
-    solid_tile_handler, // 38  solid grass
-    upspk_tile_handler, // 39  spikes up
-    dnspk_tile_handler, // 40  spikes down
-    solid_tile_handler, // 41  solid cloud
-    solid_tile_handler, // 42  solid wood
-    solid_tile_handler, // 43  solid wood
-    solid_tile_handler, // 44  solid wood
-    empty_tile_handler, // 45  half black
-    solid_tile_handler, // 46  solid black
-    down_tile_handler,  // 47  down block
-    solid_tile_handler, // 48  solid wood
-    solid_tile_handler, // 49  solid wood
-    solid_tile_handler, // 50  solid wood
-    solid_tile_handler, // 51  solid grass
-    solid_tile_handler, // 52  solid grass
-    solid_tile_handler, // 53  solid grass
-    top_tile_handler,   // 54  solid top
-    lava_tile_handler,  // 55  lava
-    solid_tile_handler, // 56  solid wood
-    solid_tile_handler, // 57  solid wood
-    solid_tile_handler, // 58  solid wood
-    end_pipe_handler,   // 59  end pipe 0
-    solid_tile_handler, // 60  end pipe 1 -- solid :)
-    empty_tile_handler, // 61  empty black
-    solid_tile_handler, // 62  solid wood
-    solid_tile_handler, // 63  solid wood
-    solid_tile_handler, // 64  solid wood
-    solid_tile_handler, // 65  solid ground
-    solid_tile_handler, // 66  solid ground
-    solid_tile_handler, // 67  solid ground
-    solid_tile_handler, // 68  solid stone
-    steepr_slope_handler, // 69  steep slope right
-    solid_tile_handler, // 70  cannon up
-    solid_tile_handler, // 71  solid sand
-    solid_tile_handler, // 72  solid sand
-    solid_tile_handler, // 73  solid sand
-    solid_tile_handler, // 74  solid block
-    solid_tile_handler, // 75  solid block
-    solid_tile_handler, // 76  solid block
-    solid_tile_handler, // 77  solid ground
-    solid_tile_handler, // 78  solid ground
-    solid_tile_handler, // 79  solid ground
-    solid_tile_handler, // 80  solid grass
-    solid_tile_handler, // 81  solid grass
-    solid_tile_handler, // 82  solid grass
-    solid_tile_handler, // 83  cannon up left
-    solid_tile_handler, // 84  solid cannon part
-    solid_tile_handler, // 85  solid sand
-    solid_tile_handler, // 86  solid sand
-    solid_tile_handler, // 87  solid sand
-    solid_tile_handler, // 88  solid block
-    solid_tile_handler, // 89  solid block
-    solid_tile_handler, // 90  solid block
-    solid_tile_handler, // 91  solid ground
-    solid_tile_handler, // 92  solid ground
-    solid_tile_handler, // 93  solid ground
-    plant_tile_handler,  // 94  yummy plant
-    plant_tile_handler,  // 95  yummy plant
-    plant_tile_handler,  // 96  yummy plant
-    solid_tile_handler, // 97  cannon down left
-    solid_tile_handler, // 98  cannon part
-    solid_tile_handler, // 99  solid sand
-    solid_tile_handler, // 100 solid sand
-    solid_tile_handler, // 101 solid sand
-    solid_tile_handler, // 102 solid block
-    solid_tile_handler, // 103 solid block
-    solid_tile_handler, // 104 solid block
-    solid_tile_handler, // 105 solid ground
-    solid_tile_handler, // 106 solid ground
-    solid_tile_handler, // 107 solid ground
-    vine_tile_handler,  // 108 vine 0
-    vine_tile_handler,  // 109 vine 1
-    vine_tile_handler,  // 110 vine 2
-    steepl_slope_handler, // 111 steep slope left
-    semi1l_slope_handler, // 112 semi slope left 0
-    semi2l_slope_handler, // 113 semi slope left 1
-    semi2r_slope_handler, // 114 semi slope right 0
-    semi1r_slope_handler, // 115 semi slope right 1
-    empty_tile_handler, // 116 empty landscape
-    empty_tile_handler, // 117 empty landscape
-    quicksandt_handler, // 118 quicksand top 0
-    quicksandt_handler, // 119 quicksand top 1
-    quicksandt_handler, // 120 quicksand top 2
-    quicksandt_handler, // 121 quicksand top 2
-    lavas_tile_handler, // 122 lave 0
-    lavas_tile_handler, // 123 lava 1
-    lavas_tile_handler, // 124 lava 2
-    lavas_tile_handler, // 125 lava 3
-    water_tile_hander, // 126 water 0
-    water_tile_hander, // 127 water 1
-    water_tile_hander, // 128 water 2
-    water_tile_hander, // 129 water 3
-    empty_tile_handler, // 130 empty landscape
-    empty_tile_handler, // 131 empty landscape
-    quicksand_handler,  // 132 quicksand 0
-    quicksand_handler,  // 133 quicksand 1
-    quicksand_handler,  // 134 quicksand 2
-    quicksand_handler,  // 135 quicksand 3
-    empty_tile_handler, // 136 empty landscape
-    empty_tile_handler, // 137 empty landscape
-    empty_tile_handler, // 138 empty landscape
-    empty_tile_handler, // 139 empty landscape
-    top_tile_handler,   // 140 box top
-    top_tile_handler,   // 141 box top
-    top_tile_handler,   // 142 box top
-    empty_tile_handler, // 143 box shadow
-    empty_tile_handler, // 144 empty landscape
-    empty_tile_handler, // 145 empty landscape
-    jelly_tile_handler, // 146 jelly
-    jelly_tile_handler, // 147 jelly
-    jelly_tile_handler, // 148 jelly
-    jelly_tile_handler, // 149 jelly
-    coin_tile_handler,  // 150 coin 0
-    coin_tile_handler,  // 151 coin 1
-    coin_tile_handler,  // 152 coin 2
-    coin_tile_handler,  // 153 coin 3
-    empty_tile_handler, // 154 box part
-    empty_tile_handler, // 155 box part
-    empty_tile_handler, // 156 box part
-    empty_tile_handler, // 157 box shadow
-    empty_tile_handler, // 158 landscape
-    empty_tile_handler, // 159 landscape
-    empty_tile_handler, // 160 rope
-    vanish_tile_handler, // 161 vanishing tile
-    empty_tile_handler, // 162 landscape
-    empty_tile_handler, // 163 landscape
-    empty_tile_handler, // 164 landscape
-    empty_tile_handler, // 165 cloud top
-    empty_tile_handler, // 166 cloud top
-    empty_tile_handler, // 167 cloud top
-    empty_tile_handler, // 168 box part
-    empty_tile_handler, // 169 box part
-    empty_tile_handler, // 170 box part
-    empty_tile_handler, // 171 box shadow
-    empty_tile_handler, // 172 landscape
-    empty_tile_handler, // 173 landscape
-    empty_tile_handler, // 174 rope end
-    solid_tile_handler, // 175 reswob clear block
-    empty_tile_handler, // 176 landscape
-    empty_tile_handler, // 177 landscape
-    empty_tile_handler, // 178 landscape
-    empty_tile_handler, // 179 cloud bottom
-    empty_tile_handler, // 180 cloud bottom
-    empty_tile_handler, // 181 cloud bottom
-    top_tile_handler,   // 182 box top
-    top_tile_handler,   // 183 box top
-    top_tile_handler,   // 184 box top
-    empty_tile_handler, // 185 box shadow
-    top_tile_handler,   // 186 box top
-    top_tile_handler,   // 187 box top
-    top_tile_handler,   // 188 box top
-    empty_tile_handler, // 189 box shadow
-    top_tile_handler,   // 190 box top
-    top_tile_handler,   // 191 box top
-    top_tile_handler,   // 192 box top
-    empty_tile_handler, // 193 box shadow
-    empty_tile_handler, // 194 landscape
-    empty_tile_handler, // 195 the rest are (mostly) box parts + shadows and landscapes
-    empty_tile_handler, // 196 
-    empty_tile_handler, // 197 
-    empty_tile_handler, // 198
-    empty_tile_handler, // 199
-    empty_tile_handler, // 200
-    empty_tile_handler, // 201
-    empty_tile_handler, // 202
-    empty_tile_handler, // 203
-    empty_tile_handler, // 204
-    empty_tile_handler, // 205
-    empty_tile_handler, // 206
-    empty_tile_handler, // 208
-    empty_tile_handler, // 209
-    empty_tile_handler, // 210
-    empty_tile_handler, // 211
-    empty_tile_handler, // 212
-    empty_tile_handler, // 213
-    empty_tile_handler, // 214
-    empty_tile_handler, // 215
-    empty_tile_handler, // 216
-    empty_tile_handler, // 217
-    empty_tile_handler, // 218
-    empty_tile_handler, // 219
-    empty_tile_handler, // 220
-    empty_tile_handler, // 221
-    empty_tile_handler, // 222
-    empty_tile_handler, // 223
-    empty_tile_handler, // 224
-    empty_tile_handler, // 223
-    coin_quest_handler, // 225
-    up1_quest_handler,  // 226
-    mushroom_quest_handler, // 227
-    star_quest_handler, // 228
-    fireflower_quest_handler, // 229
-    leaf_quest_handler, // 230
-    door_tile_handler, // 231
-    door_tile_handler, // 232
-    brick_tile_handler, // 233
-    brick_tile_handler, // 234
-    brick_tile_handler, // 235
-    brick_tile_handler, // 236
-    p_block_handler, // 237
-    empty_tile_handler,
-    empty_tile_handler,
-    empty_tile_handler,
-    empty_tile_handler,
-    empty_tile_handler,
-    empty_tile_handler,
-    empty_tile_handler,
-    empty_tile_handler,
-    empty_tile_handler,
-    empty_tile_handler,
-    empty_tile_handler,
-    empty_tile_handler,
-    empty_tile_handler,
-    empty_tile_handler,
-    empty_tile_handler,
-    empty_tile_handler,
-    empty_tile_handler,
-    empty_tile_handler, // prevent a crash caused by jumping to invalid code -- lol totes forgot about that
+    solid_tile_handler,      // 0   question box
+    empty_tile_handler,      // 1   ** unused
+    empty_tile_handler,      // 2   ** unused
+    empty_tile_handler,      // 3   ** unused
+    brick_tile_handler,      // 4   brick block
+    empty_tile_handler,      // 5   ** unused
+    empty_tile_handler,      // 6   ** unused
+    empty_tile_handler,      // 7   ** unused
+    jump_tile_handler,       // 8   jump block
+    empty_tile_handler,      // 9   ** unused
+    empty_tile_handler,      // 10  ** unused
+    solid_tile_handler,      // 11  solid box
+    solid_tile_handler,      // 12  solid wood
+    solid_tile_handler,      // 13  solid empty
+    warp_tile_handler,       // 14  pipe green up top left
+    warp_tile_handler,       // 15  pipe green up top right
+    warp_tile_handler,       // 16  pipe gray up top left
+    warp_tile_handler,       // 17  pipe gray up top right
+    solid_tile_handler,      // 18  pipe green left left top
+    solid_tile_handler,      // 19  pipe green left mid top
+    solid_tile_handler,      // 20  pipe gray left left top
+    solid_tile_handler,      // 21  pipe gray left mid top
+    solid_tile_handler,      // 22  solid grass
+    solid_tile_handler,      // 23  solid grass
+    solid_tile_handler,      // 24  solid grass
+    solid_tile_handler,      // 25  solid ball
+    water_tile_hander,       // 26  water
+    empty_tile_handler,      // 27  empty
+    solid_tile_handler,      // 28  pipe green up left mid
+    solid_tile_handler,      // 29  pipe green up right mid
+    solid_tile_handler,      // 30  pipe gray up left mid
+    solid_tile_handler,      // 31  pipe gray up right mid
+    warp_tile_handler,       // 32  pipe green left left bottom
+    solid_tile_handler,      // 33  pipe green left right bottom
+    warp_tile_handler,       // 34  pipe gray left left bottom
+    solid_tile_handler,      // 35  pipe gray left right bottom
+    solid_tile_handler,      // 36  solid grass
+    solid_tile_handler,      // 37  solid grass
+    solid_tile_handler,      // 38  solid grass
+    upspk_tile_handler,      // 39  spikes up
+    dnspk_tile_handler,      // 40  spikes down
+    solid_tile_handler,      // 41  solid cloud
+    solid_tile_handler,      // 42  solid wood
+    solid_tile_handler,      // 43  solid wood
+    solid_tile_handler,      // 44  solid wood
+    empty_tile_handler,      // 45  half black
+    solid_tile_handler,      // 46  solid black
+    down_tile_handler,       // 47  down block
+    solid_tile_handler,      // 48  solid wood
+    solid_tile_handler,      // 49  solid wood
+    solid_tile_handler,      // 50  solid wood
+    solid_tile_handler,      // 51  solid grass
+    solid_tile_handler,      // 52  solid grass
+    solid_tile_handler,      // 53  solid grass
+    top_tile_handler,        // 54  solid top
+    lava_tile_handler,       // 55  lava
+    solid_tile_handler,      // 56  solid wood
+    solid_tile_handler,      // 57  solid wood
+    solid_tile_handler,      // 58  solid wood
+    end_pipe_handler,        // 59  end pipe
+    solid_tile_handler,      // 60  end pipe
+    empty_tile_handler,      // 61  empty black
+    solid_tile_handler,      // 62  solid wood
+    solid_tile_handler,      // 63  solid wood
+    solid_tile_handler,      // 64  solid wood
+    solid_tile_handler,      // 65  solid ground
+    solid_tile_handler,      // 66  solid ground
+    solid_tile_handler,      // 67  solid ground
+    solid_tile_handler,      // 68  solid stone
+    steepr_slope_handler,    // 69  steep slope right
+    solid_tile_handler,      // 70  cannon up
+    solid_tile_handler,      // 71  solid sand
+    solid_tile_handler,      // 72  solid sand
+    solid_tile_handler,      // 73  solid sand
+    solid_tile_handler,      // 74  solid block
+    solid_tile_handler,      // 75  solid block
+    solid_tile_handler,      // 76  solid block
+    solid_tile_handler,      // 77  solid ground
+    solid_tile_handler,      // 78  solid ground
+    solid_tile_handler,      // 79  solid ground
+    solid_tile_handler,      // 80  solid grass
+    solid_tile_handler,      // 81  solid grass
+    solid_tile_handler,      // 82  solid grass
+    solid_tile_handler,      // 83  cannon up left
+    solid_tile_handler,      // 84  solid cannon part
+    solid_tile_handler,      // 85  solid sand
+    solid_tile_handler,      // 86  solid sand
+    solid_tile_handler,      // 87  solid sand
+    solid_tile_handler,      // 88  solid block
+    solid_tile_handler,      // 89  solid block
+    solid_tile_handler,      // 90  solid block
+    solid_tile_handler,      // 91  solid ground
+    solid_tile_handler,      // 92  solid ground
+    solid_tile_handler,      // 93  solid ground
+    plant_tile_handler,      // 94  yummy plant
+    empty_tile_handler,      // 95  ** unused
+    empty_tile_handler,      // 96  ** unused
+    solid_tile_handler,      // 97  cannon down left
+    solid_tile_handler,      // 98  cannon part
+    solid_tile_handler,      // 99  solid sand
+    solid_tile_handler,      // 100 solid sand
+    solid_tile_handler,      // 101 solid sand
+    solid_tile_handler,      // 102 solid block
+    solid_tile_handler,      // 103 solid block
+    solid_tile_handler,      // 104 solid block
+    solid_tile_handler,      // 105 solid ground
+    solid_tile_handler,      // 106 solid ground
+    solid_tile_handler,      // 107 solid ground
+    vine_tile_handler,       // 108 vine
+    empty_tile_handler,      // 109 ** unused
+    empty_tile_handler,      // 110 ** unused
+    steepl_slope_handler,    // 111 steep slope left
+    semi1l_slope_handler,    // 112 semi slope left 0
+    semi2l_slope_handler,    // 113 semi slope left 1
+    semi2r_slope_handler,    // 114 semi slope right 0
+    semi1r_slope_handler,    // 115 semi slope right 1
+    empty_tile_handler,      // 116 empty landscape
+    empty_tile_handler,      // 117 empty landscape
+    quicksandt_handler,      // 118 quicksand top
+    empty_tile_handler,      // 119 ** unused
+    empty_tile_handler,      // 120 ** unused
+    empty_tile_handler,      // 121 ** unused
+    lavas_tile_handler,      // 122 lava top
+    empty_tile_handler,      // 123 ** unused
+    empty_tile_handler,      // 124 ** unused
+    empty_tile_handler,      // 125 ** unused
+    water_tile_hander,       // 126 water top
+    empty_tile_handler,      // 127 ** unused
+    empty_tile_handler,      // 128 ** unused
+    empty_tile_handler,      // 129 ** unused
+    empty_tile_handler,      // 130 empty landscape
+    empty_tile_handler,      // 131 empty landscape
+    quicksand_handler,       // 132 quicksand
+    empty_tile_handler,      // 133 ** unused
+    empty_tile_handler,      // 134 ** unused
+    empty_tile_handler,      // 135 ** unused
+    empty_tile_handler,      // 136 empty landscape
+    empty_tile_handler,      // 137 empty landscape
+    empty_tile_handler,      // 138 empty landscape
+    empty_tile_handler,      // 139 empty landscape
+    top_tile_handler,        // 140 box top
+    top_tile_handler,        // 141 box top
+    top_tile_handler,        // 142 box top
+    empty_tile_handler,      // 143 box shadow
+    empty_tile_handler,      // 144 empty landscape
+    empty_tile_handler,      // 145 empty landscape
+    jelly_tile_handler,      // 146 jelly
+    jelly_tile_handler,      // 147 ** unused
+    jelly_tile_handler,      // 148 ** unused
+    jelly_tile_handler,      // 149 jelly
+    coin_tile_handler,       // 150 coin
+    coin_tile_handler,       // 151 water coin
+    ice_block_handler,       // 152 ice coin
+    empty_tile_handler,      // 153 ** unused
+    empty_tile_handler,      // 154 box part
+    empty_tile_handler,      // 155 box part
+    empty_tile_handler,      // 156 box part
+    empty_tile_handler,      // 157 box shadow
+    empty_tile_handler,      // 158 landscape
+    empty_tile_handler,      // 159 landscape
+    empty_tile_handler,      // 160 rope
+    vanish_tile_handler,     // 161 vanishing tile
+    empty_tile_handler,      // 162 landscape
+    empty_tile_handler,      // 163 landscape
+    empty_tile_handler,      // 164 landscape
+    empty_tile_handler,      // 165 cloud top
+    empty_tile_handler,      // 166 cloud top
+    empty_tile_handler,      // 167 cloud top
+    empty_tile_handler,      // 168 box part
+    empty_tile_handler,      // 169 box part
+    empty_tile_handler,      // 170 box part
+    empty_tile_handler,      // 171 box shadow
+    empty_tile_handler,      // 172 landscape
+    empty_tile_handler,      // 173 landscape
+    empty_tile_handler,      // 174 rope end
+    solid_tile_handler,      // 175 reswob clear block
+    empty_tile_handler,      // 176 landscape
+    empty_tile_handler,      // 177 landscape
+    empty_tile_handler,      // 178 landscape
+    empty_tile_handler,      // 179 cloud bottom
+    empty_tile_handler,      // 180 cloud bottom
+    empty_tile_handler,      // 181 cloud bottom
+    top_tile_handler,        // 182 box top
+    top_tile_handler,        // 183 box top
+    top_tile_handler,        // 184 box top
+    empty_tile_handler,      // 185 box shadow
+    top_tile_handler,        // 186 box top
+    top_tile_handler,        // 187 box top
+    top_tile_handler,        // 188 box top
+    empty_tile_handler,      // 189 box shadow
+    top_tile_handler,        // 190 box top
+    top_tile_handler,        // 191 box top
+    top_tile_handler,        // 192 box top
+    empty_tile_handler,      // 193 box shadow
+    empty_tile_handler,      // 194 landscape
+    empty_tile_handler,      // 195 landscape 
+    empty_tile_handler,      // 196 landscape
+    empty_tile_handler,      // 197 landscape 
+    empty_tile_handler,      // 198 landscape
+    empty_tile_handler,      // 199 landscape
+    empty_tile_handler,      // 200 landscape
+    empty_tile_handler,      // 201 landscape
+    empty_tile_handler,      // 202 landscape
+    empty_tile_handler,      // 203 landscape
+    empty_tile_handler,      // 204 landscape
+    empty_tile_handler,      // 205 landscape
+    empty_tile_handler,      // 206 landscape
+    empty_tile_handler,      // 207 landscape
+    empty_tile_handler,      // 208 landscape
+    empty_tile_handler,      // 209 landscape
+    empty_tile_handler,      // 210 landscape
+    empty_tile_handler,      // 211 landscape
+    empty_tile_handler,      // 212 landscape
+    empty_tile_handler,      // 213 landscape
+    empty_tile_handler,      // 214 landscape
+    empty_tile_handler,      // 215 landscape
+    empty_tile_handler,      // 216 landscape
+    empty_tile_handler,      // 217 landscape
+    empty_tile_handler,      // 218 landscape
+    empty_tile_handler,      // 219 landscape
+    empty_tile_handler,      // 220 landscape
+    empty_tile_handler,      // 221 landscape
+    empty_tile_handler,      // 222 landscape
+    empty_tile_handler,      // 223 landscape
+    coin_tile_handler,       // 224 water coin
+    coin_quest_handler,      // 225 coin question box
+    up1_quest_handler,       // 226 1 up mushroom question box
+    mushroom_quest_handler,  // 227 mushroom question box
+    star_quest_handler,      // 228 star question box
+    fire_quest_handler,      // 229 fire question box
+    leaf_quest_handler,      // 230 leaf question box
+    door_tile_handler,       // 231 door upper
+    door_tile_handler,       // 232 door lower
+    brick_tile_handler,      // 233 blue brick
+    empty_tile_handler,      // 234 ** unused
+    empty_tile_handler,      // 235 ** unused
+    empty_tile_handler,      // 236 ** unused
+    p_block_handler,         // 237 p switch
+    empty_tile_handler,      // 238 empty block for blue blocks
+    ice_block_handler,       // 239 ice block
+    empty_tile_handler,      // 240 ** oiram start
+    empty_tile_handler,      // 241 ** enemy reswob
+    empty_tile_handler,      // 242 ** enemy spike
+    empty_tile_handler,      // 243 ** enemy fish
+    empty_tile_handler,      // 244 ** enemy goomba
+    empty_tile_handler,      // 245 ** enemy green koopa
+    empty_tile_handler,      // 246 ** enemy red koopa
+    empty_tile_handler,      // 247 ** enemy green flying koopa
+    empty_tile_handler,      // 248 ** enemy red flying koopa
+    empty_tile_handler,      // 249 ** enemy bones koopa
+    empty_tile_handler,      // 250 ** enemy thwomp
+    empty_tile_handler,      // 251 ** enemy lava fireball
+    empty_tile_handler,      // 252 ** enemy chomper plant
+    empty_tile_handler,      // 253 ** enemy fire chomper plant
+    empty_tile_handler,      // 254 ** enemy boo
+    empty_tile_handler,      // 255 ** enemy unused
 };
 
 bumped_tile_t *bumped_tile[MAX_TILE_BUMPS];
@@ -885,7 +908,7 @@ uint8_t warp_tile_handler(uint8_t *tile) {
     unsigned int i;
     unsigned int offset, x, y;
 
-    if (handling_events || oiram.vy > 0) {
+    if (handling_events || oiram.in_warp || oiram.vy > 0) {
         return 0;
     }
     
@@ -902,7 +925,7 @@ uint8_t warp_tile_handler(uint8_t *tile) {
             switch (move_side) {
                 case TILE_LEFT:
                     if (pipe_enter & MASK_PIPE_RIGHT) {
-                        oiram.in_pipe = PIPE_LEFT;
+                        oiram.in_warp = PIPE_LEFT;
                         oiram.enter_pipe = true;
                         oiram.pipe_counter = OIRAM_HITBOX_WIDTH;
                         oiram.pipe_clip_x = x;
@@ -910,7 +933,7 @@ uint8_t warp_tile_handler(uint8_t *tile) {
                     break;
                 case TILE_RIGHT:
                     if (pipe_enter & MASK_PIPE_LEFT) {
-                        oiram.in_pipe = PIPE_RIGHT;
+                        oiram.in_warp = PIPE_RIGHT;
                         oiram.enter_pipe = true;
                         oiram.pipe_counter = OIRAM_HITBOX_WIDTH;
                         oiram.pipe_clip_x = x + TILE_WIDTH;
@@ -920,7 +943,7 @@ uint8_t warp_tile_handler(uint8_t *tile) {
                     if (oiram.x < (int)x + 2) {
                         return 0;
                     }
-                    oiram.in_pipe = PIPE_DOWN;
+                    oiram.in_warp = PIPE_DOWN;
                     oiram.enter_pipe = true;
                     oiram.pipe_counter = oiram.hitbox.height;
                     oiram.pipe_clip_y = y;
@@ -930,7 +953,7 @@ uint8_t warp_tile_handler(uint8_t *tile) {
                         if (oiram.x < (int)x + 2) {
                             return 0;
                         }
-                        oiram.in_pipe = PIPE_UP;
+                        oiram.in_warp = PIPE_UP;
                         oiram.enter_pipe = true;
                         oiram.pipe_clip_y = y + TILE_HEIGHT;
                         oiram.pipe_counter = oiram.hitbox.height;
@@ -938,7 +961,7 @@ uint8_t warp_tile_handler(uint8_t *tile) {
                     break;
                 case TILE_TEST_DOOR_UP:
                     if (pipe_enter & MASK_DOOR_E) {
-                        oiram.in_pipe = DOOR_WARP;
+                        oiram.in_warp = DOOR_WARP;
                         oiram.enter_pipe = true;
                         oiram.pipe_counter = 4;
                         oiram.door_x = x - oiram.scrollx;

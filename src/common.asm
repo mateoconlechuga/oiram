@@ -318,6 +318,10 @@ l_192:
 	add	hl,bc
 	ld	(_tileset_tiles+699),hl
 
+	ld	hl,(_tileset_tiles+672)                 ; water coin tile
+	add	hl,bc
+	ld	(_tileset_tiles+672),hl
+    
 	ld	hl,_tiles+1
 	ld	a,(hl)
 	cp	a,2

@@ -1,7 +1,6 @@
 #ifndef EVENTS_H
 #define EVENTS_H
 
-// standard headers
 #include <stdbool.h>
 #include <stdint.h>
 #include <tice.h>

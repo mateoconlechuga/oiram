@@ -105,7 +105,7 @@ void drop_shell(void) {
     }
     oiram.has_shell = false;
 }
-                
+
 // crouching is fun
 static bool crouch_oiram(void) {
     // check if we are big
@@ -229,7 +229,7 @@ void move_oiram(void) {
     uint8_t left_bottom_test,right_bottom_test;
     
     static int start_y;
-	
+    
     int diff_y;
     int prev_y = oiram.y;
     
@@ -238,7 +238,6 @@ void move_oiram(void) {
     int new_x_left = oiram.x;
     int new_x_right = new_x_left + OIRAM_HITBOX_WIDTH;
     
-    int tmp_y;
     int8_t mm = oiram.momentum;
     
     test_y_ptr = &new_y_top;
@@ -250,6 +249,7 @@ void move_oiram(void) {
     on_slope = TEST_NONE;
     in_quicksand = false;
     in_water = false;
+    on_ice = false;
     
     // do something else if someone died
     if (oiram.failed) {
@@ -270,10 +270,9 @@ void move_oiram(void) {
         return;
     }
     
-    if (oiram.in_pipe) {
-        unsigned int x, y;
-        oiram.vy = 0;
-        switch (oiram.in_pipe) {
+    if (oiram.in_warp) {
+        oiram.vy = 0; mm = 0;
+        switch (oiram.in_warp) {
             case PIPE_DOWN:
                 oiram.y++;
                 break;
@@ -298,14 +297,12 @@ void move_oiram(void) {
                     return;
                 }
                 oiram.enter_pipe = false;
-                oiram.exit_pipe = true;
-                oiram.in_pipe = oiram.exit_pipe_dir;
                 compute_oiram_location_from_offset(oiram.exit_pipe_loc);
                 if (oiram.exit_pipe_dir == DOOR_WARP) {
-                    oiram.exit_pipe = false;
-                    oiram.in_pipe = WARP_NONE;
-                    oiram.vy = 0;
+                    goto handle_pipe_exit;
                 }
+                oiram.exit_pipe = true;
+                oiram.in_warp = oiram.exit_pipe_dir;
                 if (oiram.exit_pipe_dir == PIPE_DOWN) {
                     oiram.pipe_counter = TILE_HEIGHT;
                     oiram.pipe_clip_y += TILE_HEIGHT;
@@ -323,8 +320,9 @@ void move_oiram(void) {
                 }
             // exiting a pipe
             } else {
+       handle_pipe_exit:
                 oiram.exit_pipe = false;
-                oiram.in_pipe = WARP_NONE;
+                oiram.in_warp = WARP_NONE;
             }
         }
         new_y_top = oiram.y;
@@ -334,11 +332,9 @@ void move_oiram(void) {
     } else {
         // check the tops when falling
         move_side = TILE_TOP;
-
-        tmp_y = new_y_bot + 1;
         
-        right_bottom_test = moveable_tile_right_bottom(new_x_right, tmp_y);
-        left_bottom_test  = moveable_tile_left_bottom(new_x_left, tmp_y);
+        right_bottom_test = moveable_tile_right_bottom(new_x_right, new_y_bot + 1);
+        left_bottom_test  = moveable_tile_left_bottom(new_x_left, new_y_bot + 1);
         
         // if nothing below, start accelerating
         if (left_bottom_test || right_bottom_test) {
@@ -374,7 +370,7 @@ void move_oiram(void) {
         // make sure we aren't crouching
         if (oiram.crouched) {
             pressed_right = pressed_left = false;
-            goto handle_other_reduced_speed;
+            goto handle_reduced_speed;
         } else { 
             if (pressed_left || pressed_right) {
                 if (pressed_2nd) {
@@ -400,21 +396,20 @@ void move_oiram(void) {
                     }
                 } else {
                     if (oiram.direction == FACE_RIGHT) {
-                        if (mm < 0)   { mm = 0; } else
-                        if (mm < 20)  { mm += 3; }
+                        if (mm < 0)   { mm = 0; }
+                        else if (mm < 20)  { mm += 3; }
                     } else {
-                        if (mm > -20) { mm -= 3; } else
                         if (mm > 0)   { mm = 0; }
+                        else if (mm > -20) { mm -= 3; }
                     }
-    handle_other_reduced_speed:
                     goto handle_reduced_speed;
                 }
             } else {
     handle_reduced_speed:
                 if (mm < 0) {
-                    if ((mm += 2) > 0) { mm = 0; }
+                    if ((mm += 2-(uint8_t)on_ice) >= 0) { mm = 0; }
                 } else {
-                    if ((mm -= 2) < 0) { mm = 0; }
+                    if ((mm -= 2-(uint8_t)on_ice) < 0) { mm = 0; }
                 }
             }
             
@@ -481,8 +476,8 @@ void move_oiram(void) {
         if (pressed_up) {
             // check if there is a door we can go through
             move_side = TILE_TEST_DOOR_UP;
-            moveable_tile(new_x_left + 4, new_y_top - 1);
-            if (oiram.in_pipe) {
+            moveable_tile(new_x_left + 4, new_y_top - 2);
+            if (oiram.in_warp) {
                 oiram.vy = 0;
             } else
             if (oiram.on_vine) {
@@ -535,7 +530,7 @@ void move_oiram(void) {
                 allow_up_press = false;
             }
         }
-	    
+        
         skip_up:
         
         if (pressed_down) {
@@ -561,7 +556,7 @@ void move_oiram(void) {
                 } else if (!oiram.crouched) {
                     move_side = TILE_TEST_PIPE_DOWN;
                     moveable_tile(new_x_left, new_y_bot + 1);
-                    if (!oiram.in_pipe) {
+                    if (!oiram.in_warp) {
                         crouch_oiram();
                         if ((oiram.flags & FLAG_OIRAM_BIG)) {
                             new_y_top += 11;
@@ -607,7 +602,7 @@ void move_oiram(void) {
                     }
                 }
             }
-	    
+        
             new_y_top += oiram.vy;
             new_y_bot += oiram.vy;
         }

@@ -82,10 +82,10 @@ void simple_move_handler(simple_move_t *this) {
     test_y_ptr = &new_y;
     test_y_height = add_bottom;
     
+    simple_mover_type = this->type;
+    
     test_left_bottom  = moveable_tile_left_bottom(tmp_x, tmp_y);
     test_right_bottom = moveable_tile_right_bottom(tmp_x + add_right, tmp_y);
-    
-    simple_mover_type = this->type;
     
     if (!this->is_flyer) {
         

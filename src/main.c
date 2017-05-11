@@ -41,18 +41,6 @@ void *safe_malloc(size_t bytes) {
     return data;
 }
 
-static void init_settings(void) {
-    real_t *real_in;
-    tilemap.map = NULL;
-
-    // walrus mode!
-    if(!ti_RclVar(TI_REAL_TYPE, ti_Ans, &real_in)) {
-        int in = os_RealToInt24(real_in);
-        if (in == 1337) { oiram.less = true; }
-        if (in == 505)  { oiram.less2 = true; }
-    }
-}
-
 void missing_appvars(void) {
     gfx_End();
     prgm_CleanUp();
@@ -213,6 +201,7 @@ static void extract_images(void) {
 }
 
 void main(void) {
+    real_t *real_in;
     unsigned int delay;
     size_t pack_author_len;
     char end_str[100];
@@ -222,10 +211,8 @@ void main(void) {
     gfx_Begin( gfx_8bpp );
     gfx_SetDrawBuffer();
     
-    // initialize settings
-    init_settings();
-    
     // init the state of the levels
+    tilemap.map = NULL;
     load_progress();
     
     // if we have no packs, error
@@ -263,25 +250,17 @@ void main(void) {
     game.entered_end_pipe = false;
     game.seconds = 600;
     
-    oiram.failed = false;
-    oiram.started_fail = false;
-    oiram.momentum = 0;
-    oiram.sprite_index = 0;
-    oiram.shrink_counter = 0;
+    memset(&oiram, 0, sizeof oiram);
+    oiram.fly_count = 9;
     oiram.curr_sprite = oiram_right[0];
     oiram.direction = FACE_RIGHT;
-    oiram.on_vine = false;
-    oiram.crouched = false;
-    oiram.has_shell = false;
-    oiram.in_pipe = false;
-    oiram.is_flying = false;
-    oiram.invincible = 0;
-    oiram.scrollx = 0;
-    oiram.scrolly = 0;
-    oiram.x = 0;
-    oiram.y = 0;
-    oiram.fireballs = 0;
-    oiram.fly_count = 9;
+    
+    // walrus mode!
+    if(!ti_RclVar(TI_REAL_TYPE, ti_Ans, &real_in)) {
+        int in = os_RealToInt24(real_in);
+        if (in == 1337) { oiram.less = true; }
+        if (in == 505)  { oiram.less2 = true; }
+    }
     
     // init the system
     tiles.animation_4_counter = 0;
@@ -376,7 +355,7 @@ void main(void) {
             draw_time();
             update_timer = false;
         }
-	
+    
         // animate the things
         animate();
     }

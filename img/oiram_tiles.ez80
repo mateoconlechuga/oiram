@@ -9,5 +9,7 @@
 ; palette information
 #include "orig_tileset_gfx.asm"
 
-; all the graphix
+; all the graphics
 #include "orig_tileset.asm"
+#include "coin_block.asm" ; store the coin block here
+

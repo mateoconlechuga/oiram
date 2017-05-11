@@ -73,18 +73,18 @@ void add_shell_enemy(uint8_t *tile, uint8_t type) {
     special->hitbox.height = 26;
     special->vx = -1;
     switch(type) {
-        case 0:
+        case 0:  // green type
             special->type = KOOPA_GREEN_TYPE;
             special->smart = false;
             break;
-        case 1:
+        case 1:  // red type
             special->type = KOOPA_RED_TYPE;
             special->smart = true;
             break;
-        case 2:
+        case 2:  // green fly type
             special->type = KOOPA_GREEN_FLY_TYPE;
             goto flying_type;
-        case 3:
+        case 3:  // red fly type
             special->type = KOOPA_RED_FLY_TYPE;
 flying_type:
             special->smart = true;
@@ -92,11 +92,11 @@ flying_type:
             special->vy = 1;
             special->is_flyer = true;
             break;
-        case 4:
+        case 4:  // bones type
             special->type = KOOPA_BONES_TYPE;
             special->smart = true;
             break;
-        default:
+        default: // spike type
             special->hitbox.height = 15;
             special->smart = false;
             special->type = SPIKE_TYPE;
@@ -240,7 +240,7 @@ enemy_t *add_simple_enemy(uint8_t *tile, uint8_t type) {
     enemy->counter = 100;
     enemy->y = y;
     enemy->x = x;
-	    
+        
     switch(type) {
         case BULLET_TYPE:
             enemy->vx = -3;
@@ -286,30 +286,32 @@ void remove_simple_enemy(uint8_t i) {
 }
 
 void get_enemies(void) {
+    uint8_t width = tilemap.width;
+    uint8_t height = tilemap.height;
     unsigned int j, delay;
-    unsigned int loop = tilemap.width * tilemap.height;
-
+    unsigned int loop = width * height;
+    
     for(j = 0; j < loop; j++) {
         uint8_t *this = tilemap.map + j;
         uint8_t tile = *this;
-        
-        // f0 = oriam start
-        // f1 = reswob
-        // f2 = spike
-        // f3 = fish
-        // f4 = goomba
-        // f5 = green koopa
-        // f6 = red koopa
-        // f7 = green flying koopa
-        // f8 = red flying koopa
-        // f9 = bones koopa
-        // fa = thwomp
-        // fb = fireball
-        // fc = chomper
-        // fd = fire chomper
-        // fe = boo
+        int8_t tmp1, tmp2;
         
         switch(tile) {
+            // this case is just to avoid another function that converts coins in water to water coins
+            case TILE_COIN:
+                for (tmp2=-1; tmp2<2; tmp2++) {
+                    int off = tmp2 * width;
+                    bool at_neg_1 = tmp2 == -1;
+                    for (tmp1=-1; tmp1<2; tmp1++) {
+                        tile = *(this+tmp1+off);
+                        if (tile == TILE_WATER || tile == TILE_WATER_COIN || (at_neg_1 && tile == TILE_WATER_TOP)) {
+                            *this = TILE_WATER_COIN;
+                            goto end_loops;
+                        }
+                    }
+                }
+            end_loops:
+                break;
             case 0x61:
                 add_simple_enemy(this, CANNONBALL_DOWN_CREATOR_TYPE);
                 break;
@@ -319,39 +321,42 @@ void get_enemies(void) {
             case 0x46:
                 add_simple_enemy(this, BULLET_CREATOR_TYPE);
                 break;
-            case 0xf0:
+            case TILE_E_ORIAM_START:
                 tile_to_abs_xy_pos(this, (unsigned int*)&oiram.x, (unsigned int*)&oiram.y);
                 if (oiram.flags & FLAG_OIRAM_BIG) {
-                    oiram.y -= TILE_HEIGHT;
+                    oiram.y -= TILE_HEIGHT + 2;
                 }
                 goto set_empty_tile;
-            case 0xf1:
+            case TILE_E_RESWOB:
                 add_reswob(this);
                 goto set_empty_tile;
-            case 0xf2:
-                add_shell_enemy(this, 5);
-                goto set_empty_tile;
-            case 0xf3:
+            case TILE_E_FISH:
                 add_simple_enemy(this, FISH_TYPE);
-                *this = 26;
+                *this = TILE_WATER;
                 break;
-            case 0xf4:
+            case TILE_E_GOOMBA:
                 add_goomba(this);
                 goto set_empty_tile;
-            case 0xf5: case 0xf6: case 0xf7: case 0xf8: case 0xf9:
-                add_shell_enemy(this, tile - 0xf5);
+            case TILE_E_SPIKE:
+            case TILE_E_GREEN_KOOPA:
+            case TILE_E_RED_KOOPA:
+            case TILE_E_GREEN_FLY_KOOPA:
+            case TILE_E_RED_FLY_KOOPA:
+            case TILE_E_BONES_KOOPA:
+                add_shell_enemy(this, tile - TILE_E_GREEN_KOOPA);
                 goto set_empty_tile;
-            case 0xfa:
+            case TILE_E_THWOMP:
                 add_thwomp(this);
                 goto set_empty_tile;
-            case 0xfb:
+            case TILE_E_LAVA_FIREBALL:
                 add_flame(this);
-                *this = 122;
+                *this = TILE_LAVA_TOP;
                 break;
-            case 0xfc: case 0xfd:
-                add_chomper(this + tilemap.width, tile == 0xfd);
+            case TILE_E_CHOMPER:
+            case TILE_E_FIRE_CHOMPER:
+                add_chomper(this + width, tile == TILE_E_FIRE_CHOMPER);
                 goto set_empty_tile;
-            case 0xfe:
+            case TILE_E_BOO:
                 add_boo(this);
 set_empty_tile:
                 *this = TILE_EMPTY;
@@ -361,4 +366,3 @@ set_empty_tile:
         }
     }
 }
-

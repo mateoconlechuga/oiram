@@ -139,7 +139,7 @@ bool shrink_oiram(void) {
         return false;
     }
     
-    if (!oiram.in_pipe) {
+    if (!oiram.in_warp) {
         if (!oiram.shrink_counter) {
             oiram.shrink_counter = 40;
             if (oiram.has_shell) { oiram.has_shell = false; }
@@ -184,10 +184,10 @@ void show_blue_blocks(bool state) {
         uint8_t tile = *this;
         if (state) {
             if (tile == TILE_BLUE_BRICK_X) {
-                *this = TILE_BLUE_BRICK_0;
+                *this = TILE_BLUE_BRICK;
             }
         } else {
-            if (tile >= TILE_BLUE_BRICK_0 && tile <= TILE_BLUE_BRICK_3) {
+            if (tile == TILE_BLUE_BRICK) {
                 *this = TILE_BLUE_BRICK_X;
             }
         }

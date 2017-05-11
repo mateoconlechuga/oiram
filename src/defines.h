@@ -79,7 +79,7 @@ typedef struct {
     uint8_t lives;
     unsigned int score;
     uint8_t score_counter;
-    uint8_t in_pipe;
+    uint8_t in_warp;
     bool enter_pipe;
     bool exit_pipe;
     bool pipe_counter;
@@ -130,9 +130,7 @@ typedef struct {
 
 extern game_t game;
 
-// -----------------------------
-// Tilemap defines
-// -----------------------------
+/* Tilemap defines */
 
 #define TILE_DATA_SIZE 258
 
