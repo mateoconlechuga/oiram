@@ -108,7 +108,7 @@ _tile_to_abs_xy_pos:
 	ld	l,a
 	push	hl
 	pop	bc
-	ld	de,(_tilemap)
+	ld	de,(_tilemap+0)
 	ld	hl,(ix+6)
 	or	a,a
 	sbc	hl,de
@@ -127,7 +127,6 @@ _tile_to_abs_xy_pos:
 	add	hl,hl
 	ld	iy,(ix+9)
 	ld	(iy),hl
-	ld	sp,ix
 	pop	ix
 	ret
 
@@ -137,8 +136,6 @@ _animate:
 	ld	(_tiles),a
 	cp	a,4
 	ret	nz
-	ld	hl,-66
-	call	__frameset
 	ld	bc,(_goomba_0)
 	ld	hl,(_goomba_sprite)
 	or	a,a
@@ -349,8 +346,6 @@ l_194:
 	ld	(_tiles),a
 	
 l_199:
-	ld	sp,ix
-	pop	ix
 	ret
 	
 	.ref _level_map

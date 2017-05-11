@@ -66,6 +66,8 @@ void remove_boo(uint8_t i) {
     free(free_me);
 }
 
+static enum { KOOPA_GREEN, KOOPA_RED, KOOPA_GREEN_FLY, KOOPA_RED_FLY, KOOPA_BONES, SPIKE };
+
 void add_shell_enemy(uint8_t *tile, uint8_t type) {
     simple_move_t *special = add_simple_mover(tile);
     
@@ -73,18 +75,18 @@ void add_shell_enemy(uint8_t *tile, uint8_t type) {
     special->hitbox.height = 26;
     special->vx = -1;
     switch(type) {
-        case 0:  // green type
+        case KOOPA_GREEN:
             special->type = KOOPA_GREEN_TYPE;
             special->smart = false;
             break;
-        case 1:  // red type
+        case KOOPA_RED:
             special->type = KOOPA_RED_TYPE;
             special->smart = true;
             break;
-        case 2:  // green fly type
+        case KOOPA_GREEN_FLY:
             special->type = KOOPA_GREEN_FLY_TYPE;
             goto flying_type;
-        case 3:  // red fly type
+        case KOOPA_RED_FLY:
             special->type = KOOPA_RED_FLY_TYPE;
 flying_type:
             special->smart = true;
@@ -92,7 +94,7 @@ flying_type:
             special->vy = 1;
             special->is_flyer = true;
             break;
-        case 4:  // bones type
+        case KOOPA_BONES:
             special->type = KOOPA_BONES_TYPE;
             special->smart = true;
             break;

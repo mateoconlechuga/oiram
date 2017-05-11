@@ -14,6 +14,7 @@
 #define TILE_SOLID_EMPTY          13
 #define TILE_WATER                26
 #define TILE_EMPTY                27
+#define TILE_EMPTY_BLACK          46
 #define TILE_LAVA                 55
 #define TILE_LAVA_TOP             122
 #define TILE_WATER_TOP            126

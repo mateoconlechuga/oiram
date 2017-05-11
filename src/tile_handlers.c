@@ -162,11 +162,11 @@ static uint8_t down_tile_handler(uint8_t *tile) {
     if (move_side == TILE_BOTTOM) {
         if (!handling_events) {
             add_bumped(tile, TILE_BOTTOM);
-            *tile = 46;
+            *tile = TILE_EMPTY_BLACK;
             if (game.end_counter) {
                 bumped_tile_t *bump_tile = add_bumped(tile - tilemap.width, TILE_BOTTOM);
                 bump_tile->tile_ptr = NULL;
-                bump_tile->tile = 150;
+                bump_tile->tile = TILE_COIN;
                 bump_tile->count = 6;
                 bump_tile->y -= TILE_HEIGHT/2;
                 add_coin(bump_tile->x, bump_tile->y);
@@ -201,7 +201,7 @@ static uint8_t coin_quest_handler(uint8_t *tile) {
     if (quest_tile_handler(tile)) {
         bumped_tile_t *bump_coin = add_bumped(tile - tilemap.width, TILE_BOTTOM);
         bump_coin->tile_ptr = NULL;
-        bump_coin->tile = 150;
+        bump_coin->tile = TILE_COIN;
         bump_coin->count = 6;
         bump_coin->y -= TILE_HEIGHT/2;
         add_coin(bump_coin->x, bump_coin->y);
