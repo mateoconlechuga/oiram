@@ -34,64 +34,43 @@ _test_against:
 	push	de
 	push	hl
 	push	bc
-	ld	bc,0
 	xor	a,a
-	sbc	hl,bc
-	jp	p,_l__2
-	jp	pe,_l_2
-	ret
-_l__2:
-	jp	po,_l_2
-	ret
+	bit	7,h
+	ret	nz                         ; if (x < 0) { return false; }
 
-_l_2:
 	ld	bc,(_level_map+14)
-	or	a,a
 	sbc	hl,bc
-	jr	c,not_at_max_x
-	xor	a,a
-	ret
-not_at_max_x:
+	ret	nc                         ; if (x > width) { return false; }
 	add	hl,bc
-	ld	bc,0
+	
 	ex	de,hl
-	or	a,a
-	sbc	hl,bc
-	jp	p,_l__4
-	jp	pe,_l_3
-	jr	_l__5
-_l__4:
-	jp	po,_l_3
-_l__5:
 	ld	a,1
-	ret
-_l_3:	ld	(_test_x),de
+	bit	7,h
+	ret	nz                         ; if (y < 0) { return true; }
+	
 	ld	bc,(_level_map+11)
 	or	a,a
 	sbc	hl,bc
-	jr	c,not_at_max_y
 	ld	a,1
-	ret
-not_at_max_y:
+	ret	nc
 	add	hl,bc
-	ld	(_test_y),hl
-	push	hl
-	ex	de,hl
+	
 	ld	iy,_tilemap
-	ld	b,(iy+10)
+	ld	(_test_x),de
+	ld	(_test_y),hl
+	ld	b,(iy+11)
 divloop1:
 	srl	h
 	rr	l
 	djnz	divloop1
+	ld	h,(iy+13)
+	mlt	hl
 	ex	de,hl
-	pop	hl
 	ld	b,(iy+11)
 divloop2:
 	srl	h
 	rr	l
 	djnz	divloop2
-	ld	h,(iy+13)
-	mlt	hl
 	add	hl,de
 	ld	de,(iy+0)
 	add	hl,de
