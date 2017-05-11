@@ -1,22 +1,22 @@
-    .assume adl=1
-    
+	.assume adl=1
+	
 ; tile_handlers.h
-    .def _animate
-    .def _moveable_tile
-    .def _moveable_tile_left_bottom
-    .def _moveable_tile_right_bottom
-    .def _solid_tile_handler
-    .def _empty_tile_handler
-    .def _tile_to_abs_xy_pos
-    
+	.def _animate
+	.def _moveable_tile
+	.def _moveable_tile_left_bottom
+	.def _moveable_tile_right_bottom
+	.def _solid_tile_handler
+	.def _empty_tile_handler
+	.def _tile_to_abs_xy_pos
+	
 _moveable_tile_right_bottom:
-	xor	a,a                         ; TEST_RIGHT
+	xor	a,a                      ; TEST_RIGHT
 	jr	_test_against
 _moveable_tile_left_bottom:
-	ld	a,1                         ; TEST_LEFT
+	ld	a,1                      ; TEST_LEFT
 	jr	_test_against
 _moveable_tile:
-	ld	a,2                         ; TEST_NONE
+	ld	a,2                      ; TEST_NONE
 _test_against:
 	ld	(_testing_side),a
 	pop	bc
@@ -27,17 +27,17 @@ _test_against:
 	push	bc
 	xor	a,a
 	bit	7,h
-	ret	nz                         ; if (x < 0) { return false; }
+	ret	nz                       ; if (x < 0) { return false; }
 
 	ld	bc,(_level_map+14)
 	sbc	hl,bc
-	ret	nc                         ; if (x > width) { return false; }
+	ret	nc                       ; if (x > width) { return false; }
 	add	hl,bc
 	
 	ex	de,hl
 	ld	a,1
 	bit	7,h
-	ret	nz                         ; if (y < 0) { return true; }
+	ret	nz                       ; if (y < 0) { return true; }
 	
 	ld	bc,(_level_map+11)
 	or	a,a
@@ -299,10 +299,10 @@ l_192:
 	add	hl,bc
 	ld	(_tileset_tiles+699),hl
 
-	ld	hl,(_tileset_tiles+672)                 ; water coin tile
+	ld	hl,(_tileset_tiles+672)
 	add	hl,bc
 	ld	(_tileset_tiles+672),hl
-    
+	
 	ld	hl,_tiles+1
 	ld	a,(hl)
 	cp	a,2
@@ -394,10 +394,10 @@ l_199:
 	.ref _tilemap
 	.ref _tiles
 	.ref _tileset_tiles
-    .ref _test_x
-    .ref _test_y
-    .ref _testing_side
-    .ref _tile_handler
+	.ref _test_x
+	.ref _test_y
+	.ref _testing_side
+	.ref _tile_handler
 	.ref __indcall
-    .ref __idvrmu
+	.ref __idvrmu
 	.ref __frameset0
