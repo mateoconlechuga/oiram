@@ -1,0 +1,9 @@
+*/*
+!/src
+!/img
+!/bin/*.8xv
+!/bin/*.txt
+!/bin/*.txt
+!iconc.png
+!makefile
+!readme.md

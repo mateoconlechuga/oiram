@@ -11,5 +11,3 @@
 
 ; all the graphics
 #include "orig_tileset.asm"
-#include "coin_block.asm" ; store the coin block here
-

@@ -348,7 +348,7 @@ static uint8_t quicksand_handler(uint8_t *tile) {
 bool in_water;
 bool on_ice;
 
-static uint8_t water_tile_hander(uint8_t *tile) {
+static uint8_t water_tile_handler(uint8_t *tile) {
     if (move_side == TILE_TOP) {
         static uint8_t test_sides = 0;
         
@@ -588,7 +588,7 @@ uint8_t (*tile_handler[256])(uint8_t*) = {
     solid_tile_handler,      // 23  solid grass
     solid_tile_handler,      // 24  solid grass
     solid_tile_handler,      // 25  solid ball
-    water_tile_hander,       // 26  water
+    water_tile_handler,      // 26  water
     empty_tile_handler,      // 27  empty
     solid_tile_handler,      // 28  pipe green up left mid
     solid_tile_handler,      // 29  pipe green up right mid
@@ -624,7 +624,7 @@ uint8_t (*tile_handler[256])(uint8_t*) = {
     end_pipe_handler,        // 59  end pipe
     solid_tile_handler,      // 60  end pipe
     empty_tile_handler,      // 61  empty black
-    solid_tile_handler,      // 62  solid wood
+    solid_tile_handler,      // 62  solid wood pillar
     solid_tile_handler,      // 63  solid wood
     solid_tile_handler,      // 64  solid wood
     solid_tile_handler,      // 65  solid ground
@@ -671,8 +671,8 @@ uint8_t (*tile_handler[256])(uint8_t*) = {
     solid_tile_handler,      // 106 solid ground
     solid_tile_handler,      // 107 solid ground
     vine_tile_handler,       // 108 vine
-    empty_tile_handler,      // 109 ** unused
-    empty_tile_handler,      // 110 ** unused
+    solid_tile_handler,      // 109 end pipe left
+    solid_tile_handler,      // 110 end pipe right
     steepl_slope_handler,    // 111 steep slope left
     semi1l_slope_handler,    // 112 semi slope left 0
     semi2l_slope_handler,    // 113 semi slope left 1
@@ -681,17 +681,17 @@ uint8_t (*tile_handler[256])(uint8_t*) = {
     empty_tile_handler,      // 116 empty landscape
     empty_tile_handler,      // 117 empty landscape
     quicksandt_handler,      // 118 quicksand top
-    empty_tile_handler,      // 119 ** unused
-    empty_tile_handler,      // 120 ** unused
-    empty_tile_handler,      // 121 ** unused
+    solid_tile_handler,      // 119 snow bottom left
+    solid_tile_handler,      // 120 snow bottom middle
+    solid_tile_handler,      // 121 snow bottom right
     lavas_tile_handler,      // 122 lava top
     empty_tile_handler,      // 123 ** unused
     empty_tile_handler,      // 124 ** unused
     empty_tile_handler,      // 125 ** unused
-    water_tile_hander,       // 126 water top
-    empty_tile_handler,      // 127 ** unused
-    empty_tile_handler,      // 128 ** unused
-    empty_tile_handler,      // 129 ** unused
+    water_tile_handler,      // 126 water top
+    solid_tile_handler,      // 127 snow left
+    solid_tile_handler,      // 128 snow middle
+    solid_tile_handler,      // 129 snow right
     empty_tile_handler,      // 130 empty landscape
     empty_tile_handler,      // 131 empty landscape
     quicksand_handler,       // 132 quicksand
@@ -796,8 +796,8 @@ uint8_t (*tile_handler[256])(uint8_t*) = {
     door_tile_handler,       // 231 door upper
     door_tile_handler,       // 232 door lower
     brick_tile_handler,      // 233 blue brick
-    empty_tile_handler,      // 234 ** unused
-    empty_tile_handler,      // 235 ** unused
+    coin_tile_handler,       // 234 blue coin
+    empty_tile_handler,      // 235 empty block for blue coins
     empty_tile_handler,      // 236 ** unused
     p_block_handler,         // 237 p switch
     empty_tile_handler,      // 238 empty block for blue blocks

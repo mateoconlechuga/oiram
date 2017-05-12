@@ -16,8 +16,16 @@
 #define TILE_EMPTY                27
 #define TILE_EMPTY_BLACK          46
 #define TILE_LAVA                 55
+#define TILE_END_PIPE_L           109
+#define TILE_END_PIPE_R           110
+#define TILE_SNOW_BL              119
+#define TILE_SNOW_BM              120
+#define TILE_SNOW_BR              121
 #define TILE_LAVA_TOP             122
 #define TILE_WATER_TOP            126
+#define TILE_SNOW_TL              127
+#define TILE_SNOW_TM              128
+#define TILE_SNOW_TR              129
 #define TILE_COIN                 150
 #define TILE_WATER_COIN           151
 #define TILE_ICE_COIN             152
@@ -31,6 +39,8 @@
 #define TILE_LEAF_BOX             230
 
 #define TILE_BLUE_BRICK           233
+#define TILE_BLUE_COIN            234
+#define TILE_BLUE_COIN_X          235
 #define TILE_BLUE_BRICK_X         238
 #define TILE_ICE                  239
 

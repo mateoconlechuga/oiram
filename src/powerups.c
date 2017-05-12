@@ -185,10 +185,16 @@ void show_blue_blocks(bool state) {
         if (state) {
             if (tile == TILE_BLUE_BRICK_X) {
                 *this = TILE_BLUE_BRICK;
-            }
+            } else
+			if (tile == TILE_BLUE_COIN_X) {
+				*this = TILE_BLUE_COIN;
+			}
         } else {
             if (tile == TILE_BLUE_BRICK) {
                 *this = TILE_BLUE_BRICK_X;
+            } else
+			if (tile == TILE_BLUE_COIN) {
+                *this = TILE_BLUE_COIN_X;
             }
         }
     }

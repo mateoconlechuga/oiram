@@ -165,6 +165,7 @@ void extract_tiles(void) {
     uint16_t pal_size;
     uint16_t *pal_ptr;
     uint8_t *tmp_ptr;
+    gfx_image_t **tiles = tileset_tiles;
     
     ti_CloseAll();
     slot = ti_Open("OiramT", "r");
@@ -182,11 +183,11 @@ void extract_tiles(void) {
     tmp_ptr += pal_size;
     
     for(i = 0;i++;) {
-        tileset_tiles[i] = (gfx_image_t*)tmp_ptr;
+        tiles[i] = (gfx_image_t*)tmp_ptr;
     }
     
-    for(i = 0; i < 238; i++) {
-        tileset_tiles[i] = (gfx_image_t*)tmp_ptr;
+    for(i = 0; i < 252; i++) {
+        tiles[i] = (gfx_image_t*)tmp_ptr;
         tmp_ptr += TILE_DATA_SIZE;
     }
     
@@ -194,24 +195,40 @@ void extract_tiles(void) {
     ti_CloseAll();
     
     // extract common sprite tiles
-    empty             = tileset_tiles[TILE_EMPTY];
-    coin_sprite       = tileset_tiles[TILE_COIN];
-    door_top          = tileset_tiles[228];
-    door_bot          = tileset_tiles[229];
-    tile_question_box = tileset_tiles[TILE_QUESTION_BOX];
+    empty             = tiles[TILE_EMPTY];
+    coin_sprite       = tiles[TILE_COIN];
+    door_top          = tiles[228];
+    door_bot          = tiles[229];
+    tile_question_box = tiles[TILE_QUESTION_BOX];
     
-    // handling ice coins is rather odd...
-    tileset_tiles[TILE_ICE_COIN] = (gfx_image_t*)tmp_ptr;
-    tileset_tiles[TILE_ICE]      = tileset_tiles[230];
+	// snow tiles fixup
+    tiles[TILE_SNOW_TL] = tiles[239];
+    tiles[TILE_SNOW_TM] = tiles[240];
+    tiles[TILE_SNOW_TR] = tiles[241];
+    tiles[TILE_SNOW_BL] = tiles[242];
+    tiles[TILE_SNOW_BM] = tiles[243];
+    tiles[TILE_SNOW_BR] = tiles[244];
+	
+    // handling ice/coins is rather odd...
+    tiles[TILE_BLUE_COIN] = tiles[247];
+    tiles[TILE_ICE_COIN]  = tiles[238];
+    tiles[TILE_ICE]       = tiles[230];
+    
+    // end pipe fixup
+    tiles[TILE_END_PIPE_L] = tiles[245];
+    tiles[TILE_END_PIPE_R] = tiles[246];
+    
+    // blue stuffs
+    tiles[TILE_BLUE_BRICK_X] = tiles[TILE_EMPTY];
+    tiles[TILE_BLUE_COIN_X]  = tiles[TILE_EMPTY];
     
     // handle the question boxes
-    tileset_tiles[TILE_COIN_BOX]       = tile_question_box;
-    tileset_tiles[TILE_1UP_BOX]        = tile_question_box;
-    tileset_tiles[TILE_MUSHROOM_BOX]   = tile_question_box;
-    tileset_tiles[TILE_STAR_BOX]       = tile_question_box;
-    tileset_tiles[TILE_FIREFLOWER_BOX] = tile_question_box;
-    tileset_tiles[TILE_LEAF_BOX]       = tile_question_box;
-    tileset_tiles[TILE_BLUE_BRICK_X]   = tileset_tiles[TILE_EMPTY];
+    tiles[TILE_COIN_BOX]       = tile_question_box;
+    tiles[TILE_1UP_BOX]        = tile_question_box;
+    tiles[TILE_MUSHROOM_BOX]   = tile_question_box;
+    tiles[TILE_STAR_BOX]       = tile_question_box;
+    tiles[TILE_FIREFLOWER_BOX] = tile_question_box;
+    tiles[TILE_LEAF_BOX]       = tile_question_box;
 }
 
 void extract_sprites(void) {
