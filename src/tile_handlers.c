@@ -135,8 +135,8 @@ static uint8_t p_block_handler(uint8_t *tile) {
             tile_to_abs_xy_pos(tile, &x, &y);
             add_poof(x + 2, y + 2);
             oiram.vy = -2;
-            game.blue_block_counter = 10;
-            show_blue_blocks(true);
+            game.blue_item_count = 10;
+            show_blue_items(true);
         }
     }
     return 0;
@@ -163,14 +163,14 @@ static uint8_t down_tile_handler(uint8_t *tile) {
         if (!handling_events) {
             add_bumped(tile, TILE_BOTTOM);
             *tile = TILE_EMPTY_BLACK;
-            if (game.end_counter) {
+            if (game.end_count) {
                 bumped_tile_t *bump_tile = add_bumped(tile - tilemap.width, TILE_BOTTOM);
                 bump_tile->tile_ptr = NULL;
                 bump_tile->tile = TILE_COIN;
                 bump_tile->count = 6;
                 bump_tile->y -= TILE_HEIGHT/2;
                 add_coin(bump_tile->x, bump_tile->y);
-                game.end_counter--;
+                game.end_count--;
             }
         }
     }
@@ -209,23 +209,41 @@ static uint8_t coin_quest_handler(uint8_t *tile) {
     return 0;
 }
 static uint8_t up1_quest_handler(uint8_t *tile) {
-    if (quest_tile_handler(tile)) { add_mushroom_1up(tile); }
+    if (quest_tile_handler(tile)) {
+        add_mushroom_1up(tile);
+    }
     return 0;
 }
 static uint8_t mushroom_quest_handler(uint8_t *tile) {
-    if (quest_tile_handler(tile)) { add_mushroom(tile); }
+    if (quest_tile_handler(tile)) {
+        add_mushroom(tile);
+    }
     return 0;
 }
 static uint8_t star_quest_handler(uint8_t *tile) {
-    if (quest_tile_handler(tile)) { add_star(tile); }
+    if (quest_tile_handler(tile)) {
+        add_star(tile);
+    }
     return 0;
 }
 static uint8_t fire_quest_handler(uint8_t *tile) {
-    if (quest_tile_handler(tile)) { if ((oiram.flags & FLAG_OIRAM_BIG)) { add_fire_flower(tile); } else { add_mushroom(tile); } }
+    if (quest_tile_handler(tile)) {
+        if ((oiram.flags & FLAG_OIRAM_BIG)) {
+            add_fire_flower(tile);
+        } else {
+            add_mushroom(tile);
+        }
+    }
     return 0;
 }
 static uint8_t leaf_quest_handler(uint8_t *tile) {
-    if (quest_tile_handler(tile)) { if ((oiram.flags & FLAG_OIRAM_BIG)) { add_simple_enemy(tile - tilemap.width, LEAF_TYPE); } else { add_mushroom(tile); } }
+    if (quest_tile_handler(tile)) {
+        if ((oiram.flags & FLAG_OIRAM_BIG)) {
+            add_simple_enemy(tile - tilemap.width, LEAF_TYPE);
+        } else {
+            add_mushroom(tile);
+        }
+    }
     return 0;
 }
 
@@ -439,11 +457,11 @@ static uint8_t jelly_tile_handler(uint8_t *tile) {
 static uint8_t end_pipe_handler(uint8_t *tile) {
     if (move_side == TILE_TEST_PIPE_DOWN) {
         
-        oiram.in_warp = PIPE_DOWN;
-        oiram.enter_pipe = true;
-        oiram.pipe_counter = oiram.hitbox.height + 2;
-        oiram.pipe_clip_y = tile_y_loc(tile);
-        game.entered_end_pipe = true;
+        warp.style = PIPE_DOWN;
+        warp.enter = true;
+        warp.count = oiram.hitbox.height + 2;
+        warp.clip_y = tile_y_loc(tile);
+        game.enter_end = true;
     }
     return 0;
 }
@@ -856,7 +874,7 @@ bumped_tile_t *add_bumped(uint8_t *tile, uint8_t dir) {
     for(i = 0; i < num_simple_movers; i++) {
         simple_move_t *cur = simple_mover[i];
 
-        // check if we should delete it
+        // check if we should bump it
         if (gfx_CheckRectangleHotspot(bump->x, bump->y, 15, 15, cur->x, cur->y, cur->hitbox.width, cur->hitbox.height)) {
             cur->vy -= 4;
             cur->bumped = true;
@@ -872,16 +890,18 @@ void remove_bumped_tile(uint8_t i) {
     bumped_tile_t *free_me = bumped_tile[i];
     uint8_t num_bumped_tiles_less;
     
-    if (!num_bumped_tiles) { return; }
+    if (!num_bumped_tiles) {
+        return;
+    }
     
     num_bumped_tiles_less = num_bumped_tiles--;
     
     if (free_me->tile_ptr) {
-        *free_me->tile_ptr = free_me->tile;
-    }
-    
-    if (free_me->tile == 161) {
-        *free_me->tile_ptr = TILE_EMPTY;
+        if (free_me->tile == TILE_VANISH) {
+            *free_me->tile_ptr = TILE_EMPTY;
+        } else {
+            *free_me->tile_ptr = free_me->tile;
+        }
     }
     
     for(; i < num_bumped_tiles_less; i++) {
@@ -899,6 +919,8 @@ void remove_bumped_tile(uint8_t i) {
 #define MASK_DOOR_X      (1<<19)
 #define MASK_PIPE_DOOR   (MASK_PIPE_UP | MASK_PIPE_DOWN | MASK_PIPE_LEFT | MASK_PIPE_RIGHT | MASK_DOOR_E | MASK_DOOR_X)
 
+warp_info_t warp;
+
 uint8_t door_tile_handler(uint8_t *tile) {
     warp_tile_handler(tile);
     return 1;
@@ -908,14 +930,14 @@ uint8_t warp_tile_handler(uint8_t *tile) {
     unsigned int i;
     unsigned int offset, x, y;
 
-    if (handling_events || oiram.in_warp || oiram.vy > 0) {
+    if (handling_events || warp.style || oiram.vy > 0) {
         return 0;
     }
     
     tile_to_abs_xy_pos(tile, &x, &y);
     
     offset = tile - tilemap.map;
-    oiram.enter_pipe = false;
+    warp.enter = false;
     
     for(i = 0; i < pipe_max_tests; i += 2) {
         unsigned int pipe_enter = warp_pipe_info[i];
@@ -925,45 +947,45 @@ uint8_t warp_tile_handler(uint8_t *tile) {
             switch (move_side) {
                 case TILE_LEFT:
                     if (pipe_enter & MASK_PIPE_RIGHT) {
-                        oiram.in_warp = PIPE_LEFT;
-                        oiram.enter_pipe = true;
-                        oiram.pipe_counter = OIRAM_HITBOX_WIDTH;
-                        oiram.pipe_clip_x = x;
+                        warp.style = PIPE_LEFT;
+                        warp.enter = true;
+                        warp.count = OIRAM_HITBOX_WIDTH;
+                        warp.clip_x = x;
                     }
                     break;
                 case TILE_RIGHT:
                     if (pipe_enter & MASK_PIPE_LEFT) {
-                        oiram.in_warp = PIPE_RIGHT;
-                        oiram.enter_pipe = true;
-                        oiram.pipe_counter = OIRAM_HITBOX_WIDTH;
-                        oiram.pipe_clip_x = x + TILE_WIDTH;
+                        warp.style = PIPE_RIGHT;
+                        warp.enter = true;
+                        warp.count = OIRAM_HITBOX_WIDTH;
+                        warp.clip_x = x + TILE_WIDTH;
                     }
                     break;
                 case TILE_TEST_PIPE_DOWN:
                     if (oiram.x < (int)x + 2) {
                         return 0;
                     }
-                    oiram.in_warp = PIPE_DOWN;
-                    oiram.enter_pipe = true;
-                    oiram.pipe_counter = oiram.hitbox.height;
-                    oiram.pipe_clip_y = y;
+                    warp.style = PIPE_DOWN;
+                    warp.enter = true;
+                    warp.count = oiram.hitbox.height;
+                    warp.clip_y = y;
                     break;
                 case TILE_BOTTOM:
                     if (pipe_enter & MASK_PIPE_UP) {
                         if (oiram.x < (int)x + 2) {
                             return 0;
                         }
-                        oiram.in_warp = PIPE_UP;
-                        oiram.enter_pipe = true;
-                        oiram.pipe_clip_y = y + TILE_HEIGHT;
-                        oiram.pipe_counter = oiram.hitbox.height;
+                        warp.style = PIPE_UP;
+                        warp.enter = true;
+                        warp.clip_y = y + TILE_HEIGHT;
+                        warp.count = oiram.hitbox.height;
                     }
                     break;
                 case TILE_TEST_DOOR_UP:
                     if (pipe_enter & MASK_DOOR_E) {
-                        oiram.in_warp = DOOR_WARP;
-                        oiram.enter_pipe = true;
-                        oiram.pipe_counter = 4;
+                        warp.style = DOOR_WARP;
+                        warp.enter = true;
+                        warp.count = 4;
                         oiram.door_x = x - oiram.scrollx;
                         oiram.door_y = y - oiram.scrolly;
                     }
@@ -973,32 +995,32 @@ uint8_t warp_tile_handler(uint8_t *tile) {
             }
         }
         
-        if (oiram.enter_pipe) {
+        if (warp.enter) {
             unsigned int not_masked = warp_pipe_info[i+1];
-            oiram.exit_pipe_loc = not_masked & ~MASK_PIPE_DOOR;
+            warp.exit_loc = not_masked & ~MASK_PIPE_DOOR;
             
             if (not_masked & MASK_PIPE_UP) {
-                oiram.exit_pipe_dir = PIPE_UP;
+                warp.exit_style = PIPE_UP;
             } else
             if (not_masked & MASK_PIPE_LEFT) {
-                oiram.exit_pipe_dir = PIPE_RIGHT;
+                warp.exit_style = PIPE_RIGHT;
                 if (oiram.flags & (FLAG_OIRAM_BIG | FLAG_OIRAM_FIRE)) {
-                    oiram.exit_pipe_loc -= tilemap.width;
+                    warp.exit_loc -= tilemap.width;
                 }
             } else
             if (not_masked & MASK_PIPE_RIGHT) {
-                oiram.exit_pipe_dir = PIPE_LEFT;
+                warp.exit_style = PIPE_LEFT;
                 if (oiram.flags & (FLAG_OIRAM_BIG | FLAG_OIRAM_FIRE)) {
-                    oiram.exit_pipe_loc -= tilemap.width;
+                    warp.exit_loc -= tilemap.width;
                 }
             } else
             if (not_masked & MASK_DOOR_X) {
-                oiram.exit_pipe_dir = DOOR_WARP;
+                warp.exit_style = DOOR_WARP;
                 if (!(oiram.flags & (FLAG_OIRAM_BIG | FLAG_OIRAM_FIRE))) {
-                    oiram.exit_pipe_loc += tilemap.width;
+                    warp.exit_loc += tilemap.width;
                 }
             } else {
-                oiram.exit_pipe_dir = PIPE_DOWN;
+                warp.exit_style = PIPE_DOWN;
             }
             break;
         }

@@ -1,5 +1,3 @@
-// standard headers
-#include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stdint.h>
@@ -9,6 +7,7 @@
 #include "tile_handlers.h"
 #include "loadscreen.h"
 #include "images.h"
+#include "oiram.h"
 
 void add_goomba(uint8_t *tile) {
     simple_move_t *goomba = add_simple_mover(tile);

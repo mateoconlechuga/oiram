@@ -1,21 +1,13 @@
-// standard headers
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-#include <stddef.h>
 #include <stdint.h>
 #include <tice.h>
 #include <intce.h>
-#include <debug.h>
 
-// shared libraries
 #include <graphx.h>
 #include <keypadc.h>
 #include <fileioc.h>
 
-// oiram stuffs
 #include "tile_handlers.h"
 #include "defines.h"
 #include "powerups.h"
@@ -143,7 +135,7 @@ void set_level(uint8_t abs_pack, uint8_t level) {
     uint8_t level_width = 0, level_height = 0;
     uint16_t color = 0;
     
-    game.end_level = 0;
+    game.num_levels = 0;
     search_pos = NULL;
 
     ti_CloseAll();
@@ -162,13 +154,13 @@ void set_level(uint8_t abs_pack, uint8_t level) {
         pack_data += strlen(pack_author) + 1;
         
         // get the number of levels in the pack
-        game.end_level = *pack_data;
+        game.num_levels = *pack_data;
         pack_data++;
         if (level) {
             uint16_t *level_data = (uint16_t*)pack_data;
             pack_data += level_data[level-1];
         }
-        pack_data += (game.end_level-1)*2;
+        pack_data += (game.num_levels-1)*2;
         
         // extract color channel
         color = *((uint16_t*)pack_data);
@@ -224,7 +216,7 @@ void set_load_screen(void) {
     uint8_t selected_pack = 0;
     uint8_t selected_level = 0;
     uint8_t scroll_amt = 0;
-    uint8_t end_level;
+    uint8_t num_levels;
     uint8_t max_select_level[MAX_SHOW];
     uint8_t tmp;
 
@@ -312,10 +304,10 @@ void set_load_screen(void) {
             
             pack_data += strlen((char*)pack_data) + 1;
             pack_data += strlen((char*)pack_data) + 1;
-            end_level = *pack_data;
+            num_levels = *pack_data;
             max_select = progress = pack_info[num_packs].progress;
             
-            if (progress != end_level) {
+            if (progress != num_levels) {
                 max_select++;
             }
             

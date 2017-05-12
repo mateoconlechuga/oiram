@@ -8,7 +8,7 @@
 	.def _solid_tile_handler
 	.def _empty_tile_handler
 	.def _tile_to_abs_xy_pos
-	
+
 _moveable_tile_right_bottom:
 	xor	a,a                      ; TEST_RIGHT
 	jr	_test_against
@@ -240,9 +240,9 @@ a_15:	ld	(_spike_left_sprite),bc
 	ld	bc,(_spike_right_1)
 a_16:	ld	(_spike_right_sprite),bc
 
-	ld	a,(_oiram+35)
+	ld	a,(_oiram+0)
 	xor	a,1
-	ld	(_oiram+35),a
+	ld	(_oiram+0),a
 
 	ld	bc,258                      ; TILE_DATA_SIZE
 	ld	hl,_tiles+2
@@ -361,12 +361,6 @@ l_199:
 	.ref _fish_right_0
 	.ref _fish_left_1
 	.ref _fish_left_0
-	.ref _oiram_up_fire_1
-	.ref _oiram_up_fire_0
-	.ref _oiram_up_big_1
-	.ref _oiram_up_big_0
-	.ref _oiram_up_small_1
-	.ref _oiram_up_small_0
 	.ref _wing_right_1
 	.ref _wing_right_0
 	.ref _wing_left_1

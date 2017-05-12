@@ -1,20 +1,10 @@
-// standard headers
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <stdbool.h>
-#include <stddef.h>
 #include <stdint.h>
-#include <tice.h>
-#include <debug.h>
 
-// shared libraries
 #include <graphx.h>
 #include <keypadc.h>
 #include <fileioc.h>
 
-// oiram stuffs
 #include "tile_handlers.h"
 #include "defines.h"
 #include "powerups.h"
@@ -22,6 +12,7 @@
 #include "events.h"
 #include "images.h"
 #include "lower.h"
+#include "oiram.h"
 #include "simple_mover.h"
 
 bool pressed_left = false;
@@ -32,104 +23,18 @@ bool pressed_alpha = false;
 bool pressed_2nd = false;
 bool allow_up_press = true;
 
+// determine the scroll and offsets for the start posistion
 void compute_oiram_start_location(void) {
-    int new_x_left = oiram.x;
-    int new_y_top = oiram.y;
-    
-    if (new_x_left > 155) {
-        if ((oiram.scrollx = new_x_left - 155) > level_map.max_x_scroll) { oiram.scrollx = level_map.max_x_scroll; }
+    if (oiram.x > 155 && (oiram.scrollx = oiram.x - 155) > level_map.max_x_scroll) {
+        oiram.scrollx = level_map.max_x_scroll;
     }
     
-    if (new_y_top > 80) {
-        if ((oiram.scrolly = new_y_top - 80) > level_map.max_y_scroll) { oiram.scrolly = level_map.max_y_scroll; }
+    if (oiram.y > 80 && (oiram.scrolly = oiram.y - 80) > level_map.max_y_scroll) {
+        oiram.scrolly = level_map.max_y_scroll;
     }
 }
 
-// handle picking up of a shell
-bool pickup_shell(void) {
-    uint8_t j;
-    
-    // get absolute locations
-    int abs_x = oiram.x;
-    int abs_y = oiram.y;
-    
-    // don't recurse
-    if (oiram.has_shell) { return false; }
-    
-    // locate shell location
-    if (oiram.direction == FACE_LEFT) {
-        abs_x -= 24;
-    } else {
-        abs_x += OIRAM_HITBOX_WIDTH;
-    }
-    
-    // check if there is a shell near oiram
-    for(j = 0; j < num_simple_movers; j++) {
-        simple_move_t *chk = simple_mover[j];
-        uint8_t chk_type = chk->type;
-        
-        if ((chk_type == KOOPA_RED_SHELL_TYPE || chk_type == KOOPA_GREEN_SHELL_TYPE) && !chk->vx) {
-            if (gfx_CheckRectangleHotspot(abs_x, abs_y, 24, oiram.hitbox.height, chk->x, chk->y, 15, 15)) {
-                remove_simple_mover(j);
-                oiram.has_shell = true;
-                oiram.has_red_shell = chk_type == KOOPA_RED_SHELL_TYPE;
-                return true;
-            }
-        }
-    }
-    
-    // return false if we can't pick up a shell
-    return false;
-}
-
-// drops a shell if oiram is holding one
-void drop_shell(void) {
-    simple_move_t *shell = add_simple_mover(NULL);
-    shell->y = ((oiram.flags & FLAG_OIRAM_BIG) ? oiram.y + 26/2 - 4 : oiram.y);
-    if (oiram.direction == FACE_LEFT) {
-        shell->vx = -3;
-        shell->x = -16;
-    } else {
-        shell->vx = 3;
-        shell->x = OIRAM_HITBOX_WIDTH;
-    }
-    shell->x += oiram.x;
-    shell->hitbox.height = 15;
-    shell->hitbox.width = 15;
-    if (oiram.has_red_shell) {
-        shell->sprite = koopa_red_shell_0;
-        shell->type = KOOPA_RED_SHELL_TYPE;
-    } else {
-        shell->sprite = koopa_green_shell_0;
-        shell->type = KOOPA_GREEN_SHELL_TYPE;
-    }
-    oiram.has_shell = false;
-}
-
-// crouching is fun
-static bool crouch_oiram(void) {
-    // check if we are big
-    if (oiram.flags & (FLAG_OIRAM_RACOON | FLAG_OIRAM_FIRE | FLAG_OIRAM_BIG)) {
-        gfx_image_t *img0;
-        if (oiram.flags & FLAG_OIRAM_RACOON) {
-            img0 = oiram_crouch_racoon;
-        } else if (oiram.flags & FLAG_OIRAM_FIRE) {
-            img0 = oiram_crouch_fire;
-        } else {
-            img0 = oiram_crouch_big;
-        }
-        memcpy(oiram_0_buffer_right, img0, OIRAM_BIG_SPRITE_SIZE);
-        memcpy(oiram_1_buffer_right, img0, OIRAM_BIG_SPRITE_SIZE);
-        set_left_oiram_sprites();
-        
-        oiram.hitbox.height = OIRAM_SMALL_HITBOX_HEIGHT;
-        oiram.hitbox_height_half = OIRAM_SMALL_HITBOX_HEIGHT/2;
-        oiram.crouched = true;
-        return true;
-    }
-    return false;
-}
-
+// sets the sprites
 void set_normal_oiram_sprites(void) {
     gfx_image_t *img0;
     gfx_image_t *img1;
@@ -158,30 +63,115 @@ void set_normal_oiram_sprites(void) {
     set_left_oiram_sprites();
 }
 
-void uncrouch_oiram(void) {
-    if ((oiram.flags & FLAG_OIRAM_BIG)) {
+// handle picking up of a shell
+static bool pickup_shell(void) {
+    uint8_t j;
+    
+    // get absolute locations
+    int abs_x = oiram.x;
+    int abs_y = oiram.y;
+    
+    // don't recurse
+    if (oiram.has_shell) {
+        return false;
+    }
+    
+    // locate shell location
+    if (oiram.direction == FACE_LEFT) {
+        abs_x -= 24;
+    } else {
+        abs_x += OIRAM_HITBOX_WIDTH;
+    }
+    
+    // check if there is a shell near oiram
+    for(j = 0; j < num_simple_movers; j++) {
+        simple_move_t *chk = simple_mover[j];
+        uint8_t chk_type = chk->type;
+        
+        if ((chk_type == KOOPA_RED_SHELL_TYPE || chk_type == KOOPA_GREEN_SHELL_TYPE) && !chk->vx) {
+            if (gfx_CheckRectangleHotspot(abs_x, abs_y, 24, oiram.hitbox.height, chk->x, chk->y, 15, 15)) {
+                remove_simple_mover(j);
+                oiram.has_shell = true;
+                oiram.has_red_shell = chk_type == KOOPA_RED_SHELL_TYPE;
+                return true;
+            }
+        }
+    }
+    
+    // return false if we can't pick up a shell
+    return false;
+}
+
+// drops a shell if oiram is holding one
+static void drop_shell(void) {
+    simple_move_t *shell = add_simple_mover(NULL);
+    shell->y = ((oiram.flags & FLAG_OIRAM_BIG) ? oiram.y + 26/2 - 4 : oiram.y);
+    if (oiram.direction == FACE_LEFT) {
+        shell->vx = -3;
+        shell->x = -16;
+    } else {
+        shell->vx = 3;
+        shell->x = OIRAM_HITBOX_WIDTH;
+    }
+    shell->x += oiram.x;
+    shell->hitbox.height = 15;
+    shell->hitbox.width = 15;
+    if (oiram.has_red_shell) {
+        shell->sprite = koopa_red_shell_0;
+        shell->type = KOOPA_RED_SHELL_TYPE;
+    } else {
+        shell->sprite = koopa_green_shell_0;
+        shell->type = KOOPA_GREEN_SHELL_TYPE;
+    }
+    oiram.has_shell = false;
+}
+
+static bool crouch_oiram(void) {
+    if (oiram.flags & (FLAG_OIRAM_RACOON | FLAG_OIRAM_FIRE | FLAG_OIRAM_BIG)) {
+        gfx_image_t *img0;
+        if (oiram.flags & FLAG_OIRAM_RACOON) {
+            img0 = oiram_crouch_racoon;
+        } else if (oiram.flags & FLAG_OIRAM_FIRE) {
+            img0 = oiram_crouch_fire;
+        } else {
+            img0 = oiram_crouch_big;
+        }
+        memcpy(oiram_0_buffer_right, img0, OIRAM_BIG_SPRITE_SIZE);
+        memcpy(oiram_1_buffer_right, img0, OIRAM_BIG_SPRITE_SIZE);
+        set_left_oiram_sprites();
+        
+        oiram.hitbox.height = OIRAM_SMALL_HITBOX_HEIGHT;
+        oiram.hitbox_height_half = OIRAM_SMALL_HITBOX_HEIGHT/2;
+        oiram.crouched = true;
+        return true;
+    }
+    return false;
+}
+
+static void uncrouch_oiram(void) {
+    if (oiram.flags & FLAG_OIRAM_BIG) {
         set_normal_oiram_sprites();
     }
     oiram.crouched = false;
 }
 
-void compute_oiram_location_from_offset(unsigned int offset) {
+static void oiram_location_from_offset(unsigned int offset) {
     unsigned int x, y;
     
     tile_to_abs_xy_pos(offset + tilemap.map, &x, &y);
 
-    if (oiram.exit_pipe_dir == PIPE_DOWN || oiram.exit_pipe_dir == PIPE_UP) {
+    if (warp.exit_style == PIPE_DOWN || warp.exit_style == PIPE_UP) {
         x += 8;
     }
-    if (oiram.exit_pipe_dir == DOOR_WARP && (oiram.flags & (FLAG_OIRAM_BIG | FLAG_OIRAM_FIRE))) {
+    if (warp.exit_style == DOOR_WARP && (oiram.flags & (FLAG_OIRAM_BIG | FLAG_OIRAM_FIRE))) {
         y += 3;
     }
 
     oiram.x = x;
     oiram.y = y;
     
-    oiram.pipe_clip_x = x;
-    oiram.pipe_clip_y = y;
+    warp.clip_x = x;
+    warp.clip_y = y;
 }
 
 static void spin_racoon_mario(int x, int y) {
@@ -228,8 +218,6 @@ void move_oiram(void) {
     uint8_t new_vx = oiram.vx;
     uint8_t left_bottom_test,right_bottom_test;
     
-    static int start_y;
-    
     int diff_y;
     int prev_y = oiram.y;
     
@@ -253,26 +241,27 @@ void move_oiram(void) {
     
     // do something else if someone died
     if (oiram.failed) {
+        static int fail_y;
         if (!oiram.started_fail) {
             oiram.fail_x = oiram.x;
-            oiram.fail_y = start_y = oiram.y;
-            oiram.has_shell = false;
+            oiram.fail_y = fail_y = oiram.y;
             oiram.y = -500;
             oiram.x = -500;
             oiram.vy = -9;
+            oiram.has_shell = false;
             oiram.started_fail = true;
         }
         oiram.fail_y += oiram.vy;
         if (oiram.vy < 3) {oiram.vy++; }
-        if (oiram.fail_y > start_y + 50) {
+        if (oiram.fail_y > fail_y + 55) {
             game.exit = true;
         }
         return;
     }
     
-    if (oiram.in_warp) {
+    if (warp.style != WARP_NONE) {
         oiram.vy = 0; mm = 0;
-        switch (oiram.in_warp) {
+        switch (warp.style) {
             case PIPE_DOWN:
                 oiram.y++;
                 break;
@@ -289,40 +278,39 @@ void move_oiram(void) {
                 break;
         }
         
-        oiram.pipe_counter--;
-        if (!oiram.pipe_counter) {
-            if (oiram.enter_pipe) {
-                if (game.entered_end_pipe) {
+        warp.count--;
+        if (!warp.count) {
+            if (warp.enter) {
+                if (game.enter_end) {
                     game.exit = true;
                     return;
                 }
-                oiram.enter_pipe = false;
-                compute_oiram_location_from_offset(oiram.exit_pipe_loc);
-                if (oiram.exit_pipe_dir == DOOR_WARP) {
+                warp.enter = false;
+                oiram_location_from_offset(warp.exit_loc);
+                if (warp.exit_style == DOOR_WARP) {
                     goto handle_pipe_exit;
                 }
-                oiram.exit_pipe = true;
-                oiram.in_warp = oiram.exit_pipe_dir;
-                if (oiram.exit_pipe_dir == PIPE_DOWN) {
-                    oiram.pipe_counter = TILE_HEIGHT;
-                    oiram.pipe_clip_y += TILE_HEIGHT;
+                warp.exit = true;
+                warp.style = warp.exit_style;
+                if (warp.exit_style == PIPE_DOWN) {
+                    warp.count = TILE_HEIGHT;
+                    warp.clip_y += TILE_HEIGHT;
                 } else
-                if (oiram.exit_pipe_dir == PIPE_UP) {
-                    oiram.pipe_counter = oiram.hitbox.height + 1;
+                if (warp.exit_style == PIPE_UP) {
+                    warp.count = oiram.hitbox.height + 1;
                 } else {
                     if (oiram.flags & (FLAG_OIRAM_BIG | FLAG_OIRAM_FIRE)) {
                         oiram.y+=2;
                     }
-                    if (oiram.exit_pipe_dir == PIPE_LEFT) {
-                        oiram.pipe_clip_x += OIRAM_HITBOX_WIDTH;
+                    if (warp.exit_style == PIPE_LEFT) {
+                        warp.clip_x += OIRAM_HITBOX_WIDTH;
                     }
-                    oiram.pipe_counter = OIRAM_HITBOX_WIDTH + 1;
+                    warp.count = OIRAM_HITBOX_WIDTH + 1;
                 }
-            // exiting a pipe
             } else {
        handle_pipe_exit:
-                oiram.exit_pipe = false;
-                oiram.in_warp = WARP_NONE;
+                warp.exit = false;
+                warp.style = WARP_NONE;
             }
         }
         new_y_top = oiram.y;
@@ -346,7 +334,7 @@ void move_oiram(void) {
             }
             if (oiram.vy < 8) { oiram.vy++; }
         } else {
-            oiram.score_counter = 0;
+            oiram.score_chain = 0;
             oiram.is_flying = false;
             oiram.fly_count = 9;
         }
@@ -364,12 +352,15 @@ void move_oiram(void) {
             gfx_FillRectangle_NoClip(119, 146, 79, 2);
             gfx_SetColor(WHITE_INDEX);
             new_vx = 2;
-            if (!oiram.fly_count) { pressed_2nd = false; }
+            if (!oiram.fly_count) {
+                pressed_2nd = false;
+            }
         }
         
         // make sure we aren't crouching
         if (oiram.crouched) {
-            pressed_right = pressed_left = false;
+            pressed_right = false;
+            pressed_left = false;
             goto handle_reduced_speed;
         } else { 
             if (pressed_left || pressed_right) {
@@ -382,15 +373,15 @@ void move_oiram(void) {
                     if (oiram.direction == FACE_RIGHT) {
                         if (mm < 0)   { mm = 0; add_poof(new_x_left, new_y_bot); }
                         if (mm < 5)   { new_vx = 2; } else
-                        if (mm > 20)  { new_vx = 5; oiram.sprite_index ^= 1; } else
-                        if (mm > 10)  { new_vx = 4; oiram.sprite_index ^= 1; } else
+                        if (mm > 20)  { new_vx = 5; oiram.index ^= 1; } else
+                        if (mm > 10)  { new_vx = 4; oiram.index ^= 1; } else
                         if (mm > 5)   { new_vx = 3; }
                         if (mm < 40)  { mm++; }
                     } else {
                         if (mm > 0)   { mm = 0; add_poof(new_x_right, new_y_bot); }
                         if (mm > -5)  { new_vx = 2; } else
-                        if (mm < -20) { new_vx = 5; oiram.sprite_index ^= 1; } else
-                        if (mm < -10) { new_vx = 4; oiram.sprite_index ^= 1; } else
+                        if (mm < -20) { new_vx = 5; oiram.index ^= 1; } else
+                        if (mm < -10) { new_vx = 4; oiram.index ^= 1; } else
                         if (mm < -5)  { new_vx = 3; }
                         if (mm > -40) { mm--; }
                     }
@@ -419,9 +410,9 @@ void move_oiram(void) {
         // check if no momentum and set sprites
         if (!mm) {
             if (oiram.direction == FACE_RIGHT) {
-                oiram.curr_sprite = oiram_0_buffer_right; 
+                oiram.sprite = oiram_0_buffer_right; 
             } else {
-                oiram.curr_sprite = oiram_0_buffer_left;
+                oiram.sprite = oiram_0_buffer_left;
             }
         }
         
@@ -477,7 +468,7 @@ void move_oiram(void) {
             // check if there is a door we can go through
             move_side = TILE_TEST_DOOR_UP;
             moveable_tile(new_x_left + 4, new_y_top - 2);
-            if (oiram.in_warp) {
+            if (warp.style) {
                 oiram.vy = 0;
             } else
             if (oiram.on_vine) {
@@ -544,7 +535,7 @@ void move_oiram(void) {
                     oiram.direction = FACE_RIGHT;
                     add_poof(new_x_left, new_y_bot);
                 }
-                oiram.sprite_index = 0;
+                oiram.index = 0;
                 oiram.flags |= FLAG_OIRAM_SLIDE;
                 goto handle_down;
             } else {
@@ -556,7 +547,7 @@ void move_oiram(void) {
                 } else if (!oiram.crouched) {
                     move_side = TILE_TEST_PIPE_DOWN;
                     moveable_tile(new_x_left, new_y_bot + 1);
-                    if (!oiram.in_warp) {
+                    if (!warp.style) {
                         crouch_oiram();
                         if ((oiram.flags & FLAG_OIRAM_BIG)) {
                             new_y_top += 11;
@@ -568,7 +559,8 @@ void move_oiram(void) {
             oiram.flags &= ~FLAG_OIRAM_SLIDE;
             if (oiram.crouched) {
                 uncrouch_oiram();
-                new_y_top -= 12; new_y_bot -= 12;
+                new_y_top -= 12;
+                new_y_bot -= 12;
             }
         }
         
@@ -611,10 +603,10 @@ void move_oiram(void) {
             int thalf;
             
             oiram.direction = FACE_RIGHT;
-            if (oiram.sprite_index) {
-                oiram.curr_sprite = oiram_0_buffer_right;
+            if (oiram.index) {
+                oiram.sprite = oiram_0_buffer_right;
             } else {
-                oiram.curr_sprite = oiram_1_buffer_right;
+                oiram.sprite = oiram_1_buffer_right;
             }
             
             // check the left of the tile
@@ -640,10 +632,10 @@ void move_oiram(void) {
             int thalf;
             
             oiram.direction = FACE_LEFT;
-            if (oiram.sprite_index) {
-                oiram.curr_sprite = oiram_0_buffer_left;
+            if (oiram.index) {
+                oiram.sprite = oiram_0_buffer_left;
             } else {
-                oiram.curr_sprite = oiram_1_buffer_left;
+                oiram.sprite = oiram_1_buffer_left;
             }
             
             // check the right of the tile
@@ -666,18 +658,20 @@ void move_oiram(void) {
     skip_left:
 
     if (new_x_left > 155) {
-        if ((oiram.scrollx = new_x_left - 155) > level_map.max_x_scroll) { oiram.scrollx = level_map.max_x_scroll; }
+        if ((oiram.scrollx = new_x_left - 155) > level_map.max_x_scroll) {
+            oiram.scrollx = level_map.max_x_scroll;
+        }
     } else {
         oiram.scrollx = 0;
     }
     
-    if ((diff_y = (new_y_top - prev_y)) < 0) {
-        if (oiram.rel_y <= 20) {
-            if ((oiram.scrolly += diff_y) > level_map.max_y_scroll) { oiram.scrolly = 0; }
+    if ((diff_y = (new_y_top - prev_y)) >= 0) {
+        if (oiram.rel_y >= 80 && (oiram.scrolly += diff_y) > level_map.max_y_scroll) {
+            oiram.scrolly = level_map.max_y_scroll;
         }
     } else {
-        if (oiram.rel_y >= 80) {
-            if ((oiram.scrolly += diff_y) > level_map.max_y_scroll) { oiram.scrolly = level_map.max_y_scroll; }
+        if (oiram.rel_y <= 20 && (oiram.scrolly += diff_y) > level_map.max_y_scroll) {
+            oiram.scrolly = 0;
         }
     }
     
@@ -687,25 +681,17 @@ void move_oiram(void) {
     oiram.momentum = mm;
     
     if (new_y_top > level_map.max_y) {
-        if (!oiram.started_fail) {
-            oiram.fail_x = oiram.x;
-            oiram.fail_y = start_y = oiram.y;
-            oiram.has_shell = false;
-            oiram.y = -500;
-            oiram.x = -500;
-            oiram.vy = 1;
-            oiram.started_fail = true;
-            oiram.failed = true;
-            oiram.flags = FLAG_OIRAM_RESET;
-        }
+        oiram.failed = true;
+        oiram.has_shell = false;
+        oiram.flags = FLAG_OIRAM_RESET;
     }
 
     if (oiram.spin_count) {
         oiram.spin_count--;
-        if (oiram.curr_sprite == oiram_0_buffer_right) {
-            oiram.curr_sprite = oiram_0_buffer_left;
+        if (oiram.sprite == oiram_0_buffer_right) {
+            oiram.sprite = oiram_0_buffer_left;
         } else {
-            oiram.curr_sprite = oiram_0_buffer_right;
+            oiram.sprite = oiram_0_buffer_right;
         }
         if (!oiram.spin_count) {
             pressed_alpha = false;

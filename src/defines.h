@@ -3,7 +3,7 @@
 
 #include <graphx.h>
 #include <stdint.h>
-#include "stdlib.h"
+#include <stdlib.h>
 
 void interrupt isr_keyboard_alternate(void);
 void interrupt isr_keyboard(void);
@@ -57,51 +57,17 @@ enum directions {
 #define OIRAM_BIG_HITBOX_HEIGHT   26
 
 typedef struct {
-    int x, y;
-    int vy;
-    uint8_t vx;
-    unsigned int scrollx, scrolly;
-    int rel_x, rel_y;
-    gfx_image_t *curr_sprite;
-    hitbox_t hitbox;
-    uint8_t hitbox_height_half;
-    bool direction;
-    uint8_t flags;
-    bool has_shell;
-    bool has_red_shell;
-    bool crouched;
-    uint8_t fireballs;
-    int8_t momentum;
-    uint8_t sprite_index;
-    uint8_t invincible;            // used to count how long invincibility should last
-    bool less;
-    bool on_vine;
-    uint8_t lives;
-    unsigned int score;
-    uint8_t score_counter;
-    uint8_t in_warp;
-    bool enter_pipe;
-    bool exit_pipe;
-    bool pipe_counter;
-    uint8_t exit_pipe_dir;
-    unsigned int exit_pipe_loc;
-    int pipe_clip_x;
-    int pipe_clip_y;
-    bool on_slope;
-    bool failed;
-    int fail_x;
-    int fail_y;
-    bool is_flying;
-    uint8_t fly_count;
-    uint8_t spin_count;
-    bool started_fail;
-    unsigned int coins;
-    uint8_t shrink_counter;
-    bool less2;
-    unsigned int door_x;
-    uint8_t door_y;
-} oiram_t;
-extern oiram_t oiram;
+    bool enter;
+    bool exit;
+    bool count;
+    int clip_x;
+    int clip_y;
+    uint8_t style;
+    uint8_t exit_style;
+    unsigned int exit_loc;
+} warp_info_t;
+
+extern warp_info_t warp;
 
 enum warp_types {
     WARP_NONE,
@@ -118,14 +84,16 @@ extern gfx_image_t *oiram_right[];
 typedef struct {
     bool exit;
     bool fastexit;
-    uint8_t end_counter;
-    bool entered_end_pipe;
+    unsigned int coins;
+    unsigned int score;
+    uint8_t end_count;
+    bool enter_end;
     uint8_t level;
-    uint8_t end_level;
+    uint8_t num_levels;
     uint8_t pack;
     uint24_t seconds;
     bool alternate_keypad;
-    uint8_t blue_block_counter;
+    uint8_t blue_item_count;
 } game_t;
 
 extern game_t game;
@@ -150,6 +118,8 @@ extern game_t game;
 
 #define OIRAM_BIG_SPRITE_SIZE   ((27*16) + 2)
 #define OIRAM_SMALL_SPRITE_SIZE ((16*16) + 2)
+
+#define oiram_collision(a, b, c, d) gfx_CheckRectangleHotspot(oiram.x, oiram.y, OIRAM_HITBOX_WIDTH, oiram.hitbox.height, a, b, c, d)
 
 #endif
 

@@ -1,19 +1,12 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <stdbool.h>
-#include <stddef.h>
 #include <stdint.h>
 #include <tice.h>
 #include <intce.h>
-#include <debug.h>
 
-// shared libraries
 #include <graphx.h>
 #include <keypadc.h>
 #include <fileioc.h>
 
-// oiram stuffs
 #include "tile_handlers.h"
 #include "defines.h"
 #include "powerups.h"
@@ -30,6 +23,10 @@ tiles_struct_t tiles;
 gfx_tilemap_t tilemap;
 oiram_t oiram;
 game_t game;
+
+static bool easter_egg1;
+static bool easter_egg2;
+static bool easter_egg3;
 
 void *safe_malloc(size_t bytes) {
     void *data = malloc(bytes);
@@ -61,10 +58,10 @@ void interrupt isr_timer1(void) {
         int_EnableConfig = INT_KEYBOARD;
     }
     
-    if (game.blue_block_counter) {
-        game.blue_block_counter--;
-        if (!game.blue_block_counter) {
-            show_blue_blocks(false);
+    if (game.blue_item_count) {
+        game.blue_item_count--;
+        if (!game.blue_item_count) {
+            show_blue_items(false);
         }
     }
 
@@ -189,12 +186,12 @@ static void extract_images(void) {
     // extract sprites from sprite file
     extract_sprites();
     
-    gfx_palette[BLACK_INDEX] = gfx_RGBTo1555( 0, 0, 0 );
-    gfx_palette[WHITE_INDEX] = gfx_RGBTo1555( 255, 255, 255 );
-    gfx_palette[DARK_BLUE_INDEX] = gfx_RGBTo1555( 24, 120, 184 );
-    if (oiram.less2) {
-        unsigned int j;
-        for (j=0; j<256; j++) {
+    gfx_palette[BLACK_INDEX] = gfx_RGBTo1555(0, 0, 0);
+    gfx_palette[WHITE_INDEX] = gfx_RGBTo1555(255, 255, 255);
+    gfx_palette[DARK_BLUE_INDEX] = gfx_RGBTo1555(24, 120, 184);
+    if (easter_egg2) {
+        uint8_t j;
+        for (j=0; j++;) {
             gfx_palette[j] = ~gfx_palette[j];
         }
     }
@@ -246,20 +243,20 @@ void main(void) {
     // init the structs
     game.exit = false;
     game.fastexit = false;
-    game.end_counter = 10;
-    game.entered_end_pipe = false;
+    game.end_count = 10;
+    game.enter_end = false;
     game.seconds = 600;
     
     memset(&oiram, 0, sizeof oiram);
     oiram.fly_count = 9;
-    oiram.curr_sprite = oiram_right[0];
+    oiram.sprite = oiram_right[0];
     oiram.direction = FACE_RIGHT;
     
     // walrus mode!
     if(!ti_RclVar(TI_REAL_TYPE, ti_Ans, &real_in)) {
         int in = os_RealToInt24(real_in);
-        if (in == 1337) { oiram.less = true; }
-        if (in == 505)  { oiram.less2 = true; }
+        if (in == 1337) { easter_egg1 = true; }
+        if (in == 505)  { easter_egg2 = true; }
     }
     
     // init the system
@@ -271,10 +268,11 @@ void main(void) {
     
     oiram.flags = pack->flags;
     oiram.lives = pack->lives;
-    oiram.score = pack->score;
-    oiram.coins = pack->coins;
     
-    if (oiram.less) {
+    game.score = pack->score;
+    game.coins = pack->coins;
+    
+    if (easter_egg1) {
         oiram_0_small = easter_egg_0;
         oiram_1_small = easter_egg_1;
     }
@@ -378,24 +376,24 @@ void main(void) {
     gfx_SetColor(BLACK_INDEX);
     
     if (!game.fastexit) {
-        pack->coins = oiram.coins;
-        pack->score = oiram.score;
+        pack->coins = game.coins;
+        pack->score = game.score;
         pack->lives = oiram.lives;
         pack->flags = oiram.flags;
         
         black_circles();
         
         // if we entered the end pipe, proceed to next level if it exists
-        if (game.entered_end_pipe) {
-            if (game.level < game.end_level) {
+        if (game.enter_end) {
+            if (game.level < game.num_levels) {
                 game.level++;
                 if (pack->progress < game.level) { pack->progress = game.level; }
-                if (game.level == game.end_level) {
+                if (game.level == game.num_levels) {
                     goto pack_finish;
                 }
                 goto draw_level;
             } else {
-                if (pack->progress == game.end_level) {
+                if (pack->progress == game.num_levels) {
                     goto pack_finish;
                 }
                 goto main_start;

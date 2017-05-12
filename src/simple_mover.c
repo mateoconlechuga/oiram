@@ -48,7 +48,9 @@ void remove_simple_mover(uint8_t i) {
     simple_move_t *mover = simple_mover[i];
     uint8_t num_simple_movers_less;
     
-    if (!num_simple_movers) { return; }
+    if (!num_simple_movers) {
+        return;
+    }
     
     num_simple_movers_less = num_simple_movers--;
     
@@ -92,7 +94,9 @@ void simple_move_handler(simple_move_t *this) {
         // if nothing below, start accelerating
         if (test_left_bottom || test_right_bottom) {
             if (test_left_bottom && test_right_bottom) {
-                if (tmp_vy < 7) { tmp_vy += 1; }
+                if (tmp_vy < 7) {
+                    tmp_vy++;
+                }
             } else if (this->smart) {
                 if ((tmp_vx < 0 && test_left_bottom) || (tmp_vx >= 0 && test_right_bottom)) {
                     tmp_vx = -tmp_vx;

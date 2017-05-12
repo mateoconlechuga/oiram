@@ -30,6 +30,7 @@
 #define TILE_WATER_COIN           151
 #define TILE_ICE_COIN             152
 #define TILE_VANISH               161
+#define TILE_RESWOB_VANISH        175
 
 #define TILE_COIN_BOX             225
 #define TILE_1UP_BOX              226

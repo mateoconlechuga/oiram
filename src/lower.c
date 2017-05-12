@@ -19,7 +19,7 @@ void draw_time(void) {
 
 void draw_score(void) {
     gfx_SetTextXY(253, 164);
-    gfx_PrintUInt(oiram.score, 7);
+    gfx_PrintUInt(game.score, 7);
     gfx_BlitLines(gfx_buffer, 161, 14);
 }
 
@@ -31,7 +31,7 @@ void draw_level(void) {
 
 void draw_coins(void) {
     gfx_SetTextXY(29, 144);
-    gfx_PrintUInt(oiram.coins, 2);
+    gfx_PrintUInt(game.coins, 2);
     gfx_BlitLines(gfx_buffer, 144, 8);
 }
 
@@ -49,9 +49,9 @@ void add_life(void) {
 
 // add a coin, if we reach 100 coins, add another life
 void add_coin(int x, int y) {
-    oiram.coins++;
-    if (oiram.coins == 100) {
-        oiram.coins = 0;
+    game.coins++;
+    if (game.coins == 100) {
+        game.coins = 0;
         add_life();
     }
     draw_coins();
@@ -59,8 +59,10 @@ void add_coin(int x, int y) {
 }
 
 void add_next_chain_score(int x, int y) {
-    add_score(oiram.score_counter, x, y);
-    if(oiram.score_counter != 8) { oiram.score_counter++; }
+    add_score(oiram.score_chain, x, y);
+    if(oiram.score_chain != 8) {
+        oiram.score_chain++;
+    }
 }
 
 void add_score(uint8_t add, int x, int y) {
@@ -71,7 +73,7 @@ void add_score(uint8_t add, int x, int y) {
     if (add == ONE_UP_SCORE) {
         add_life();
     } else {
-        oiram.score += oiram_score_chain[add];
+        game.score += oiram_score_chain[add];
     }
     draw_score();
 }
@@ -80,7 +82,7 @@ void add_score_no_sprite(uint8_t add) {
     if (add == ONE_UP_SCORE) {
         add_life();
     } else {
-        oiram.score += oiram_score_chain[add];
+        game.score += oiram_score_chain[add];
     }
     draw_score();
 }

@@ -1,32 +1,24 @@
-// standard headers
-#include <math.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <tice.h>
-#include <debug.h>
 
-// shared libraries
 #include <graphx.h>
 #include <keypadc.h>
 #include <fileioc.h>
 
-// oiram stuffs
 #include "loadscreen.h"
 #include "tile_handlers.h"
 #include "defines.h"
 #include "events.h"
 #include "images.h"
 #include "lower.h"
+#include "oiram.h"
 #include "powerups.h"
 #include "enemies.h"
 #include "simple_mover.h"
 
 bool something_died = false;
-const unsigned int shell_score_chain[] = { 500, 800, 1000, 2000, 4000, 5000, 8000, ONE_UP_SCORE };
 
 // only handle if somewhat within view; otherwise we can just ignore it
 bool in_viewport(int x, int y) {
@@ -126,7 +118,7 @@ void handle_pending_events(void) {
             
             y += tmp_vy;
             
-            if (gfx_CheckRectangleHotspot(oiram.x, oiram.y, OIRAM_HITBOX_WIDTH, oiram.hitbox.height, x, y, 23, 31)) {
+            if (oiram_collision(x, y, 23, 31)) {
                 if (!shrink_oiram()) {
                     add_poof(oiram.x, oiram.y + 2);
                     remove_thwomp(i--);
@@ -153,17 +145,15 @@ void handle_pending_events(void) {
             
             if (y > level_map.max_y) {
                if (cur->type == RESWOB_TYPE) {
-                   unsigned int chk = 0;
-                   unsigned int max = tilemap.width * tilemap.height;
-                   for (; chk < max; chk++) {
-                       if (tilemap.map[chk] == 175) {
+                   unsigned int chk, max = tilemap.width * tilemap.height;
+                   for (chk = 0; chk < max; chk++) {
+                       if (tilemap.map[chk] == TILE_RESWOB_VANISH) {
                            tilemap.map[chk] = TILE_EMPTY;
                        }
                    }
                }
     continue_loop_fail:
-               remove_simple_mover(i);
-               i = -1;
+               remove_simple_mover(i--);
                continue;
             }
             
@@ -190,7 +180,10 @@ void handle_pending_events(void) {
                         add_poof(x + 4, y + 4);
                         add_score(0, x, y);
                         goto continue_loop_fail;
-                    case KOOPA_RED_TYPE: case KOOPA_GREEN_TYPE: case KOOPA_BONES_TYPE: case SPIKE_TYPE:
+                    case KOOPA_RED_TYPE:
+                    case KOOPA_GREEN_TYPE:
+                    case KOOPA_BONES_TYPE:
+                    case SPIKE_TYPE:
                         add_score(0, x, y);
                         goto create_shell;
                     default:
@@ -199,7 +192,7 @@ void handle_pending_events(void) {
                 }
             }
             
-            if (!gfx_CheckRectangleHotspot(oiram.x, oiram.y, OIRAM_HITBOX_WIDTH, oiram.hitbox.height, x, y, cur->hitbox.width, cur->hitbox.height)) {
+            if (!oiram_collision(x, y, cur->hitbox.width, cur->hitbox.height)) {
                 gfx_image_t *img;
                 uint8_t cur_counter;
                 static uint8_t reswob_sprite_count = 0;
@@ -239,7 +232,7 @@ draw_sprite:
                                 reswob_sprite = img;
                             }
                             if (reswob_sprite_count++ == 5) { reswob_sprite_count = 0; }
-                            if ((oiram.x >= x - 23 && oiram.x <= x + 23 + OIRAM_HITBOX_WIDTH)) {
+                            if ((oiram.x >= x - 23 && oiram.x <= x + 31)) {
                                 cur->vy = -11;
                                 reswob_is_jumping = true;
                                 reswob_sprite = reswob_down;
@@ -622,8 +615,7 @@ skip_draw:
             gfx_TransparentSprite(tileset_tiles[tile_img], x - oiram.scrollx, y - oiram.scrolly);
 
             if (!cur->count) {
-                remove_bumped_tile(i);
-                i = -1;
+                remove_bumped_tile(i--);
             }
         }
     }
@@ -695,14 +687,12 @@ skip_draw:
                 }
             }
             
-            if (gfx_CheckRectangleHotspot(oiram.x, oiram.y, OIRAM_HITBOX_WIDTH, oiram.hitbox.height, x, y, 15, 30)) {
-                if (!oiram.in_warp) {
-                    if (!shrink_oiram()) {
-                        add_score(1, x, y);
-                        add_poof(oiram.x, oiram.y + 2);
-                        remove_chomper(i--);
-                        continue;
-                    }
+            if (oiram_collision(x, y, 15, 30)) {
+                if (!warp.style && !shrink_oiram()) {
+                    add_score(1, x, y);
+                    add_poof(oiram.x, oiram.y + 2);
+                    remove_chomper(i--);
+                    continue;
                 }
             }
             
@@ -751,7 +741,7 @@ skip_draw:
                         cur->vx = -cur->vx;
                     }
                     cur->x += cur->vx;
-                    if (gfx_CheckRectangleHotspot(oiram.x, oiram.y, OIRAM_HITBOX_WIDTH, oiram.hitbox.height, x, y, 16, 16)) {
+                    if (oiram_collision(x, y, 16, 16)) {
                         if (!shrink_oiram()) {
                             add_score_no_sprite(1);
                             cur->type = SCORE_TYPE;
@@ -810,7 +800,7 @@ skip_draw:
                     gfx_TransparentSprite(cur->sprite, rel_x, rel_y);
                     cur->x += cur->vx;
                     cur->y += cur->vy;
-                    if (gfx_CheckRectangleHotspot(oiram.x, oiram.y, OIRAM_HITBOX_WIDTH, oiram.hitbox.height, x, y, 15, 13)) {
+                    if (oiram_collision(x, y, 15, 13)) {
                         if ((y < oiram.y + oiram.hitbox.height/2) || oiram.flags & (FLAG_OIRAM_INVINCIBLE | FLAG_OIRAM_SLIDE)) {
                             if (!shrink_oiram()) {
                                 cur->vy = 4;
@@ -846,7 +836,7 @@ skip_draw:
                         cur->counter = 32;
                     }
                 
-                    if (gfx_CheckRectangleHotspot(oiram.x, oiram.y, OIRAM_HITBOX_WIDTH, oiram.hitbox.height, x, y, 16, 11)) {
+                    if (oiram_collision(x, y, 16, 11)) {
                         eat_leaf();
                         add_score_no_sprite(4);
                         cur->type = SCORE_TYPE;
@@ -914,7 +904,7 @@ skip_draw:
                     
             gfx_TransparentSprite(img, rel_x, rel_y);
             
-            if (gfx_CheckRectangleHotspot(oiram.x, oiram.y, OIRAM_HITBOX_WIDTH, oiram.hitbox.height, x, y, 15, 15)) {
+            if (oiram_collision(x, y, 15, 15)) {
                 if (!shrink_oiram()) {
                     add_score(1, x, y);
                     add_poof(oiram.x, oiram.y + 2);
@@ -961,7 +951,7 @@ skip_draw:
                 }
             }
             
-            if (gfx_CheckRectangleHotspot(oiram.x, oiram.y, OIRAM_HITBOX_WIDTH, oiram.hitbox.height, x, y, 14, 16)) {
+            if (oiram_collision(x, y, 14, 16)) {
                 if (!shrink_oiram()) {
                     add_score(1, x, y);
                     add_poof(oiram.x, oiram.y + 2);
@@ -1057,7 +1047,7 @@ skip_draw:
                 
             // the type that can hit oiram
             } else {
-                if (gfx_CheckRectangleHotspot(oiram.x, oiram.y, OIRAM_HITBOX_WIDTH, oiram.hitbox.height, x, y, 7, 7)) {
+                if (oiram_collision(x, y, 7, 7)) {
                     shrink_oiram();
                     add_poof(x + 4, y + 4);
                     goto remove_fireball_continue;
@@ -1073,24 +1063,24 @@ skip_draw:
     } else if (in_quicksand) {
         gfx_SetClipRegion(0, 0, X_PXL_MAX, quicksand_clip_y - oiram.scrolly);
         goto draw_oiram;
-    } else if (oiram.in_warp) {
-        if (!oiram.enter_pipe) {
-            switch (oiram.in_warp) {
+    } else if (warp.style) {
+        if (!warp.enter) {
+            switch (warp.style) {
                 case PIPE_DOWN:
                 pipe_oiram_down:
-                    gfx_SetClipRegion(0, oiram.pipe_clip_y - oiram.scrolly, X_PXL_MAX, Y_PXL_MAX);
+                    gfx_SetClipRegion(0, warp.clip_y - oiram.scrolly, X_PXL_MAX, Y_PXL_MAX);
                     break;
                 case PIPE_LEFT:
                 pipe_oiram_left:
-                    gfx_SetClipRegion(oiram.pipe_clip_x - oiram.scrollx, 0, X_PXL_MAX, Y_PXL_MAX);
+                    gfx_SetClipRegion(warp.clip_x - oiram.scrollx, 0, X_PXL_MAX, Y_PXL_MAX);
                     break;
                 case PIPE_RIGHT:
                 pipe_oiram_right:
-                    gfx_SetClipRegion(0, 0, oiram.pipe_clip_x - oiram.scrollx, Y_PXL_MAX);
+                    gfx_SetClipRegion(0, 0, warp.clip_x - oiram.scrollx, Y_PXL_MAX);
                     break;
                 case PIPE_UP:
                 pipe_oiram_up:
-                    gfx_SetClipRegion(0, 0, X_PXL_MAX, oiram.pipe_clip_y - oiram.scrolly);
+                    gfx_SetClipRegion(0, 0, X_PXL_MAX, warp.clip_y - oiram.scrolly);
                     break;
                 case DOOR_WARP:
                 pipe_door:
@@ -1099,7 +1089,7 @@ skip_draw:
                     break;
             }
         } else {
-            switch (oiram.in_warp) {
+            switch (warp.style) {
                 case PIPE_DOWN:
                     goto pipe_oiram_up;
                 case PIPE_LEFT:
@@ -1120,14 +1110,14 @@ skip_draw:
         } else {
             if (!oiram.invincible) { oiram.flags &= ~FLAG_OIRAM_INVINCIBLE; }
         }
-    } else if (oiram.shrink_counter) {
-        oiram.shrink_counter--;
-        if (oiram.shrink_counter & 1) {
+    } else if (oiram.shrink_count) {
+        oiram.shrink_count--;
+        if (oiram.shrink_count & 1) {
             goto draw_oiram;
         }
     } else {
 draw_oiram:
-        gfx_TransparentSprite(oiram.curr_sprite, oiram.rel_x, oiram.rel_y);
+        gfx_TransparentSprite(oiram.sprite, oiram.rel_x, oiram.rel_y);
     }
     
     if (oiram.has_shell) {
@@ -1155,7 +1145,7 @@ draw_oiram:
         gfx_image_t *tail_img;
         int tail_x, tail_y = oiram.rel_y + 17;
         if (oiram.spin_count) {
-            if (oiram.curr_sprite == oiram_0_buffer_right) {
+            if (oiram.sprite == oiram_0_buffer_right) {
                 goto set_tail_right;
             } else {
                 goto set_tail_left;
