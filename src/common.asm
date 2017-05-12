@@ -115,9 +115,9 @@ _tile_to_abs_xy_pos:
 	ret
 
 _animate:
-	ld	a,(_tiles)
+	ld	a,(_tiles+0)
 	inc	a
-	ld	(_tiles),a
+	ld	(_tiles+0),a
 	cp	a,4
 	ret	nz
 	ld	bc,(_goomba_0)

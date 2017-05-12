@@ -180,6 +180,8 @@ static void print_centered(const char *string, const uint8_t ypos) {
 }
 
 static void extract_images(void) {
+    uint8_t j;
+    
     // extract palette and tiles -- this is also where palette information is stored
     extract_tiles();
     
@@ -189,8 +191,7 @@ static void extract_images(void) {
     gfx_palette[BLACK_INDEX] = gfx_RGBTo1555(0, 0, 0);
     gfx_palette[WHITE_INDEX] = gfx_RGBTo1555(255, 255, 255);
     gfx_palette[DARK_BLUE_INDEX] = gfx_RGBTo1555(24, 120, 184);
-    if (easter_egg2) {
-        uint8_t j;
+    if (easter_egg3) {
         for (j=0; j++;) {
             gfx_palette[j] = ~gfx_palette[j];
         }
@@ -256,13 +257,9 @@ void main(void) {
     if(!ti_RclVar(TI_REAL_TYPE, ti_Ans, &real_in)) {
         int in = os_RealToInt24(real_in);
         if (in == 1337) { easter_egg1 = true; }
-        if (in == 505)  { easter_egg2 = true; }
+        if (in == 1202) { easter_egg2 = true; }
+        if (in == 505)  { easter_egg3 = true; }
     }
-    
-    // init the system
-    tiles.animation_4_counter = 0;
-    tiles.animation_3_counter = 0;
-    tiles.animation_counter = 0;
     
     pack = &pack_info[game.pack];
     
@@ -335,6 +332,12 @@ void main(void) {
     // interrupts can now generate after this
     int_Enable();
     
+    // ensure sprites are filled for easter_egg2
+    for(delay=0; delay<4; delay++) {
+        tiles.animation_counter = 3;
+        animate();
+    }
+    
     // wait until the clear key is pressed
     while(!game.exit) {
         // move oiram if required
@@ -342,20 +345,23 @@ void main(void) {
         
         // draw the tilemap at the current oiram offsets
         gfx_Tilemap(&tilemap, oiram.scrollx, oiram.scrolly);
-    
+        
         // handle outstanding events, such as showing number of coins
         handle_pending_events();
     
         // swap the draw buffer
         gfx_BlitLines(gfx_buffer, 0, 146);
         
+        // draw the timer if it changes
         if (update_timer) {
             draw_time();
             update_timer = false;
         }
-    
+        
         // animate the things
-        animate();
+        if (!easter_egg2) {
+            animate();
+        }
     }
     
     // reset interrupt status
@@ -422,17 +428,17 @@ game_over:
     pack->lives = 15;
     gfx_PrintStringXY("GAME      OVER", 120, 55);
     gfx_BlitBuffer();
-    for(delay=0; delay<700010; delay++);
+    for(delay=0; delay<700000; delay++);
     goto main_start;
     
 pack_finish:
     pack_author_len = strlen(pack_author);
-    memset(end_str, 0, sizeof(end_str));
+    memset(end_str, 0, sizeof end_str);
     memcpy(end_str, pack_author, pack_author_len);
     memcpy(end_str + pack_author_len, " thanks you for playing!", 24);
     
     gfx_SetClipRegion(0, 0, LCD_WIDTH, LCD_HEIGHT);
-    for(delay=0;delay<130;delay++) {
+    for(delay=0; delay<130; delay++) {
         gfx_ShiftDown(1);
         gfx_BlitBuffer();
     }
