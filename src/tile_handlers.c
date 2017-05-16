@@ -939,14 +939,14 @@ uint8_t warp_tile_handler(uint8_t *tile) {
     offset = tile - tilemap.map;
     warp.enter = false;
     
-    for(i = 0; i < pipe_max_tests; i += 2) {
-        unsigned int pipe_enter = warp_pipe_info[i];
-        unsigned int pipe_enter_masked = pipe_enter & ~MASK_PIPE_DOOR;
+    for(i = 0; i < warp_num; i += 2) {
+        unsigned int warp_enter = warp_info[i];
+        unsigned int warp_enter_masked = warp_enter & ~MASK_PIPE_DOOR;
 
-        if (offset == pipe_enter_masked) {
+        if (offset == warp_enter_masked) {
             switch (move_side) {
                 case TILE_LEFT:
-                    if (pipe_enter & MASK_PIPE_RIGHT) {
+                    if (warp_enter & MASK_PIPE_RIGHT) {
                         warp.style = PIPE_LEFT;
                         warp.enter = true;
                         warp.count = OIRAM_HITBOX_WIDTH;
@@ -954,7 +954,7 @@ uint8_t warp_tile_handler(uint8_t *tile) {
                     }
                     break;
                 case TILE_RIGHT:
-                    if (pipe_enter & MASK_PIPE_LEFT) {
+                    if (warp_enter & MASK_PIPE_LEFT) {
                         warp.style = PIPE_RIGHT;
                         warp.enter = true;
                         warp.count = OIRAM_HITBOX_WIDTH;
@@ -971,7 +971,7 @@ uint8_t warp_tile_handler(uint8_t *tile) {
                     warp.clip_y = y;
                     break;
                 case TILE_BOTTOM:
-                    if (pipe_enter & MASK_PIPE_UP) {
+                    if (warp_enter & MASK_PIPE_UP) {
                         if (oiram.x < (int)x + 2) {
                             return 0;
                         }
@@ -982,7 +982,7 @@ uint8_t warp_tile_handler(uint8_t *tile) {
                     }
                     break;
                 case TILE_TEST_DOOR_UP:
-                    if (pipe_enter & MASK_DOOR_E) {
+                    if (warp_enter & MASK_DOOR_E) {
                         warp.style = DOOR_WARP;
                         warp.enter = true;
                         warp.count = 4;
@@ -996,7 +996,7 @@ uint8_t warp_tile_handler(uint8_t *tile) {
         }
         
         if (warp.enter) {
-            unsigned int not_masked = warp_pipe_info[i+1];
+            unsigned int not_masked = warp_info[i+1];
             warp.exit_loc = not_masked & ~MASK_PIPE_DOOR;
             
             if (not_masked & MASK_PIPE_UP) {

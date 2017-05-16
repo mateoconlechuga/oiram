@@ -116,8 +116,8 @@ extern gfx_image_t *flame_sprite_down;
 extern gfx_image_t *fish_left_sprite;
 extern gfx_image_t *fish_right_sprite;
 
-extern gfx_image_t *oiram_right[];
-extern gfx_image_t *oiram_left[];
+extern gfx_image_t *oiram_right[2];
+extern gfx_image_t *oiram_left[2];
 
 extern gfx_image_t *oiram_logo;
 

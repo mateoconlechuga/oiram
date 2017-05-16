@@ -280,7 +280,7 @@ void main(void) {
     // load all the enemies in the level
     set_level(game.pack, game.level);
     get_enemies();
-    compute_oiram_start_location();
+    oiram_start_location();
     
     gfx_SetColor(WHITE_INDEX);
     double_rectangle(4, 133, 312, 48);
@@ -332,9 +332,12 @@ void main(void) {
     // interrupts can now generate after this
     int_Enable();
     
+    tiles.animation_3_count = 0;
+    tiles.animation_4_count = 0;
+    
     // ensure sprites are filled for easter_egg2
     for(delay=0; delay<4; delay++) {
-        tiles.animation_counter = 3;
+        tiles.animation_count = 3;
         animate();
     }
     

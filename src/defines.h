@@ -12,12 +12,9 @@ extern bool handling_events;
 extern bool something_died;
 
 typedef struct {
-    uint8_t animation_counter;
-    uint8_t animation_3_counter;
-    uint8_t animation_4_counter;
-    uint8_t current_tile;
-    uint8_t current_tile_sel;
-    gfx_image_t *current_image_ptr;
+    uint8_t animation_count;
+    uint8_t animation_3_count;
+    uint8_t animation_4_count;
 } tiles_struct_t;
 extern tiles_struct_t tiles;
 
@@ -43,14 +40,14 @@ enum directions {
     FACE_RIGHT=1
 };
 
-#define FLAG_OIRAM_RESET      0
-#define FLAG_OIRAM_BIG        1
-#define FLAG_OIRAM_FIRE       2
-#define FLAG_OIRAM_INVINCIBLE 4
-#define FLAG_OIRAM_SLIDE      8
-#define FLAG_OIRAM_RACOON     16
+#define FLAG_OIRAM_RESET          0
+#define FLAG_OIRAM_BIG            1
+#define FLAG_OIRAM_FIRE           2
+#define FLAG_OIRAM_INVINCIBLE     4
+#define FLAG_OIRAM_SLIDE          8
+#define FLAG_OIRAM_RACOON         16
 
-#define ONE_UP_SCORE          8
+#define ONE_UP_SCORE              8
 
 #define OIRAM_HITBOX_WIDTH        15
 #define OIRAM_SMALL_HITBOX_HEIGHT 15
@@ -122,4 +119,3 @@ extern game_t game;
 #define oiram_collision(a, b, c, d) gfx_CheckRectangleHotspot(oiram.x, oiram.y, OIRAM_HITBOX_WIDTH, oiram.hitbox.height, a, b, c, d)
 
 #endif
-

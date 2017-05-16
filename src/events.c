@@ -1058,7 +1058,7 @@ skip_draw:
     }
 
     // draw the oiram sprite
-    if (oiram.failed) {
+    if (oiram.failed && oiram.started_fail) {
         gfx_TransparentSprite(oiram_fail, oiram.fail_x - oiram.scrollx, oiram.fail_y - oiram.scrolly);
     } else if (in_quicksand) {
         gfx_SetClipRegion(0, 0, X_PXL_MAX, quicksand_clip_y - oiram.scrolly);

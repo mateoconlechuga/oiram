@@ -182,8 +182,11 @@ void extract_tiles(void) {
     tmp_ptr = (uint8_t*)pal_ptr;
     tmp_ptr += pal_size;
     
-    for(i = 0;i++;) {
-        tiles[i] = (gfx_image_t*)tmp_ptr;
+    // get the question block tile
+    tile_question_box = (gfx_image_t*)tmp_ptr;
+    
+    for(i = 0; i++;) {
+        tiles[i] = tile_question_box;
     }
     
     for(i = 0; i < 252; i++) {
@@ -195,11 +198,10 @@ void extract_tiles(void) {
     ti_CloseAll();
     
     // extract common sprite tiles
-    empty             = tiles[TILE_EMPTY];
-    coin_sprite       = tiles[TILE_COIN];
-    door_top          = tiles[228];
-    door_bot          = tiles[229];
-    tile_question_box = tiles[TILE_QUESTION_BOX];
+    empty       = tiles[TILE_EMPTY];
+    coin_sprite = tiles[TILE_COIN];
+    door_top    = tiles[228];
+    door_bot    = tiles[229];
     
 	// snow tiles fixup
     tiles[TILE_SNOW_TL] = tiles[239];

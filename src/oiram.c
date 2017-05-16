@@ -24,7 +24,7 @@ bool pressed_2nd = false;
 bool allow_up_press = true;
 
 // determine the scroll and offsets for the start posistion
-void compute_oiram_start_location(void) {
+void oiram_start_location(void) {
     if (oiram.x > 155 && (oiram.scrollx = oiram.x - 155) > level_map.max_x_scroll) {
         oiram.scrollx = level_map.max_x_scroll;
     }
@@ -253,7 +253,7 @@ void move_oiram(void) {
         }
         oiram.fail_y += oiram.vy;
         if (oiram.vy < 3) {oiram.vy++; }
-        if (oiram.fail_y > fail_y + 55) {
+        if (oiram.fail_y > fail_y + 65) {
             game.exit = true;
         }
         return;

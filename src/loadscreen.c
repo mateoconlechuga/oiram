@@ -19,8 +19,8 @@
 #include "lower.h"
 #include "simple_mover.h"
 
-unsigned int *warp_pipe_info;
-unsigned int pipe_max_tests;
+unsigned int *warp_info;
+unsigned int warp_num;
 
 pack_info_t pack_info[256];
 
@@ -143,8 +143,8 @@ void set_level(uint8_t abs_pack, uint8_t level) {
         abs_pack--;
     }
 
-    if ((slot = ti_Open((char*)var_name, "r"))) {
-        uint8_t *pack_data = ((uint8_t*)ti_GetDataPtr(slot)) + 2;
+    if ((slot = ti_Open(var_name, "r"))) {
+        uint8_t *pack_data = (uint8_t*)ti_GetDataPtr(slot) + 2;
         uint8_t num_pipes;
         
         // find start of actual data
@@ -169,8 +169,8 @@ void set_level(uint8_t abs_pack, uint8_t level) {
         // get the number of pipes
         num_pipes = *pack_data;
         pack_data++;
-        warp_pipe_info = (unsigned int*)pack_data;
-        pipe_max_tests = num_pipes * 2;
+        warp_info = (unsigned int*)pack_data;
+        warp_num = num_pipes * 2;
         
         pack_data += num_pipes * 6;
         
@@ -237,30 +237,30 @@ void set_load_screen(void) {
     gfx_TransparentSprite(tile_194, 24, 52);
     gfx_TransparentSprite(tile_195, 40, 52);
     
-    gfx_TransparentSprite(tile_145, 40, 52+16);
+    gfx_TransparentSprite(tile_145, 40, 68);
 
-    gfx_TransparentSprite(tile_194, 56, 52-16-16);
-    gfx_TransparentSprite(tile_195, 72, 52-16-16);
-    gfx_TransparentSprite(tile_145, 72, 52-16);
+    gfx_TransparentSprite(tile_194, 56, 20);
+    gfx_TransparentSprite(tile_195, 72, 20);
+    gfx_TransparentSprite(tile_145, 72, 36);
     gfx_TransparentSprite(tile_145, 72, 52);
-    gfx_TransparentSprite(tile_145, 72, 52+16);
-    gfx_TransparentSprite(tile_145, 72, 52+16+16);
-    gfx_TransparentSprite(tile_208, 56, 52-16);
+    gfx_TransparentSprite(tile_145, 72, 68);
+    gfx_TransparentSprite(tile_145, 72, 84);
+    gfx_TransparentSprite(tile_208, 56, 36);
     gfx_TransparentSprite(tile_208, 56, 52);
-    gfx_TransparentSprite(tile_208, 56, 52+16);
+    gfx_TransparentSprite(tile_208, 56, 68);
     
-    gfx_TransparentSprite(tile_208, 24, 52+16);
-    gfx_TransparentSprite(tile_208, 24, 52+16+16);
+    gfx_TransparentSprite(tile_208, 24, 68);
+    gfx_TransparentSprite(tile_208, 24, 84);
     
-    gfx_TransparentSprite(tileset_tiles[222], 56, 52+16+16);
-    gfx_TransparentSprite(tileset_tiles[223], 40, 52+16+16);
+    gfx_TransparentSprite(tileset_tiles[222], 56, 84);
+    gfx_TransparentSprite(tileset_tiles[223], 40, 84);
     
     gfx_SetTextFGColor(WHITE_INDEX);
     gfx_PrintStringXY("By Mateo", 150, 58);
     gfx_SetColor(DARK_BLUE_INDEX);
-    gfx_FillRectangle(2,100,316,80);
+    gfx_FillRectangle(2, 100, 316, 80);
     gfx_SetColor(WHITE_INDEX);
-    gfx_Rectangle(2,100,316,((MAX_SHOW+1) * 10) + 1);
+    gfx_Rectangle(2, 100, 316, ((MAX_SHOW+1) * 10) + 1);
     
     gfx_TransparentSprite(mushroom, 5, selected_pack*10 + 103);
     

@@ -19,8 +19,8 @@ void load_progress(void);
 void set_load_screen(void);
 void set_level(uint8_t abs_pack, uint8_t level);
 
-extern unsigned int *warp_pipe_info;
-extern unsigned int pipe_max_tests;
+extern unsigned int *warp_info;
+extern unsigned int warp_num;
 
 #endif
 
