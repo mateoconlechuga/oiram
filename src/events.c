@@ -640,7 +640,7 @@ skip_draw:
             
             if (y < start_y) {
                 int ymax = start_y - oiram.scrolly;
-                if (ymax < 0) { ymax = 0; }
+                if (ymax < 0) { goto chomper_no_draw; }
                 if (ymax > Y_PXL_MAX) { ymax = Y_PXL_MAX; }
                 gfx_SetClipRegion(0, 0, X_PXL_MAX, ymax);
                 
@@ -669,7 +669,7 @@ skip_draw:
                 }
                 gfx_TransparentSprite(chomper_body, rel_x, rel_y + 16);
             }
-            
+chomper_no_draw:
             if (!cur->count) {
                 
                 y += cur->vy;
