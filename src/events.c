@@ -668,7 +668,6 @@ skip_draw:
                     gfx_TransparentSprite(chomper_sprite, rel_x, rel_y);
                 }
                 gfx_TransparentSprite(chomper_body, rel_x, rel_y + 16);
-                gfx_SetClipRegion(0, 0, X_PXL_MAX, (TILEMAP_DRAW_HEIGHT * TILE_HEIGHT) - TILE_HEIGHT);
             }
             
             if (!cur->count) {
@@ -698,6 +697,7 @@ skip_draw:
             
             cur->y = y;
         }
+        gfx_SetClipRegion(0, 0, X_PXL_MAX, Y_PXL_MAX);
     }
     
     if (num_simple_enemies) {

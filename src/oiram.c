@@ -243,11 +243,12 @@ void move_oiram(void) {
     if (oiram.failed) {
         static int fail_y;
         if (!oiram.started_fail) {
+            oiram.vy = -9;
+start_fail:
             oiram.fail_x = oiram.x;
             oiram.fail_y = fail_y = oiram.y;
             oiram.y = -500;
             oiram.x = -500;
-            oiram.vy = -9;
             oiram.has_shell = false;
             oiram.started_fail = true;
         }
@@ -681,9 +682,9 @@ void move_oiram(void) {
     oiram.momentum = mm;
     
     if (new_y_top > level_map.max_y) {
-        oiram.failed = true;
-        oiram.has_shell = false;
         oiram.flags = FLAG_OIRAM_RESET;
+        oiram.failed = true;
+        goto start_fail;
     }
 
     if (oiram.spin_count) {

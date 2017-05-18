@@ -332,8 +332,11 @@ void main(void) {
     // interrupts can now generate after this
     int_Enable();
     
+    // reset animations
     tiles.animation_3_count = 0;
     tiles.animation_4_count = 0;
+    warp.style = WARP_NONE;
+    warp.enter = false;
     
     // ensure sprites are filled for easter_egg2
     for(delay=0; delay<4; delay++) {
