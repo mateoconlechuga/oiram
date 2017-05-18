@@ -232,7 +232,7 @@ draw_sprite:
                                 reswob_sprite = img;
                             }
                             if (reswob_sprite_count++ == 5) { reswob_sprite_count = 0; }
-                            if ((oiram.x >= x - 23 && oiram.x <= x + 31)) {
+                            if ((oiram.x >= x - 24 && oiram.x <= x + 40)) {
                                 cur->vy = -11;
                                 reswob_is_jumping = true;
                                 reswob_sprite = reswob_down;
