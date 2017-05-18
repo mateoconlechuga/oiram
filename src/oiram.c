@@ -239,6 +239,8 @@ void move_oiram(void) {
     in_water = false;
     on_ice = false;
     
+    oiram.flags &= ~FLAG_OIRAM_SLIDE;
+    
     // do something else if someone died
     if (oiram.failed) {
         static int fail_y;
@@ -539,8 +541,6 @@ start_fail:
                 oiram.index = 0;
                 oiram.flags |= FLAG_OIRAM_SLIDE;
                 goto handle_down;
-            } else {
-                oiram.flags &= ~FLAG_OIRAM_SLIDE;
             }
             if (!(oiram.flags & FLAG_OIRAM_SLIDE)) {
                 if (oiram.on_vine) {
@@ -657,7 +657,7 @@ start_fail:
     }
     
     skip_left:
-
+    
     if (new_x_left > 155) {
         if ((oiram.scrollx = new_x_left - 155) > level_map.max_x_scroll) {
             oiram.scrollx = level_map.max_x_scroll;

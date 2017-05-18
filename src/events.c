@@ -388,14 +388,15 @@ draw_shell:
                         goto remove_curr_mover;
                     case STAR_TYPE:
                         eat_star();
-    remove_curr_mover:
+remove_curr_mover:
                         add_score(4, x, y);
-    remove_curr_mover_no_score:
+remove_curr_mover_no_score:
                         remove_simple_mover(i);
                         i = -1;
                         break;
                     case GOOMBA_TYPE:
-                        if ((oiram.vy <= 0 && oiram.y + ((oiram.flags & FLAG_OIRAM_BIG) ? 11 : 0) >= y) || oiram.flags & (FLAG_OIRAM_INVINCIBLE | FLAG_OIRAM_SLIDE)) {
+                        if ((oiram.vy <= 0 && oiram.y + ((oiram.flags & FLAG_OIRAM_BIG) ? 11 : 0) >= y) ||
+                            (oiram.flags & (FLAG_OIRAM_INVINCIBLE | FLAG_OIRAM_SLIDE))) {
                             if (!shrink_oiram()) {
                                 add_next_chain_score(x, y);
                                 add_poof(oiram.x, oiram.y + 2);
@@ -403,10 +404,6 @@ draw_shell:
                             } else {
                                 goto draw_goomba_sprite;
                             }
-                        } else if (oiram.flags & (FLAG_OIRAM_INVINCIBLE | FLAG_OIRAM_SLIDE)) {
-                            add_next_chain_score(x, y);
-                            add_poof(oiram.x, oiram.y + 2);
-                            goto remove_curr_mover_no_score;
                         } else {
                             add_next_chain_score(x, y);
                             oiram.vy = -5;
