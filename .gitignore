@@ -2,8 +2,7 @@
 !/src
 !/img
 !/bin/*.8xv
-!/bin/*.txt
-!/bin/*.txt
+!/bin/*.md
 !iconc.png
 !makefile
 !readme.md
