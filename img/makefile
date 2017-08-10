@@ -13,8 +13,8 @@ all: cv sp
 	$(MV) OiramT.8xv ../bin/OiramT.8xv
 
 sp:
-	$(SPASM) -E oiram_tiles.ez80 OiramT.8xv
-	$(SPASM) -E oiram_sprites.ez80 OiramS.8xv
+	$(SPASM) -E -Z oiram_tiles.ez80 OiramT.8xv
+	$(SPASM) -E -Z oiram_sprites.ez80 OiramS.8xv
 
 cv:
 	convpng
