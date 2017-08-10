@@ -291,8 +291,8 @@ static uint8_t vine_tile_handler(uint8_t *tile) {
     if (!handling_events) {
         if (pressed_up) {
             if (!oiram.on_vine) {
-                gfx_image_t *img0;
-                gfx_image_t *img1;
+                gfx_sprite_t *img0;
+                gfx_sprite_t *img1;
                 oiram.on_vine = true;
                 if (oiram.flags & FLAG_OIRAM_RACOON) {
                     img0 = oiram_up_racoon_0;
@@ -506,7 +506,7 @@ void add_poof(int x, int y) {
         remove_poof(0);
     }
     
-    fluff = poof[num_poofs] = safe_malloc(sizeof(poof_t));
+    fluff = poof[num_poofs] = malloc(sizeof(poof_t));
     num_poofs++;
     fluff->x = x;
     fluff->y = y;
@@ -543,8 +543,8 @@ void add_fireball(int x, int y, uint8_t dir, uint8_t type) {
         return;
     }
     
-    ball = fireball[num_fireballs] = safe_malloc(sizeof(fireball_t));
-    mover = ball->mover = safe_malloc(sizeof(simple_move_t));
+    ball = fireball[num_fireballs] = malloc(sizeof(fireball_t));
+    mover = ball->mover = malloc(sizeof(simple_move_t));
     mover->x = x;
     mover->y = y;
     
@@ -851,7 +851,7 @@ bumped_tile_t *add_bumped(uint8_t *tile, uint8_t dir) {
     }
     
     tile_to_abs_xy_pos(tile, &x, &y);
-    bump = bumped_tile[num_bumped_tiles] = safe_malloc(sizeof(bumped_tile_t));
+    bump = bumped_tile[num_bumped_tiles] = malloc(sizeof(bumped_tile_t));
     
     switch(dir) {
         case TILE_BOTTOM:

@@ -27,7 +27,7 @@ typedef struct {
     unsigned int scrolly;
     int rel_x;
     int rel_y;
-    gfx_image_t *sprite;
+    gfx_sprite_t *sprite;
     hitbox_t hitbox;
     uint8_t hitbox_height_half;
     bool direction;

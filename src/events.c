@@ -193,10 +193,11 @@ void handle_pending_events(void) {
             }
             
             if (!oiram_collision(x, y, cur->hitbox.width, cur->hitbox.height)) {
-                gfx_image_t *img;
+                gfx_sprite_t *img;
+                gfx_rletsprite_t *rletimg;
                 uint8_t cur_counter;
                 static uint8_t reswob_sprite_count = 0;
-                static gfx_image_t *reswob_sprite;
+                static gfx_rletsprite_t *reswob_sprite;
                 static bool reswob_is_jumping = false;
                 static uint8_t reswob_force_fall = 0;
 draw_sprite:
@@ -218,18 +219,18 @@ draw_sprite:
                             if (!reswob_sprite_count) {
                                 if (cur->vx < 0) {
                                     if (reswob_sprite == reswob_left_0) {
-                                        img = reswob_left_1;
+                                        rletimg = reswob_left_1;
                                     } else {
-                                        img = reswob_left_0;
+                                        rletimg = reswob_left_0;
                                     }
                                 } else {
                                     if (reswob_sprite == reswob_right_0) {
-                                        img = reswob_right_1;
+                                        rletimg = reswob_right_1;
                                     } else {
-                                        img = reswob_right_0;
+                                        rletimg = reswob_right_0;
                                     }
                                 }
-                                reswob_sprite = img;
+                                reswob_sprite = rletimg;
                             }
                             if (reswob_sprite_count++ == 5) { reswob_sprite_count = 0; }
                             if ((oiram.x >= x - 24 && oiram.x <= x + 40)) {
@@ -244,10 +245,10 @@ draw_sprite:
                                     reswob_is_jumping = false;
                                     if (oiram.x < x) {
                                         cur->vx = -1;
-                                        img = reswob_left_0;
+                                        rletimg = reswob_left_0;
                                     } else {
                                         cur->vx = 1;
-                                        img = reswob_right_0;
+                                        rletimg = reswob_right_0;
                                     }
                                     move_side = TILE_RESWOB_DOWN;
                                     moveable_tile(x, y + 45);
@@ -255,8 +256,9 @@ draw_sprite:
                                 }
                             }
                         }
-                        img = reswob_sprite;
-                        break;
+                        rletimg = reswob_sprite;
+                        gfx_RLETSprite(rletimg, rel_x, rel_y);
+                        goto skip_draw;
                     case GOOMBA_TYPE:
 draw_goomba_sprite:
                         img = goomba_sprite;
@@ -371,7 +373,7 @@ draw_shell:
                     default:
                         goto skip_draw;
                 }
-                gfx_TransparentSprite(img, rel_x, rel_y);  
+                gfx_TransparentSprite(img, rel_x, rel_y);
             } else {
                 switch(type) {
                     case RESWOB_TYPE:
@@ -617,7 +619,7 @@ skip_draw:
         }
     }
     
-    if (num_chompers) {
+    if (num_chompers && !easter_egg4) {
         uint8_t dir = 0;
         
         for(i = 0; i < num_chompers; i++) {
@@ -637,12 +639,12 @@ skip_draw:
             
             if (y < start_y) {
                 int ymax = start_y - oiram.scrolly;
-                if (ymax < 0) { goto chomper_no_draw; }
+                if (ymax <= 0) { goto chomper_no_draw; }
                 if (ymax > Y_PXL_MAX) { ymax = Y_PXL_MAX; }
                 gfx_SetClipRegion(0, 0, X_PXL_MAX, ymax);
                 
                 if (cur->throws_fire) {
-                    gfx_image_t *img;
+                    gfx_sprite_t *img;
                     if (x > oiram.x) {
                         if (y < oiram.y) {
                             img = chomper_fire_down_left;
@@ -700,7 +702,7 @@ chomper_no_draw:
     if (num_simple_enemies) {
         for(i = 0; i < num_simple_enemies; i++) {
             enemy_t *cur = simple_enemy[i];
-            gfx_image_t *img;
+            gfx_sprite_t *img;
             uint8_t *tile;
             int tmp_add;
             
@@ -851,7 +853,7 @@ chomper_no_draw:
     if (num_boos) {
         for(i = 0; i < num_boos; i++) {
             boo_t *cur = boo[i];
-            gfx_image_t *img;
+            gfx_sprite_t *img;
             int prev_x = x = cur->x;
             y = cur->y;
             
@@ -931,7 +933,7 @@ chomper_no_draw:
             tmp_vy = cur->vy;
             
             if (y < cur->start_y) {
-                gfx_image_t *img;
+                gfx_sprite_t *img;
                 if (tmp_vy < 0) { img = flame_sprite_up; } else { img = flame_sprite_down; }
                 gfx_TransparentSprite(img, x - oiram.scrollx, y - oiram.scrolly);
             }
@@ -1118,7 +1120,7 @@ draw_oiram:
     }
     
     if (oiram.has_shell) {
-        gfx_image_t *shell;
+        gfx_sprite_t *shell;
         int shell_x, shell_y;
         if (oiram.has_red_shell) {
             shell = koopa_red_shell_0;
@@ -1139,7 +1141,7 @@ draw_oiram:
     }
     
     if ((oiram.flags & FLAG_OIRAM_RACOON) && !oiram.on_vine) {
-        gfx_image_t *tail_img;
+        gfx_sprite_t *tail_img;
         int tail_x, tail_y = oiram.rel_y + 17;
         if (oiram.spin_count) {
             if (oiram.sprite == oiram_0_buffer_right) {

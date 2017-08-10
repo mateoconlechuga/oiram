@@ -11,6 +11,11 @@ void interrupt isr_keyboard(void);
 extern bool handling_events;
 extern bool something_died;
 
+extern bool easter_egg1;
+extern bool easter_egg2;
+extern bool easter_egg3;
+extern bool easter_egg4;
+
 typedef struct {
     uint8_t animation_count;
     uint8_t animation_3_count;
@@ -27,7 +32,6 @@ typedef struct map {
 extern map_t level_map;
 
 void missing_appvars(void);
-void *safe_malloc(size_t bytes);
 
 extern gfx_tilemap_t tilemap;
 
@@ -75,8 +79,8 @@ enum warp_types {
     DOOR_WARP,
 };
 
-extern gfx_image_t *oiram_left[];
-extern gfx_image_t *oiram_right[];
+extern gfx_sprite_t *oiram_left[];
+extern gfx_sprite_t *oiram_right[];
 
 typedef struct {
     bool exit;

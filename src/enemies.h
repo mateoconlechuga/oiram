@@ -67,7 +67,7 @@ typedef struct {
     int8_t vx;
     uint8_t type;
     uint8_t counter;
-    gfx_image_t *sprite;
+    gfx_sprite_t *sprite;
 } enemy_t;
 
 enum simple_enemy_type {

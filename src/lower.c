@@ -7,9 +7,8 @@
 #include "lower.h"
 #include "enemies.h"
 
-bool update_timer = false;
 const unsigned int oiram_score_chain[] = { 100, 200, 400, 800, 1000, 2000, 4000, 8000, ONE_UP_SCORE };
-gfx_image_t *oiram_score_chain_sprites[9];
+gfx_sprite_t *oiram_score_chain_sprites[9];
 
 void draw_time(void) {
     gfx_SetTextXY(285, 144);

@@ -23,7 +23,7 @@ typedef struct simple_move {
     bool is_flyer;
     int8_t fly_counter;
     int8_t counter;
-    gfx_image_t *sprite;
+    gfx_sprite_t *sprite;
     uint8_t score_counter;
 } simple_move_t;
 

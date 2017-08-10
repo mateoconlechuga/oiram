@@ -1,23 +1,22 @@
-#include <string.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <tice.h>
-#include <intce.h>
-
-#include <graphx.h>
-#include <keypadc.h>
-#include <fileioc.h>
-
+#include "loadscreen.h"
 #include "tile_handlers.h"
 #include "defines.h"
 #include "powerups.h"
 #include "enemies.h"
 #include "events.h"
-#include "loadscreen.h"
 #include "images.h"
 #include "oiram.h"
 #include "lower.h"
 #include "simple_mover.h"
+
+#include <string.h>
+#include <stdbool.h>
+#include <stdint.h>
+
+#include <tice.h>
+#include <graphx.h>
+#include <keypadc.h>
+#include <fileioc.h>
 
 unsigned int *warp_info;
 unsigned int warp_num;
@@ -206,10 +205,10 @@ void set_load_screen(void) {
     char *str_2;
     char *str_3;
     
-    gfx_image_t *tile_208 = tileset_tiles[208];
-    gfx_image_t *tile_145 = tileset_tiles[145];
-    gfx_image_t *tile_194 = tileset_tiles[194];
-    gfx_image_t *tile_195 = tileset_tiles[195];
+    gfx_sprite_t *tile_208 = tileset_tiles[208];
+    gfx_sprite_t *tile_145 = tileset_tiles[145];
+    gfx_sprite_t *tile_194 = tileset_tiles[194];
+    gfx_sprite_t *tile_195 = tileset_tiles[195];
     
     uint8_t *pack_data;
     uint8_t key;
@@ -331,16 +330,8 @@ void set_load_screen(void) {
     
     gfx_BlitBuffer();
     
-    // freeze bug
-    asm("call 0004F4h");
-    int_Disable();
-    
     // debounce
-    while (kb_ScanGroup(kb_group_1) & kb_Del);
-    
-    // reset the mode
-    kb_SetMode(MODE_0_IDLE);
-    kb_EnableInt = 0;
+    while (kb_ScanGroup(1) & kb_Del);
     
     for (;;) {
         unsigned int delay;

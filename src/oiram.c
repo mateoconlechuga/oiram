@@ -36,8 +36,8 @@ void oiram_start_location(void) {
 
 // sets the sprites
 void set_normal_oiram_sprites(void) {
-    gfx_image_t *img0;
-    gfx_image_t *img1;
+    gfx_sprite_t *img0;
+    gfx_sprite_t *img1;
     if (oiram.flags & FLAG_OIRAM_RACOON) {
         img0 = oiram_0_racoon;
         img1 = oiram_1_racoon;
@@ -128,7 +128,7 @@ static void drop_shell(void) {
 
 static bool crouch_oiram(void) {
     if (oiram.flags & (FLAG_OIRAM_RACOON | FLAG_OIRAM_FIRE | FLAG_OIRAM_BIG)) {
-        gfx_image_t *img0;
+        gfx_sprite_t *img0;
         if (oiram.flags & FLAG_OIRAM_RACOON) {
             img0 = oiram_crouch_racoon;
         } else if (oiram.flags & FLAG_OIRAM_FIRE) {

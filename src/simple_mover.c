@@ -27,7 +27,7 @@ simple_move_t *add_simple_mover(uint8_t *spawing_tile) {
     
     tile_to_abs_xy_pos(spawing_tile, &x, &y);
     
-    mover = simple_mover[num_simple_movers] = safe_malloc(sizeof(simple_move_t));
+    mover = simple_mover[num_simple_movers] = malloc(sizeof(simple_move_t));
     
     mover->vy = 0;
     mover->vx = 0;

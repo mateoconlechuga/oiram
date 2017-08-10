@@ -1,22 +1,21 @@
+#include "defines.h"
+#include "powerups.h"
+#include "loadscreen.h"
+#include "enemies.h"
+#include "events.h"
+#include "oiram.h"
+#include "lower.h"
+#include "images.h"
+#include "simple_mover.h"
+#include "tile_handlers.h"
+
 #include <stdbool.h>
 #include <stdint.h>
-#include <tice.h>
-#include <intce.h>
 
+#include <tice.h>
 #include <graphx.h>
 #include <keypadc.h>
 #include <fileioc.h>
-
-#include "tile_handlers.h"
-#include "defines.h"
-#include "powerups.h"
-#include "enemies.h"
-#include "events.h"
-#include "loadscreen.h"
-#include "images.h"
-#include "oiram.h"
-#include "lower.h"
-#include "simple_mover.h"
 
 map_t level_map;
 tiles_struct_t tiles;
@@ -24,38 +23,26 @@ gfx_tilemap_t tilemap;
 oiram_t oiram;
 game_t game;
 
-static bool easter_egg1;
-static bool easter_egg2;
-static bool easter_egg3;
-
-void *safe_malloc(size_t bytes) {
-    void *data = malloc(bytes);
-    if (!data) {
-        save_progress();
-        int_Reset();
-        exit(0);
-    }
-    return data;
-}
+bool easter_egg1;
+bool easter_egg2;
+bool easter_egg3;
+bool easter_egg4;
 
 void missing_appvars(void) {
     gfx_End();
-    prgm_CleanUp();
     os_SetCursorPos(0, 0);
     os_PutStrFull("Err: Missing Oiram AppVars");
     while(!os_GetCSC());
-    prgm_CleanUp();
     exit(0);
 }
 
-// this interrupt is called every second
-void interrupt isr_timer1(void) {
+// this handles the timer
+void handler_timer(void) {
     game.seconds--;
    
     // if no more time, fail -- only need to trigger keypad interrupt now
     if (!game.seconds) {
         oiram.failed = true;
-        int_EnableConfig = INT_KEYBOARD;
     }
     
     if (game.blue_item_count) {
@@ -65,21 +52,20 @@ void interrupt isr_timer1(void) {
         }
     }
 
-    update_timer = true;
-    
-    // ack
-    int_Acknowledge = INT_TIMER1;
-    timer_IntAcknowledge = TIMER1_RELOADED;
+    draw_time();
 }
 
 // called when user presses or releases a key
-void interrupt isr_keyboard_alternate(void) {
+void handler_keypad_alternate(void) {
     bool press_up;
+    kb_key_t g1_key, g2_key, g7_key;
+    
+    kb_Scan();
     
     // read keypad data
-    kb_key_t g1_key = kb_Data[kb_group_1];
-    kb_key_t g2_key = kb_Data[kb_group_2];
-    kb_key_t g7_key = kb_Data[kb_group_7];
+    g1_key = kb_Data[1];
+    g2_key = kb_Data[2];
+    g7_key = kb_Data[7];
     
     pressed_alpha   = (g2_key & kb_Alpha);
     pressed_2nd     = (g1_key & kb_2nd);
@@ -105,19 +91,19 @@ void interrupt isr_keyboard_alternate(void) {
             game.fastexit = true;
         }
     }
-    
-    int_Acknowledge = INT_KEYBOARD;
-    kb_IntAcknowledge = KB_DATA_CHANGED;
 }
 
 // called when user presses or releases a key
-void interrupt isr_keyboard(void) {
+void handler_keypad(void) {
     bool press_up;
+    kb_key_t g1_key, g2_key, g7_key;
+    
+    kb_Scan();
     
     // read keypad data
-    kb_key_t g1_key = kb_Data[kb_group_1];
-    kb_key_t g2_key = kb_Data[kb_group_2];
-    kb_key_t g7_key = kb_Data[kb_group_7];
+    g1_key = kb_Data[1];
+    g2_key = kb_Data[2];
+    g7_key = kb_Data[7];
     
     pressed_2nd     = (g2_key & kb_Alpha);
     
@@ -144,10 +130,9 @@ void interrupt isr_keyboard(void) {
             game.fastexit = true;
         }
     }
-    
-    int_Acknowledge = INT_KEYBOARD;
-    kb_IntAcknowledge = KB_DATA_CHANGED;
 }
+
+static void (*handle_keypad)(void);
 
 void black_circles(void) {
     uint8_t radius;
@@ -176,7 +161,7 @@ void double_rectangle(uint24_t x, uint8_t y, uint24_t width, uint8_t height) {
 }
 
 static void print_centered(const char *string, const uint8_t ypos) {
-    gfx_PrintStringXY(string, (LCD_WIDTH - gfx_GetStringWidth(string))/2, ypos);
+    gfx_PrintStringXY(string, (LCD_WIDTH - gfx_GetStringWidth(string)) / 2, ypos);
 }
 
 static void extract_images(void) {
@@ -192,7 +177,7 @@ static void extract_images(void) {
     gfx_palette[WHITE_INDEX] = gfx_RGBTo1555(255, 255, 255);
     gfx_palette[DARK_BLUE_INDEX] = gfx_RGBTo1555(24, 120, 184);
     if (easter_egg3) {
-        for (j=0; j++;) {
+        for (j=0; ++j;) {
             gfx_palette[j] = ~gfx_palette[j];
         }
     }
@@ -204,7 +189,8 @@ void main(void) {
     size_t pack_author_len;
     char end_str[100];
     pack_info_t *pack;
-
+    bool cntr;
+    
     // initialize the 8bpp graphics
     gfx_Begin( gfx_8bpp );
     gfx_SetDrawBuffer();
@@ -217,7 +203,16 @@ void main(void) {
     if (!num_packs) {
         missing_appvars();
     }
-   
+    
+    // easter egg setup
+    if(!ti_RclVar(TI_REAL_TYPE, ti_Ans, &real_in)) {
+        int in = os_RealToInt24(real_in);
+        if (in == 1337) { easter_egg1 = true; }
+        if (in == 1202) { easter_egg2 = true; }
+        if (in == 505)  { easter_egg3 = true; }
+        if (in == 101)  { easter_egg4 = true; }
+    }
+    
     // extract palette and tiles/sprites just to make sure they exist
     extract_images();
     
@@ -252,14 +247,6 @@ void main(void) {
     oiram.fly_count = 9;
     oiram.sprite = oiram_right[0];
     oiram.direction = FACE_RIGHT;
-    
-    // walrus mode!
-    if(!ti_RclVar(TI_REAL_TYPE, ti_Ans, &real_in)) {
-        int in = os_RealToInt24(real_in);
-        if (in == 1337) { easter_egg1 = true; }
-        if (in == 1202) { easter_egg2 = true; }
-        if (in == 505)  { easter_egg3 = true; }
-    }
     
     pack = &pack_info[game.pack];
     
@@ -301,9 +288,6 @@ void main(void) {
     
     for(delay=0; delay<400000; delay++);
     
-    // initialize the interrupt handlers
-    int_Initialize();
-    
     // disable the timer so it doesn't run when we don't want it to be running
     timer_Control = TIMER1_DISABLE;
     
@@ -313,24 +297,12 @@ void main(void) {
     // enable the timer, set it to the 32768 kHz clock, enable an interrupt once it reaches 0, and make it count down
     timer_Control = TIMER1_ENABLE | TIMER1_32K | TIMER1_0INT | TIMER1_DOWN;
     
-    // setup the int vectors
-    int_SetVector(TIMER1_IVECT, isr_timer1);
+    // setup keypad handlers
     if (game.alternate_keypad) {
-        int_SetVector(KEYBOARD_IVECT, isr_keyboard_alternate);
+        handle_keypad = handler_keypad_alternate;
     } else {
-        int_SetVector(KEYBOARD_IVECT, isr_keyboard);
+        handle_keypad = handler_keypad;
     }
-    
-    // tell the interrupt controller that the ON flag should latch and be enabled
-    int_EnableConfig = INT_KEYBOARD | INT_TIMER1;
-    int_LatchConfig = INT_TIMER1;
-    
-    // configure the keypad to be continously scanning
-    kb_SetMode(MODE_3_CONTINUOUS);
-    kb_EnableInt = KB_DATA_CHANGED;
-    
-    // interrupts can now generate after this
-    int_Enable();
     
     // reset animations
     tiles.animation_3_count = 0;
@@ -346,6 +318,10 @@ void main(void) {
     
     // wait until the clear key is pressed
     while(!game.exit) {
+        
+        // handle keypad presses
+        handle_keypad();
+        
         // move oiram if required
         move_oiram();
         
@@ -354,15 +330,15 @@ void main(void) {
         
         // handle outstanding events, such as showing number of coins
         handle_pending_events();
-    
-        // swap the draw buffer
-        gfx_BlitLines(gfx_buffer, 0, 146);
         
-        // draw the timer if it changes
-        if (update_timer) {
-            draw_time();
-            update_timer = false;
+        // handle timer every second
+        if (timer_IntStatus & TIMER1_RELOADED) {
+            handler_timer();
+            timer_IntAcknowledge = TIMER1_RELOADED;
         }
+        
+        // blit the draw buffer
+        gfx_BlitLines(gfx_buffer, 0, 146);
         
         // animate the things
         if (!easter_egg2) {
@@ -370,8 +346,7 @@ void main(void) {
         }
     }
     
-    // reset interrupt status
-    int_Reset();
+    timer_Control = TIMER1_DISABLE;
     
     // deallocate
     while(num_simple_enemies) { remove_simple_enemy(0); }

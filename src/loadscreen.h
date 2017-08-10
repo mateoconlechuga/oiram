@@ -1,6 +1,8 @@
 #ifndef LOADSCREEN_H
 #define LOADSCREEN_H
 
+#include <stdint.h>
+
 typedef struct {
     uint8_t progress;
     uint8_t coins;

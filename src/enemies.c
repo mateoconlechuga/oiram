@@ -40,7 +40,7 @@ void add_boo(uint8_t *tile) {
     
     tile_to_abs_xy_pos(tile, &x, &y);
     
-    booooo = boo[num_boos] = safe_malloc(sizeof(boo_t));
+    booooo = boo[num_boos] = malloc(sizeof(boo_t));
     
     booooo->x = x;
     booooo->y = y;
@@ -118,7 +118,7 @@ void add_chomper(uint8_t *tile, bool throws_fire) {
     
     tile_to_abs_xy_pos(tile, &x, &y);
     
-    chomp = chomper[num_chompers] = safe_malloc(sizeof(chomper_t));
+    chomp = chomper[num_chompers] = malloc(sizeof(chomper_t));
     
     chomp->x = x + TILE_WIDTH/2;
     chomp->y = y;
@@ -158,7 +158,7 @@ void add_flame(uint8_t *tile) {
     
     tile_to_abs_xy_pos(tile, &x, &y);
     
-    fire = flame[num_flames] = safe_malloc(sizeof(flame_t));
+    fire = flame[num_flames] = malloc(sizeof(flame_t));
     
     fire->x = x;
     fire->y = y;
@@ -196,7 +196,7 @@ void add_thwomp(uint8_t *tile) {
     
     tile_to_abs_xy_pos(tile, &x, &y);
     
-    womp = thwomp[num_thwomps] = safe_malloc(sizeof(thwomp_t));
+    womp = thwomp[num_thwomps] = malloc(sizeof(thwomp_t));
     
     womp->x = x + 4;
     womp->y = y;
@@ -234,7 +234,7 @@ enemy_t *add_simple_enemy(uint8_t *tile, uint8_t type) {
     
     tile_to_abs_xy_pos(tile, &x, &y);
     
-    enemy = simple_enemy[num_simple_enemies] = safe_malloc(sizeof(enemy_t));
+    enemy = simple_enemy[num_simple_enemies] = malloc(sizeof(enemy_t));
     
     enemy->vx = 0;
     enemy->vy = 0;
