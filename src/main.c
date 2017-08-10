@@ -57,8 +57,9 @@ void handler_timer(void) {
 
 // called when user presses or releases a key
 void handler_keypad_alternate(void) {
-    bool press_up;
+    bool press_up, pressed_s;
     kb_key_t g1_key, g2_key, g7_key;
+    static bool pressed_special = false;
     
     kb_Scan();
     
@@ -67,7 +68,7 @@ void handler_keypad_alternate(void) {
     g2_key = kb_Data[2];
     g7_key = kb_Data[7];
     
-    pressed_alpha   = (g2_key & kb_Alpha);
+    pressed_s       = (g2_key & kb_Alpha);
     pressed_2nd     = (g1_key & kb_2nd);
     
     pressed_down    = (g7_key & kb_Down);
@@ -85,6 +86,13 @@ void handler_keypad_alternate(void) {
         }
     }
     
+    if (pressed_s && !pressed_special) {
+        pressed_alpha = true;
+    } else {
+        pressed_alpha = false;
+    }
+    pressed_special = pressed_s;
+    
     if (g1_key & kb_Del) {
         if (!oiram.failed) {
             game.exit = true;
@@ -95,8 +103,9 @@ void handler_keypad_alternate(void) {
 
 // called when user presses or releases a key
 void handler_keypad(void) {
-    bool press_up;
+    bool press_up, pressed_s;
     kb_key_t g1_key, g2_key, g7_key;
+    static bool pressed_special = false;
     
     kb_Scan();
     
@@ -111,7 +120,7 @@ void handler_keypad(void) {
     pressed_left    = (g7_key & kb_Left);
     pressed_right   = (g7_key & kb_Right);
     
-    pressed_alpha   = (g7_key & kb_Up);
+    pressed_s       = (g7_key & kb_Up);
     
     press_up        = (g1_key & kb_2nd);
     
@@ -123,6 +132,13 @@ void handler_keypad(void) {
             oiram.vy = -5;
         }
     }
+    
+    if (pressed_s && !pressed_special) {
+        pressed_alpha = true;
+    } else {
+        pressed_alpha = false;
+    }
+    pressed_special = pressed_s;
     
     if (g1_key & kb_Del) {
         if (!oiram.failed) {
