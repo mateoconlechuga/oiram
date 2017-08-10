@@ -286,8 +286,6 @@ void main(void) {
     
     gfx_BlitBuffer();
     
-    for(delay=0; delay<400000; delay++);
-    
     // disable the timer so it doesn't run when we don't want it to be running
     timer_Control = TIMER1_DISABLE;
     
@@ -296,6 +294,14 @@ void main(void) {
     
     // enable the timer, set it to the 32768 kHz clock, enable an interrupt once it reaches 0, and make it count down
     timer_Control = TIMER1_ENABLE | TIMER1_32K | TIMER1_0INT | TIMER1_DOWN;
+    
+    // show the start screen for a bit
+    for(delay=0; delay<2; delay++) {
+        if (timer_IntStatus & TIMER1_RELOADED) {
+            delay++;
+            timer_IntAcknowledge = TIMER1_RELOADED;
+        }
+    }
     
     // setup keypad handlers
     if (game.alternate_keypad) {

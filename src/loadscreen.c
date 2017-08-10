@@ -55,6 +55,11 @@ void load_progress(void) {
     if ((variable = ti_Open(save_name, "r"))) {
         num_packs_in_var = (uint8_t)ti_GetC(variable);
         pack_info_in_var = ti_GetDataPtr(variable);
+        ti_Seek(-1, SEEK_END, variable);
+        game.alternate_keypad = (bool)ti_GetC(variable);
+        ti_Rewind(variable);
+    } else {
+        game.alternate_keypad = false;
     }
     
     memset(pack_info, 0, sizeof pack_info);
@@ -80,9 +85,6 @@ void load_progress(void) {
         num_packs++;
     }
     
-    // go to the end of the file
-    ti_Seek(-1, SEEK_END, variable);
-    game.alternate_keypad = (bool)ti_GetC(variable);
     ti_CloseAll();
 }
 
@@ -345,9 +347,9 @@ void set_load_screen(void) {
         // debounce
         for (delay=0; delay<30000; delay++);
         
-        grp7 = kb_Data[kb_group_7];
-        grp6 = kb_Data[kb_group_6];
-        grp1 = kb_Data[kb_group_1];
+        grp7 = kb_Data[7];
+        grp6 = kb_Data[6];
+        grp1 = kb_Data[1];
         
         if (grp1 == kb_Del) {
             save_progress();
