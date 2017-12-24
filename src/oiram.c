@@ -226,17 +226,6 @@ static void scroll_map(void) {
                 oiram.scrollx--;
             }
             break;
-        case SCROLL_DOWN:
-            oiram.scrolly++;
-            if (oiram.scrolly > level_map.max_y_scroll) {
-                oiram.scrolly = level_map.max_y_scroll;
-            }
-            break;
-        case SCROLL_UP:
-            if (oiram.scrolly) {
-                oiram.scrolly--;
-            }
-            break;
         default:
             break;
     }
@@ -327,7 +316,13 @@ EXECUTE_FAIL:
                 warp.enter = false;
                 oiram_location_from_offset(warp.exit_loc);
                 if (warp.exit_style == DOOR_WARP) {
-                    goto HANDLE_PIPE_EXIT;
+                    warp.exit = false;
+                    warp.style = WARP_NONE;
+                    new_y_top = oiram.y;
+                    new_x_left = oiram.x;
+                    oiram.rel_x = new_x_left - oiram.scrollx;
+                    oiram.rel_y = new_y_top - oiram.scrolly;
+                    goto HANDLE_NO_X_SCROLL;
                 }
                 warp.exit = true;
                 warp.style = warp.exit_style;
@@ -339,7 +334,7 @@ EXECUTE_FAIL:
                     warp.count = oiram.hitbox.height + 1;
                 } else {
                     if (oiram.flags & (FLAG_OIRAM_BIG | FLAG_OIRAM_FIRE)) {
-                        oiram.y+=2;
+                        oiram.y += 2;
                     }
                     if (warp.exit_style == PIPE_LEFT) {
                         warp.clip_x += OIRAM_HITBOX_WIDTH;
@@ -347,7 +342,6 @@ EXECUTE_FAIL:
                     warp.count = OIRAM_HITBOX_WIDTH + 1;
                 }
             } else {
-HANDLE_PIPE_EXIT:
                 warp.exit = false;
                 warp.style = WARP_NONE;
             }
@@ -707,7 +701,10 @@ HANDLE_NO_X_SCROLL:
         }
     } else {
         int xoff;
-        if (warp.style != WARP_NONE && warp.exit) {
+        if (warp.exit_style == DOOR_WARP || (warp.style != WARP_NONE && warp.exit)) {
+            if (warp.exit_style == DOOR_WARP) {
+                warp.exit_style = WARP_NONE;
+            }
             goto HANDLE_NO_X_SCROLL;
         }
         
@@ -721,21 +718,13 @@ HANDLE_NO_X_SCROLL:
         }
     }
     
-    if (level_map.scroll == SCROLL_NONE || (level_map.scroll != SCROLL_UP && level_map.scroll != SCROLL_DOWN)) {
-HANDLE_NO_Y_SCROLL:
-        if ((diff_y = (new_y_top - prev_y)) >= 0) {
-            if (oiram.rel_y >= 80 && (oiram.scrolly += diff_y) > level_map.max_y_scroll) {
-                oiram.scrolly = level_map.max_y_scroll;
-            }
-        } else {
-            if (oiram.rel_y <= 20 && (oiram.scrolly += diff_y) > level_map.max_y_scroll) {
-                oiram.scrolly = 0;
-            }
+    if ((diff_y = (new_y_top - prev_y)) >= 0) {
+        if (oiram.rel_y >= 80 && (oiram.scrolly += diff_y) > level_map.max_y_scroll) {
+            oiram.scrolly = level_map.max_y_scroll;
         }
     } else {
-        int yoff;
-        if (warp.style != WARP_NONE && warp.exit) {
-            goto HANDLE_NO_Y_SCROLL;
+        if (oiram.rel_y <= 20 && (oiram.scrolly += diff_y) > level_map.max_y_scroll) {
+            oiram.scrolly = 0;
         }
     }
     

@@ -986,8 +986,8 @@ uint8_t warp_tile_handler(uint8_t *tile) {
                         warp.style = DOOR_WARP;
                         warp.enter = true;
                         warp.count = 4;
-                        oiram.door_x = x - oiram.scrollx;
-                        oiram.door_y = y - oiram.scrolly;
+                        oiram.door_x = x;
+                        oiram.door_y = y;
                     }
                     break;
                 default:

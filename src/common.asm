@@ -72,9 +72,12 @@ divloop2:
 	ld	de,_tile_handler
 	add	hl,de
 	ld	iy,(hl)
-	call	__indcall
+	call	__jump_iy
 	pop	de
 	ret
+
+__jump_iy:
+	jp	(iy)
 
 _solid_tile_handler:
 	xor	a,a

@@ -152,7 +152,7 @@ void handle_pending_events(void) {
                        }
                    }
                }
-    continue_loop_fail:
+HANDLE_LOOP_FAIL:
                remove_simple_mover(i--);
                continue;
             }
@@ -165,7 +165,7 @@ void handle_pending_events(void) {
             if (something_died) {
                 something_died = false;
                 add_poof(x + 4, y + 4);
-                goto continue_loop_fail;
+                goto HANDLE_LOOP_FAIL;
             }
             
             rel_x = x - oiram.scrollx;
@@ -179,13 +179,13 @@ void handle_pending_events(void) {
                     case GOOMBA_TYPE:
                         add_poof(x + 4, y + 4);
                         add_score(0, x, y);
-                        goto continue_loop_fail;
+                        goto HANDLE_LOOP_FAIL;
                     case KOOPA_RED_TYPE:
                     case KOOPA_GREEN_TYPE:
                     case KOOPA_BONES_TYPE:
                     case SPIKE_TYPE:
                         add_score(0, x, y);
-                        goto create_shell;
+                        goto HANDLE_CREATE_SHELL;
                     default:
                         cur->bumped = false;
                         break;
@@ -200,7 +200,7 @@ void handle_pending_events(void) {
                 static gfx_rletsprite_t *reswob_sprite;
                 static bool reswob_is_jumping = false;
                 static uint8_t reswob_force_fall = 0;
-draw_sprite:
+HANDLE_DRAW_SPRITE:
                 switch(type) {
                     case MUSHROOM_TYPE:
                         img = mushroom;
@@ -258,13 +258,13 @@ draw_sprite:
                         }
                         rletimg = reswob_sprite;
                         gfx_RLETSprite(rletimg, rel_x, rel_y);
-                        goto skip_draw;
+                        goto HANDLE_SKIP_DRAW;
                     case GOOMBA_TYPE:
-draw_goomba_sprite:
+HANDLE_DRAW_SPRITE_GOOMBA:
                         img = goomba_sprite;
                         break;
                     case FLAT_GOOMBA_TYPE:
-draw_flat_goomba_sprite:
+HANDLE_DRAW_GOOMBA_FLAT:
                         img = goomba_flat;
                         break;
                     case KOOPA_BONES_TYPE:
@@ -282,7 +282,7 @@ draw_flat_goomba_sprite:
                             gfx_TransparentSprite(koopa_red_right_sprite, rel_x, rel_y);
                             gfx_TransparentSprite(wing_right_sprite, rel_x, rel_y);
                         }
-                        goto skip_draw;
+                        goto HANDLE_SKIP_DRAW;
                     case KOOPA_RED_TYPE:
                         if (cur->vx < 0) {
                             img = koopa_red_left_sprite;
@@ -305,7 +305,7 @@ draw_flat_goomba_sprite:
                             gfx_TransparentSprite(koopa_green_right_sprite, rel_x, rel_y);
                             gfx_TransparentSprite(wing_right_sprite, rel_x, rel_y);
                         }
-                        goto skip_draw;
+                        goto HANDLE_SKIP_DRAW;
                     case KOOPA_GREEN_TYPE:
                         if (cur->vx < 0) {
                             img = koopa_green_left_sprite;
@@ -314,19 +314,19 @@ draw_flat_goomba_sprite:
                         }
                         break;
                     case KOOPA_BONES_DEAD_TYPE:
-draw_koopa_bones_dead_sprite:
+HANDLE_DRAW_BONES_FLAT:
                         img = cur->sprite;
-                        if (cur->counter < 20) { if (cur->counter & 1) { goto skip_draw; } }
+                        if (cur->counter < 20) { if (cur->counter & 1) { goto HANDLE_SKIP_DRAW; } }
                         break;
                     case KOOPA_RED_SHELL_TYPE:
                         if (cur->sprite == koopa_red_shell_1) { img = koopa_red_shell_0; } else { img = koopa_red_shell_1; }
-                        goto draw_shell;
+                        goto HANDLE_DRAW_SHELL;
                     case KOOPA_GREEN_SHELL_TYPE:
                         if (cur->sprite == koopa_green_shell_1) { img = koopa_green_shell_0; } else { img = koopa_green_shell_1; }
-                        goto draw_shell;
+                        goto HANDLE_DRAW_SHELL;
                     case SPIKE_SHELL_TYPE:
                         if (cur->sprite == spike_shell_1) { img = spike_shell_0; } else { img = spike_shell_1; }
-draw_shell:
+HANDLE_DRAW_SHELL:
                         if (cur->vx) {
                             uint8_t j;
                             cur->sprite = img;
@@ -366,12 +366,12 @@ draw_shell:
                             }
                             
                         } else {
-                            if (cur->counter < 20) { if (cur->counter & 1) { goto skip_draw; } }
+                            if (cur->counter < 20) { if (cur->counter & 1) { goto HANDLE_SKIP_DRAW; } }
                         }
                         
                         break;
                     default:
-                        goto skip_draw;
+                        goto HANDLE_SKIP_DRAW;
                 }
                 gfx_TransparentSprite(img, rel_x, rel_y);
             } else {
@@ -381,18 +381,18 @@ draw_shell:
                         break;
                     case MUSHROOM_TYPE:
                         eat_mushroom();
-                        goto remove_curr_mover;
+                        goto HANDLE_REMOVE_MOVER;
                     case MUSHROOM_1UP_TYPE:
                         add_score(8, x, y);
-                        goto remove_curr_mover_no_score;
+                        goto HANDLE_REMOVE_MOVER_NO_SCORE;
                     case FIRE_FLOWER_TYPE:
                         eat_fire_flower();
-                        goto remove_curr_mover;
+                        goto HANDLE_REMOVE_MOVER;
                     case STAR_TYPE:
                         eat_star();
-remove_curr_mover:
+HANDLE_REMOVE_MOVER:
                         add_score(4, x, y);
-remove_curr_mover_no_score:
+HANDLE_REMOVE_MOVER_NO_SCORE:
                         remove_simple_mover(i);
                         i = -1;
                         break;
@@ -402,9 +402,9 @@ remove_curr_mover_no_score:
                             if (!shrink_oiram()) {
                                 add_next_chain_score(x, y);
                                 add_poof(oiram.x, oiram.y + 2);
-                                goto remove_curr_mover_no_score;
+                                goto HANDLE_REMOVE_MOVER_NO_SCORE;
                             } else {
-                                goto draw_goomba_sprite;
+                                goto HANDLE_DRAW_SPRITE_GOOMBA;
                             }
                         } else {
                             add_next_chain_score(x, y);
@@ -414,20 +414,20 @@ remove_curr_mover_no_score:
                             cur->vx = 0;
                             y += 5;
                             cur->counter = 30;
-                            goto draw_goomba_sprite;
+                            goto HANDLE_DRAW_SPRITE_GOOMBA;
                         }
                         break;
                     case FLAT_GOOMBA_TYPE:
-                        goto draw_flat_goomba_sprite;
+                        goto HANDLE_DRAW_GOOMBA_FLAT;
                     case KOOPA_GREEN_FLY_TYPE:
                     case KOOPA_RED_FLY_TYPE:
                         if ((oiram.vy <= 0 && oiram.y >= y) || oiram.flags & (FLAG_OIRAM_INVINCIBLE | FLAG_OIRAM_SLIDE)) {
                             if (!shrink_oiram()) {
                                 add_next_chain_score(x, y);
                                 add_poof(oiram.x, oiram.y + 2);
-                                goto remove_curr_mover_no_score;
+                                goto HANDLE_REMOVE_MOVER_NO_SCORE;
                             } else {
-                                goto draw_sprite;
+                                goto HANDLE_DRAW_SPRITE;
                             }
                         } else {
                             add_next_chain_score(x, y);
@@ -445,7 +445,7 @@ remove_curr_mover_no_score:
                                 cur->vx = -1;
                             }
                             cur->is_flyer = false;
-                            goto draw_sprite;
+                            goto HANDLE_DRAW_SPRITE;
                         }
                         break;
                     case KOOPA_BONES_TYPE:
@@ -456,13 +456,13 @@ remove_curr_mover_no_score:
                             if (!shrink_oiram()) {
                                 add_next_chain_score(x, y);
                                 add_poof(oiram.x, oiram.y + 2);
-                                goto remove_curr_mover_no_score;
+                                goto HANDLE_REMOVE_MOVER_NO_SCORE;
                             } else {
-                                goto draw_sprite;
+                                goto HANDLE_DRAW_SPRITE;
                             }
                         } else {
                             oiram.vy = -5;
-create_shell:
+HANDLE_CREATE_SHELL:
                             add_next_chain_score(x, y);
                             if (type == KOOPA_RED_TYPE) {
                                 cur->sprite = koopa_red_shell_0;
@@ -483,20 +483,20 @@ create_shell:
                                 y += 11;
                                 cur->smart = false;
                                 cur->counter = 127;
-                                goto draw_koopa_bones_dead_sprite;
+                                goto HANDLE_DRAW_BONES_FLAT;
                             }
                             cur->vx = 0;
                             y += 11;
                             cur->smart = false;
                             cur->counter = 127;
-                            goto draw_sprite;
+                            goto HANDLE_DRAW_SPRITE;
                         }
                         break;
                     case KOOPA_RED_SHELL_TYPE: case KOOPA_GREEN_SHELL_TYPE:
                         if (cur->vy > 0 || oiram.y + oiram.hitbox.height - 8 < y) {
                             oiram.vy = -8;
                             if (!cur->vx && (oiram.x != x)) {
-                                goto kick_shell;
+                                goto HANDLE_KICK_SHELL;
                             }
                             cur->vx = 0;
                             cur->score_counter = 0;
@@ -508,13 +508,13 @@ create_shell:
                                     if (!shrink_oiram()) {
                                         add_score(0, oiram.x, oiram.y);
                                         add_poof(oiram.x, oiram.y + 2);
-                                        goto remove_curr_mover_no_score;
+                                        goto HANDLE_REMOVE_MOVER_NO_SCORE;
                                     } else {
-                                        goto draw_sprite;
+                                        goto HANDLE_DRAW_SPRITE;
                                     }
                                 }
                             } else {
-kick_shell:
+HANDLE_KICK_SHELL:
                                 if ((oiram.x + OIRAM_HITBOX_WIDTH/2) < x) {
                                     cur->vx = 5;
                                 } else {
@@ -525,12 +525,12 @@ kick_shell:
                             }
                         }
                     case KOOPA_BONES_DEAD_TYPE:
-                        goto draw_sprite;
+                        goto HANDLE_DRAW_SPRITE;
                     default:
                         break;
                 }
             }
-skip_draw:
+HANDLE_SKIP_DRAW:
 
             if (cur->counter >= 0) {
                 cur->counter--;
@@ -553,7 +553,7 @@ skip_draw:
                         cur->hitbox.height = 15;
                         cur->smart = false;
                     } else {
-                        goto remove_curr_mover_no_score;
+                        goto HANDLE_REMOVE_MOVER_NO_SCORE;
                     }
                     cur->counter = -1;
                     if (oiram.x < rel_x) {
@@ -568,7 +568,7 @@ skip_draw:
             continue;
         }
     }
-        
+
     if (num_bumped_tiles) {
         for(i = 0; i < num_bumped_tiles; i++) {
             bumped_tile_t *cur = bumped_tile[i];
@@ -596,7 +596,7 @@ skip_draw:
             
             if (tile_img == TILE_VANISH) {
                 if (cur->count > 8) {
-                    goto skip_new_bump_y;
+                    goto HANDLE_SKIP_BUMP;
                 } else {
                     if (cur->count & 1) {
                         y--;
@@ -608,7 +608,7 @@ skip_draw:
             
             cur->y = y;
             
-    skip_new_bump_y:
+HANDLE_SKIP_BUMP:
     
             // draw the tile
             gfx_TransparentSprite(tileset_tiles[tile_img], x - oiram.scrollx, y - oiram.scrolly);
@@ -639,7 +639,7 @@ skip_draw:
             
             if (y < start_y) {
                 int ymax = start_y - oiram.scrolly;
-                if (ymax <= 0) { goto chomper_no_draw; }
+                if (ymax <= 0) { goto HANDLE_CHOMER_NO_DRAW; }
                 if (ymax > Y_PXL_MAX) { ymax = Y_PXL_MAX; }
                 gfx_SetClipRegion(0, 0, X_PXL_MAX, ymax);
                 
@@ -668,7 +668,7 @@ skip_draw:
                 }
                 gfx_TransparentSprite(chomper_body, rel_x, rel_y + 16);
             }
-chomper_no_draw:
+HANDLE_CHOMER_NO_DRAW:
             if (!cur->count) {
                 
                 y += cur->vy;
@@ -999,7 +999,7 @@ chomper_no_draw:
                 if (something_died) {
                     something_died = false;
                     add_poof(cur->mover->x + 4, cur->mover->y + 4);
-                    goto remove_fireball_continue;
+                    goto HANDLE_REMOVE_FIREBALL;
                 }
             } else {
                 cur->mover->x += tmp_vx;
@@ -1014,7 +1014,7 @@ chomper_no_draw:
             
             if (tmp_vx != cur->mover->vx || !cur->count-- || rel_x < -20 || rel_x > 350) {
                 add_poof(x + 2, y + 2);
-    remove_fireball_continue:
+HANDLE_REMOVE_FIREBALL:
                 remove_fireball(i--);
                 continue;
             }
@@ -1028,7 +1028,7 @@ chomper_no_draw:
                             add_score(1, x,y );
                             add_poof(hit->x + 4, hit->y + 4);
                             remove_simple_mover(j);
-                            goto remove_fireball_continue;
+                            goto HANDLE_REMOVE_FIREBALL;
                         }
                     }
                 }
@@ -1040,7 +1040,7 @@ chomper_no_draw:
                         add_score(1, x, y);
                         add_poof(hit->x + 4, y);
                         remove_chomper(j);
-                        goto remove_fireball_continue;
+                        goto HANDLE_REMOVE_FIREBALL;
                     }
                 }
                 
@@ -1049,7 +1049,7 @@ chomper_no_draw:
                 if (oiram_collision(x, y, 7, 7)) {
                     shrink_oiram();
                     add_poof(x + 4, y + 4);
-                    goto remove_fireball_continue;
+                    goto HANDLE_REMOVE_FIREBALL;
                 }
             }
             gfx_TransparentSprite(fireball_sprite, rel_x, rel_y);
@@ -1061,61 +1061,61 @@ chomper_no_draw:
         gfx_TransparentSprite(oiram_fail, oiram.fail_x - oiram.scrollx, oiram.fail_y - oiram.scrolly);
     } else if (in_quicksand) {
         gfx_SetClipRegion(0, 0, X_PXL_MAX, quicksand_clip_y - oiram.scrolly);
-        goto draw_oiram;
+        goto HANDLE_DRAW_OIRAM;
     } else if (warp.style) {
         if (!warp.enter) {
             switch (warp.style) {
                 case PIPE_DOWN:
-                pipe_oiram_down:
+                HANDLE_PIPE_DOWN:
                     gfx_SetClipRegion(0, warp.clip_y - oiram.scrolly, X_PXL_MAX, Y_PXL_MAX);
                     break;
                 case PIPE_LEFT:
-                pipe_oiram_left:
+                HANDLE_PIPE_LEFT:
                     gfx_SetClipRegion(warp.clip_x - oiram.scrollx, 0, X_PXL_MAX, Y_PXL_MAX);
                     break;
                 case PIPE_RIGHT:
-                pipe_oiram_right:
+                HANDLE_PIPE_RIGHT:
                     gfx_SetClipRegion(0, 0, warp.clip_x - oiram.scrollx, Y_PXL_MAX);
                     break;
                 case PIPE_UP:
-                pipe_oiram_up:
+                HANDLE_PIPE_UP:
                     gfx_SetClipRegion(0, 0, X_PXL_MAX, warp.clip_y - oiram.scrolly);
                     break;
                 case DOOR_WARP:
-                pipe_door:
-                    gfx_Sprite(door_top, oiram.door_x, oiram.door_y);
-                    gfx_Sprite(door_bot, oiram.door_x, oiram.door_y + 16);
+                HANDLE_DOOR_WARP:
+                    gfx_Sprite(door_top, oiram.door_x - oiram.scrollx, oiram.door_y - oiram.scrolly);
+                    gfx_Sprite(door_bot, oiram.door_x - oiram.scrollx, oiram.door_y + 16 - oiram.scrolly);
                     break;
             }
         } else {
             switch (warp.style) {
                 case PIPE_DOWN:
-                    goto pipe_oiram_up;
+                    goto HANDLE_PIPE_UP;
                 case PIPE_LEFT:
-                    goto pipe_oiram_right;
+                    goto HANDLE_PIPE_RIGHT;
                 case PIPE_RIGHT:
-                    goto pipe_oiram_left;
+                    goto HANDLE_PIPE_LEFT;
                 case PIPE_UP:
-                    goto pipe_oiram_down;
+                    goto HANDLE_PIPE_DOWN;
                 case DOOR_WARP:
-                    goto pipe_door;
+                    goto HANDLE_DOOR_WARP;
             }
         }
-        goto draw_oiram;
+        goto HANDLE_DRAW_OIRAM;
     } else if (oiram.invincible) {
         oiram.invincible--;
         if (oiram.invincible & 1) {
-            goto draw_oiram;
+            goto HANDLE_DRAW_OIRAM;
         } else {
             if (!oiram.invincible) { oiram.flags &= ~FLAG_OIRAM_INVINCIBLE; }
         }
     } else if (oiram.shrink_count) {
         oiram.shrink_count--;
         if (oiram.shrink_count & 1) {
-            goto draw_oiram;
+            goto HANDLE_DRAW_OIRAM;
         }
     } else {
-draw_oiram:
+HANDLE_DRAW_OIRAM:
         gfx_TransparentSprite(oiram.sprite, oiram.rel_x, oiram.rel_y);
     }
     
