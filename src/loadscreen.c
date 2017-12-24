@@ -88,7 +88,8 @@ void load_progress(void) {
     ti_CloseAll();
 }
 
-static void init_level(uint8_t width, uint8_t height) {
+static void init_level(uint8_t width, uint8_t height, uint8_t scroll) {
+    level_map.scroll = scroll;
     level_map.max_y = height * TILE_HEIGHT;
     level_map.max_x = width * TILE_WIDTH;
     level_map.max_x_scroll = level_map.max_x - ((TILEMAP_DRAW_WIDTH-1) * TILE_WIDTH);
@@ -111,8 +112,10 @@ static void decode(uint8_t *in, uint8_t *out) {
         uint8_t c, i, cnt;
         c = *in;
         in++;
-        if (c == 255) return;
         if (c > 128) {
+            if (c == 255) {
+                break;
+            }
             cnt = c - 128;
             for (i = 0; i < cnt; i++) {
                 *out = *in;
@@ -135,6 +138,7 @@ void set_level(uint8_t abs_pack, uint8_t level) {
     ti_var_t slot = 0;
     uint8_t level_width = 0, level_height = 0;
     uint16_t color = 0;
+    uint8_t scroll = SCROLL_NONE;
     
     game.num_levels = 0;
     search_pos = NULL;
@@ -165,7 +169,14 @@ void set_level(uint8_t abs_pack, uint8_t level) {
         
         // extract color channel
         color = *((uint16_t*)pack_data);
-        pack_data+=2;
+        pack_data += 2;
+        
+        // extract scroll behavior if available
+        if (*pack_data == 255) {
+            pack_data += 1;
+            scroll = *pack_data;
+            pack_data += 1;
+        }
         
         // get the number of pipes
         num_pipes = *pack_data;
@@ -190,7 +201,7 @@ void set_level(uint8_t abs_pack, uint8_t level) {
     }
     
     // init the tilemap structure
-    init_level(level_width, level_height);
+    init_level(level_width, level_height, scroll);
     gfx_palette[BACKGROUND_COLOR_INDEX] = color;
 }
 
@@ -336,7 +347,6 @@ void set_load_screen(void) {
     while (kb_ScanGroup(1) & kb_Del);
     
     for (;;) {
-        unsigned int delay;
         kb_key_t grp7;
         kb_key_t grp1;
         kb_key_t grp6;
@@ -345,7 +355,7 @@ void set_load_screen(void) {
         kb_Scan();
         
         // debounce
-        for (delay=0; delay<30000; delay++);
+        delay(20);
         
         grp7 = kb_Data[7];
         grp6 = kb_Data[6];

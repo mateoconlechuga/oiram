@@ -213,20 +213,56 @@ static void spin(int x, int y) {
     oiram.spin_count = 3;
 }
 
+static void scroll_map(void) {
+    switch (level_map.scroll) {
+        case SCROLL_RIGHT:
+            oiram.scrollx++;
+            if (oiram.scrollx > level_map.max_x_scroll) {
+                oiram.scrollx = level_map.max_x_scroll;
+            }
+            break;
+        case SCROLL_LEFT:
+            if (oiram.scrollx) {
+                oiram.scrollx--;
+            }
+            break;
+        case SCROLL_DOWN:
+            oiram.scrolly++;
+            if (oiram.scrolly > level_map.max_y_scroll) {
+                oiram.scrolly = level_map.max_y_scroll;
+            }
+            break;
+        case SCROLL_UP:
+            if (oiram.scrolly) {
+                oiram.scrolly--;
+            }
+            break;
+        default:
+            break;
+    }
+}
+
 // move oiram around on the screen, checking for bounds
 void move_oiram(void) {
-    uint8_t new_vx = oiram.vx;
-    uint8_t left_bottom_test,right_bottom_test;
+    uint8_t new_vx, left_bottom_test, right_bottom_test;
+    int8_t mm;
     
-    int diff_y;
-    int prev_y = oiram.y;
+    int diff_y, prev_y;
+    int new_y_top, new_y_bot, new_x_left, new_x_right;
     
-    int new_y_top = prev_y;
-    int new_y_bot = new_y_top + oiram.hitbox.height;
-    int new_x_left = oiram.x;
-    int new_x_right = new_x_left + OIRAM_HITBOX_WIDTH;
+    // scroll the tilemap if needed
+    if (level_map.scroll) {
+        scroll_map();
+    }
     
-    int8_t mm = oiram.momentum;
+    // load variables
+    new_vx = oiram.vx;
+    prev_y = oiram.y;
+    new_y_top = prev_y;
+    new_y_bot = new_y_top + oiram.hitbox.height;
+    new_x_left = oiram.x;
+    new_x_right = new_x_left + OIRAM_HITBOX_WIDTH;
+    mm = oiram.momentum;
     
     test_y_ptr = &new_y_top;
     test_y_height = oiram.hitbox.height;
@@ -234,11 +270,11 @@ void move_oiram(void) {
     oiram.rel_x = new_x_left - oiram.scrollx;
     oiram.rel_y = new_y_top - oiram.scrolly;
     
+    // reset states
     on_slope = TEST_NONE;
     in_quicksand = false;
     in_water = false;
     on_ice = false;
-    
     oiram.flags &= ~FLAG_OIRAM_SLIDE;
     
     // do something else if someone died
@@ -246,7 +282,7 @@ void move_oiram(void) {
         static int fail_y;
         if (!oiram.started_fail) {
             oiram.vy = -9;
-start_fail:
+EXECUTE_FAIL:
             oiram.fail_x = oiram.x;
             oiram.fail_y = fail_y = oiram.y;
             oiram.y = -500;
@@ -291,7 +327,7 @@ start_fail:
                 warp.enter = false;
                 oiram_location_from_offset(warp.exit_loc);
                 if (warp.exit_style == DOOR_WARP) {
-                    goto handle_pipe_exit;
+                    goto HANDLE_PIPE_EXIT;
                 }
                 warp.exit = true;
                 warp.style = warp.exit_style;
@@ -311,7 +347,7 @@ start_fail:
                     warp.count = OIRAM_HITBOX_WIDTH + 1;
                 }
             } else {
-       handle_pipe_exit:
+HANDLE_PIPE_EXIT:
                 warp.exit = false;
                 warp.style = WARP_NONE;
             }
@@ -364,12 +400,12 @@ start_fail:
         if (oiram.crouched) {
             pressed_right = false;
             pressed_left = false;
-            goto handle_reduced_speed;
+            goto HANDLE_REDUCED_SPEED;
         } else { 
             if (pressed_left || pressed_right) {
                 if (pressed_2nd) {
                     gfx_FillRectangle_NoClip(118, 146, abs(mm)*2, 2);
-    handle_down:
+HANDLE_DOWN:
                     on_slope = TEST_NONE;
                     
                     // increase momentum in the x direction
@@ -396,10 +432,10 @@ start_fail:
                         if (mm > 0)   { mm = 0; }
                         else if (mm > -20) { mm -= 3; }
                     }
-                    goto handle_reduced_speed;
+                    goto HANDLE_REDUCED_SPEED;
                 }
             } else {
-    handle_reduced_speed:
+HANDLE_REDUCED_SPEED:
                 if (mm < 0) {
                     if ((mm += 2-(uint8_t)on_ice) >= 0) { mm = 0; }
                 } else {
@@ -454,6 +490,12 @@ start_fail:
 
         // if inside a tile, force us out of it
         if (!moveable_tile(new_x_right, new_y_top) || !moveable_tile(new_x_left, new_y_top)) {
+            if (level_map.scroll == SCROLL_RIGHT && oiram.rel_x <= 0) {
+                oiram.vy = -9;
+                goto TOTAL_FAIL;
+            }
+            if (level_map.scroll == SCROLL_LEFT) {
+            }
             if (!in_quicksand) {
                 if (oiram.direction == FACE_LEFT) {
                     new_x_right--;
@@ -462,7 +504,7 @@ start_fail:
                     new_x_right++;
                     new_x_left++;
                 }
-                goto skip_up;
+                goto HANDLE_SKIP_UP;
             }
         }
         
@@ -495,14 +537,14 @@ start_fail:
                             oiram.fly_count = 9;
                             oiram.vy = -9;
                         } else {
-                            goto normal_jump;
+                            goto HANDLE_NORMAL_JUMP;
                         }
                     }
                     
-                    goto skip_force_up;
+                    goto HANDLE_SKIP_FORCE_UP;
                 }
                 
-        normal_jump:
+HANDLE_NORMAL_JUMP:
                 // if forced jump added from bouncing on music blocks
                 if (force_jump) {
                     if (oiram.vy <= 1) {
@@ -519,14 +561,13 @@ start_fail:
                         oiram.vy = -11;
                     }
                 }
-        skip_force_up:
+HANDLE_SKIP_FORCE_UP:
                 pressed_up = false;
                 allow_up_press = false;
             }
         }
         
-        skip_up:
-        
+HANDLE_SKIP_UP:
         if (pressed_down) {
             if (on_slope != TEST_NONE) {
                 if (on_slope == TEST_RIGHT) {
@@ -540,7 +581,7 @@ start_fail:
                 }
                 oiram.index = 0;
                 oiram.flags |= FLAG_OIRAM_SLIDE;
-                goto handle_down;
+                goto HANDLE_DOWN;
             }
             if (!(oiram.flags & FLAG_OIRAM_SLIDE)) {
                 if (oiram.on_vine) {
@@ -617,15 +658,15 @@ start_fail:
             for(; new_vx > 0; new_vx--) {
                 int tx = new_x_right + new_vx;
                 if (moveable_tile_right_bottom(tx, new_y_bot) && moveable_tile(tx, new_y_top) && moveable_tile(tx, thalf)) {
-                    goto set_new_right;
+                    goto HANDLE_SET_RIGHT;
                 }
             }
             mm = 0;
-    set_new_right:
+HANDLE_SET_RIGHT:
             new_x_left += new_vx;
             
             if (mm < 0) {
-                goto skip_left;
+                goto HANDLE_SKIP_LEFT;
             }
         }
         
@@ -646,33 +687,57 @@ start_fail:
             for(; new_vx > 0; new_vx--) {
                 int tx = new_x_left - new_vx;
                 if (moveable_tile_left_bottom(tx, new_y_bot) && moveable_tile(tx, new_y_top) && moveable_tile(tx, thalf)) {
-                    goto set_new_left;
+                    goto HANDLE_SET_LEFT;
                 }
             }
             mm = 0;
-    set_new_left:
+HANDLE_SET_LEFT:
             new_x_left -= new_vx;
         }
-    
     }
-    
-    skip_left:
-    
-    if (new_x_left > 155) {
-        if ((oiram.scrollx = new_x_left - 155) > level_map.max_x_scroll) {
-            oiram.scrollx = level_map.max_x_scroll;
+
+HANDLE_SKIP_LEFT:
+
+    if (level_map.scroll == SCROLL_NONE || (level_map.scroll != SCROLL_LEFT && level_map.scroll != SCROLL_RIGHT)) {
+HANDLE_NO_X_SCROLL:
+        if (new_x_left > 155) {
+            if ((oiram.scrollx = new_x_left - 155) > level_map.max_x_scroll) {
+                oiram.scrollx = level_map.max_x_scroll;
+            }
+        } else {
+            oiram.scrollx = 0;
         }
     } else {
-        oiram.scrollx = 0;
+        int xoff;
+        if (warp.style != WARP_NONE && warp.exit) {
+            goto HANDLE_NO_X_SCROLL;
+        }
+        
+        xoff = new_x_left - (int)oiram.scrollx;
+        if (xoff < 0) {
+            oiram.rel_x = 0;
+            new_x_left = oiram.scrollx;
+        } else if (xoff > 305) {
+            oiram.rel_x = 305;
+            new_x_left = oiram.scrollx + 305;
+        }
     }
     
-    if ((diff_y = (new_y_top - prev_y)) >= 0) {
-        if (oiram.rel_y >= 80 && (oiram.scrolly += diff_y) > level_map.max_y_scroll) {
-            oiram.scrolly = level_map.max_y_scroll;
+    if (level_map.scroll == SCROLL_NONE || (level_map.scroll != SCROLL_UP && level_map.scroll != SCROLL_DOWN)) {
+HANDLE_NO_Y_SCROLL:
+        if ((diff_y = (new_y_top - prev_y)) >= 0) {
+            if (oiram.rel_y >= 80 && (oiram.scrolly += diff_y) > level_map.max_y_scroll) {
+                oiram.scrolly = level_map.max_y_scroll;
+            }
+        } else {
+            if (oiram.rel_y <= 20 && (oiram.scrolly += diff_y) > level_map.max_y_scroll) {
+                oiram.scrolly = 0;
+            }
         }
     } else {
-        if (oiram.rel_y <= 20 && (oiram.scrolly += diff_y) > level_map.max_y_scroll) {
-            oiram.scrolly = 0;
+        int yoff;
+        if (warp.style != WARP_NONE && warp.exit) {
+            goto HANDLE_NO_Y_SCROLL;
         }
     }
     
@@ -682,9 +747,10 @@ start_fail:
     oiram.momentum = mm;
     
     if (new_y_top > level_map.max_y) {
+TOTAL_FAIL:
         oiram.flags = FLAG_OIRAM_RESET;
         oiram.failed = true;
-        goto start_fail;
+        goto EXECUTE_FAIL;
     }
 
     if (oiram.spin_count) {

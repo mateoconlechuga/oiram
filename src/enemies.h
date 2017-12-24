@@ -2,6 +2,8 @@
 #define ENEMIES_H
 
 #include <stdint.h>
+#include <stdbool.h>
+#include <graphx.h>
 
 void get_enemies(void);
 
@@ -9,6 +11,13 @@ void remove_flame(uint8_t i);
 void remove_thwomp(uint8_t i);
 void remove_chomper(uint8_t i);
 void remove_boo(uint8_t i);
+
+// enemy dimensions
+#define GOOMBA_WIDTH 15
+#define GOOMBA_HEIGHT 15
+#define RESWOB_WIDTH 31
+#define RESWOB_HEIGHT 39
+#define SPIKE_HEIGHT 15
 
 #define MAX_CHOMPERS 64
 

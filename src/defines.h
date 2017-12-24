@@ -28,6 +28,7 @@ typedef struct map {
     uint8_t *data;
     unsigned int max_x_scroll, max_y_scroll;
     int max_y, max_x;
+    uint8_t scroll;
 } map_t;
 extern map_t level_map;
 
@@ -42,6 +43,14 @@ typedef struct {
 enum directions {
     FACE_LEFT=0,
     FACE_RIGHT=1
+};
+
+enum autoscroll {
+    SCROLL_NONE=0,
+    SCROLL_RIGHT,
+    SCROLL_LEFT,
+    SCROLL_DOWN,
+    SCROLL_UP
 };
 
 #define FLAG_OIRAM_RESET          0

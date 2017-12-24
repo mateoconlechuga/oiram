@@ -152,13 +152,16 @@ static void (*handle_keypad)(void);
 
 void black_circles(void) {
     uint8_t radius;
-    for(radius = 5; radius < 255; radius += 5) {
+    for(radius = 5; radius < 200; radius += 6) {
         gfx_FillCircle(160, 60, radius);
         gfx_BlitBuffer();
     }
 }
 
 void double_rectangle(uint24_t x, uint8_t y, uint24_t width, uint8_t height) {
+    uint24_t xw = x + width;
+    uint8_t yh = y + height;
+    
     gfx_SetColor(WHITE_INDEX);
     gfx_Rectangle_NoClip(x, y, width, height);
     gfx_Rectangle_NoClip(x + 1, y + 1, width - 2, height - 2);
@@ -166,14 +169,14 @@ void double_rectangle(uint24_t x, uint8_t y, uint24_t width, uint8_t height) {
     gfx_FillRectangle_NoClip(x + 2, y + 2, width - 4, height - 4);
     gfx_SetColor(BLACK_INDEX);
     gfx_SetPixel(x,y);
-    gfx_SetPixel(x + width - 1, y);
-    gfx_SetPixel(x + width - 1, y + height - 1);
+    gfx_SetPixel(xw - 1, y);
+    gfx_SetPixel(xw - 1, yh - 1);
     gfx_SetPixel(x, y + height - 1);
     gfx_SetColor(WHITE_INDEX);
     gfx_SetPixel(x + 2, y + 2);
-    gfx_SetPixel(x + width - 3, y + 2);
-    gfx_SetPixel(x + width - 3, y + height - 3);
-    gfx_SetPixel(x + 2, y + height - 3);
+    gfx_SetPixel(xw - 3, y + 2);
+    gfx_SetPixel(xw - 3, yh - 3);
+    gfx_SetPixel(x + 2, yh - 3);
 }
 
 static void print_centered(const char *string, const uint8_t ypos) {
@@ -201,11 +204,12 @@ static void extract_images(void) {
 
 void main(void) {
     real_t *real_in;
-    unsigned int delay;
+    unsigned int wait;
     size_t pack_author_len;
     char end_str[100];
     pack_info_t *pack;
     bool cntr;
+    int x;
     
     // initialize the 8bpp graphics
     gfx_Begin( gfx_8bpp );
@@ -232,12 +236,12 @@ void main(void) {
     // extract palette and tiles/sprites just to make sure they exist
     extract_images();
     
-    main_start:
+HANDLE_MAIN_START:
     
     // load the splash screen
     set_load_screen();
     
-    draw_level:
+HANDLE_DRAW_LEVEL:
     
     // extract palette and tiles/sprites
     extract_images();
@@ -302,22 +306,13 @@ void main(void) {
     
     gfx_BlitBuffer();
     
-    // disable the timer so it doesn't run when we don't want it to be running
-    timer_Control = TIMER1_DISABLE;
-    
-    // by using the 32768 kHz clock, we can count for exactly a one second
-    timer_1_ReloadValue = timer_1_Counter = 32768;
-    
-    // enable the timer, set it to the 32768 kHz clock, enable an interrupt once it reaches 0, and make it count down
-    timer_Control = TIMER1_ENABLE | TIMER1_32K | TIMER1_0INT | TIMER1_DOWN;
-    
     // show the start screen for a bit
-    for(delay=0; delay<2; delay++) {
-        if (timer_IntStatus & TIMER1_RELOADED) {
-            delay++;
-            timer_IntAcknowledge = TIMER1_RELOADED;
-        }
-    }
+    delay(200);
+    
+    // set up the timer
+    timer_Control = TIMER1_DISABLE;
+    timer_1_ReloadValue = timer_1_Counter = 32768;
+    timer_Control = TIMER1_ENABLE | TIMER1_32K | TIMER1_0INT | TIMER1_DOWN;
     
     // setup keypad handlers
     if (game.alternate_keypad) {
@@ -333,7 +328,7 @@ void main(void) {
     warp.enter = false;
     
     // ensure sprites are filled for easter_egg2
-    for(delay=0; delay<4; delay++) {
+    for (wait = 0; wait < 4; wait++) {
         tiles.animation_count = 3;
         animate();
     }
@@ -344,7 +339,7 @@ void main(void) {
         // handle keypad presses
         handle_keypad();
         
-        // move oiram if required
+        // move oiram if requested
         move_oiram();
         
         // draw the tilemap at the current oiram offsets
@@ -398,63 +393,84 @@ void main(void) {
                 game.level++;
                 if (pack->progress < game.level) { pack->progress = game.level; }
                 if (game.level == game.num_levels) {
-                    goto pack_finish;
+                    goto HANDLE_PACK_FINISH;
                 }
-                goto draw_level;
+                goto HANDLE_DRAW_LEVEL;
             } else {
                 if (pack->progress == game.num_levels) {
-                    goto pack_finish;
+                    goto HANDLE_PACK_FINISH;
                 }
-                goto main_start;
+                goto HANDLE_MAIN_START;
             }
         } else {
             if (oiram.failed) {
                 pack->lives--;
                 pack->flags = FLAG_OIRAM_RESET;
                 if (!pack->lives) {
-                    goto game_over;
+                    goto HANDLE_GAME_OVER;
                 } else {
-                    goto draw_level;
+                    goto HANDLE_DRAW_LEVEL;
                 }
             }
         }
     } else {
-        goto main_start;
+        goto HANDLE_MAIN_START;
     }
 
-    goto exit;
+    goto HANDLE_EXIT;
     
-game_over:
+HANDLE_GAME_OVER:
     gfx_SetClipRegion(0, 0, LCD_WIDTH, LCD_HEIGHT);
     gfx_SetTextBGColor(BLACK_INDEX);
     memset(pack, 0, sizeof(pack_info_t));
     pack->lives = 15;
     gfx_PrintStringXY("GAME      OVER", 120, 55);
     gfx_BlitBuffer();
-    for(delay=0; delay<700000; delay++);
-    goto main_start;
+    delay(1500);
+    goto HANDLE_MAIN_START;
     
-pack_finish:
+HANDLE_PACK_FINISH:
     pack_author_len = strlen(pack_author);
     memset(end_str, 0, sizeof end_str);
     memcpy(end_str, pack_author, pack_author_len);
     memcpy(end_str + pack_author_len, " thanks you for playing!", 24);
     
     gfx_SetClipRegion(0, 0, LCD_WIDTH, LCD_HEIGHT);
-    for(delay=0; delay<130; delay++) {
+    for (wait = 0; wait < 130; wait++) {
         gfx_ShiftDown(1);
         gfx_BlitBuffer();
     }
+    
     gfx_SetTextBGColor(BLACK_INDEX);
     print_centered("Pack Compelete!", 55);
     print_centered(end_str, 71);
     print_centered("Press [enter] to continue", 91);
-    gfx_BlitBuffer();
-    while(os_GetCSC() != sk_Enter);
+
+    gfx_SetColor(BLACK_INDEX);
+    for (x = 0; x < 336; x += 16) {
+        gfx_Sprite(tileset_tiles[52], x, 208);
+        gfx_Sprite(tileset_tiles[66], x, 224);
+    }
+    x = (-GOOMBA_WIDTH) / 2;
+
+    // be creative and draw a goomba walking across the bottom
+    do {
+        gfx_FillRectangle(x-1, 192, GOOMBA_WIDTH, GOOMBA_HEIGHT+1);
+        gfx_TransparentSprite(goomba_sprite, x++, 192);
+        animate();
+        if (x > 320) {
+            x = -GOOMBA_WIDTH;
+        }
+        gfx_BlitBuffer();
+        delay(22);
+    } while (os_GetCSC() != sk_Enter);
     
-    goto main_start;
+    // debounce
+    delay(200);
     
-exit:
+    goto HANDLE_MAIN_START;
+    
+HANDLE_EXIT:
     // save the pack states
     save_progress();
 }

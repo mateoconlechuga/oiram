@@ -1,3 +1,14 @@
+#include "events.h"
+#include "loadscreen.h"
+#include "tile_handlers.h"
+#include "defines.h"
+#include "images.h"
+#include "lower.h"
+#include "oiram.h"
+#include "powerups.h"
+#include "enemies.h"
+#include "simple_mover.h"
+
 #include <stdlib.h>
 #include <stdbool.h>
 #include <stddef.h>
@@ -6,17 +17,6 @@
 #include <graphx.h>
 #include <keypadc.h>
 #include <fileioc.h>
-
-#include "loadscreen.h"
-#include "tile_handlers.h"
-#include "defines.h"
-#include "events.h"
-#include "images.h"
-#include "lower.h"
-#include "oiram.h"
-#include "powerups.h"
-#include "enemies.h"
-#include "simple_mover.h"
 
 bool something_died = false;
 
