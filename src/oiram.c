@@ -490,11 +490,9 @@ HANDLE_REDUCED_SPEED:
 
         // if inside a tile, force us out of it
         if (!moveable_tile(new_x_right, new_y_top) || !moveable_tile(new_x_left, new_y_top)) {
-            if (level_map.scroll == SCROLL_RIGHT && oiram.rel_x <= 0) {
+            if ((level_map.scroll == SCROLL_RIGHT && oiram.rel_x <= 0) || (level_map.scroll == SCROLL_LEFT && oiram.rel_x >= 305)) {
                 oiram.vy = -9;
                 goto TOTAL_FAIL;
-            }
-            if (level_map.scroll == SCROLL_LEFT) {
             }
             if (!in_quicksand) {
                 if (oiram.direction == FACE_LEFT) {
