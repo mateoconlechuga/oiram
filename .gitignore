@@ -1,8 +1,8 @@
 */*
 !/src
 !/img
-!/bin/*.8xv
-!/bin/*.md
+!/extra/*.8xv
+!/extra/*.md
 !iconc.png
 !makefile
 !readme.md
