@@ -1,7 +1,7 @@
 # Oiram
 Oiram is a mario-style platformer programmed from scratch in C and assembly using the CE development toolchain.
 
-You can find the complete readme [here](https://github.com/mateoconlechuga/oiram/blob/master/bin/readme.md).
+You can find the complete readme [here](https://github.com/mateoconlechuga/oiram/blob/master/extra/readme.md).
 
 Animated Screenshot
 
