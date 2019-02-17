@@ -12,9 +12,7 @@ If you would like to build oiram, be sure you have the latest [CE C Toolchain](h
 
 Then simply clone or download the repository from above, and run the following commands:
 
-    cd img
-    make
-    cd ..
+    make -C img
     make
 
 
