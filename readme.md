@@ -10,4 +10,11 @@ Animated Screenshot
 ## Building
 If you would like to build oiram, be sure you have the latest [CE C Toolchain](https://github.com/CE-Programming/toolchain/releases/latest) installed.
 
-Then simply clone or download the repository from above, and build with `make`.
+Then simply clone or download the repository from above, and run the following commands:
+
+    cd img
+    make
+    cd ..
+    make
+
+

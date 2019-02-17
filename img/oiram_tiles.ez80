@@ -1,13 +1,8 @@
-; ZDS sillyness
-#define equ .equ
-#define db .db
-#define dw .dw
-#define dl .dl
+include 'ez80.inc'
+include 'tiformat.inc'
+format ti archived appvar 'OiramT'
 
- dw _orig_tileset_gfx_pal_size
- 
-; palette information
-#include "orig_tileset_gfx.asm"
+	dw _orig_tileset_gfx_pal_size
 
-; all the graphics
-#include "orig_tileset.asm"
+include 'orig_tileset_gfx.asm'
+include 'orig_tileset.asm'
