@@ -9,6 +9,9 @@
 
 * Transfer the 4 files in this folder: (Oiram, OiramPK, OiramS, OiramT)
 
+* If you would like to make your own levels, a level editor is provided here:
+  https://github.com/mateoconlechuga/oiram-editor/releases/latest
+
 ### Run
 
 Run Oiram from the homescreen by pressing [2nd][0], and selecting the Asm( token. Then select OIRAM from the program menu.
@@ -31,7 +34,7 @@ When you are at the pack loading screen, you can toggle controls to use an alter
 
 ### Credits
 
-Matt "MateoConLechuga" Waltz 2017
+Matt "MateoConLechuga" Waltz 2016-2019
 Oiram code was created from scratch based off of Super Mario 3 Advanced 4 mechanics. Images are copyright of Nintendo.
 You should really check out the original game, and buy a Nintendo Gameboy Advance SP.
 They are the best things ever, and an absolutely incredible platform.
@@ -40,10 +43,10 @@ Oiram is not affiliated with Nintendo, and is simply a humble attempt to recreat
 ### Source Code
 
 You can find the source for Oiram here:
-https://github.com/mateoconlechuga/Oiram
+https://github.com/mateoconlechuga/oiram
 
 Level Editor source code can be found here:
-https://github.com/mateoconlechuga/OiramLevelEditor
+https://github.com/mateoconlechuga/oiram-editor
 
 ### Bugs
 

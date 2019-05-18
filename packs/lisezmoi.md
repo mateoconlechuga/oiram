@@ -30,7 +30,7 @@ Oiram est un jeu de plateforme. Si vous voulez une histoire, inventez-la vous!
 
 ### Credits
 
-Matt "MateoConLechuga" Waltz 2017
+Matt "MateoConLechuga" Waltz 2016-2019
 Le code source d'Oiram a été créé à partir de zéro, basé sur le comportement de Super Mario 3 Advanced 4.
 Les images sont copyright Nintendo.
 Vous devriez vraiment jouer au jeu original, et acheter une Nintendo Gameboy Advance SP.
@@ -41,10 +41,10 @@ Oiram n'est pas affilié à Nintendo, c'est simplement une humble tentative de r
 ### Code source
 
 Vous pouvez trouver le code source d'Oiram ici:
-https://github.com/mateoconlechuga/Oiram
+https://github.com/mateoconlechuga/oiram
 
 Vous pouvez trouver le code source de l'éditeur de niveaux ici:
-https://github.com/mateoconlechuga/OiramLevelEditor
+https://github.com/mateoconlechuga/oiram-editor
 
 ### Bugs
 Veuillez envoyer tout commentaire, bug ou question à matthewwaltzis@gmail.com.
