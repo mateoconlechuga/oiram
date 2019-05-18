@@ -307,7 +307,7 @@ HANDLE_DRAW_LEVEL:
     gfx_BlitBuffer();
 
     // show the start screen for a bit
-    delay(200);
+    delay(400);
 
     // set up the timer
     timer_Control = TIMER1_DISABLE;
