@@ -85,4 +85,3 @@ void add_score_no_sprite(uint8_t add) {
     }
     draw_score();
 }
-

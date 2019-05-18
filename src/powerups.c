@@ -20,7 +20,7 @@ void add_mushroom_1up(uint8_t *spawing_tile) {
 
 void add_mushroom(uint8_t *spawing_tile) {
     simple_move_t *shroom = add_simple_mover(spawing_tile);
-    
+
     shroom->hitbox.width = 15;
     shroom->hitbox.height = 15;
     shroom->y -= TILE_HEIGHT;
@@ -34,7 +34,7 @@ void add_mushroom(uint8_t *spawing_tile) {
 
 void add_star(uint8_t *spawing_tile) {
     simple_move_t *star = add_simple_mover(spawing_tile);
-    
+
     star->hitbox.width = 15;
     star->hitbox.height = 15;
     star->y -= TILE_HEIGHT;
@@ -49,7 +49,7 @@ void add_star(uint8_t *spawing_tile) {
 
 void add_fire_flower(uint8_t *spawing_tile) {
     simple_move_t *flower = add_simple_mover(spawing_tile);
-    
+
     flower->hitbox.width = 15;
     flower->hitbox.height = 15;
     flower->y -= TILE_HEIGHT;
@@ -109,7 +109,7 @@ bool shrink_oiram(void) {
     if (oiram.flags & (FLAG_OIRAM_INVINCIBLE | FLAG_OIRAM_SLIDE)) {
         return false;
     }
-    
+
     if (!warp.style) {
         if (!oiram.shrink_count) {
             oiram.shrink_count = 40;
@@ -132,9 +132,9 @@ bool shrink_oiram(void) {
                 memcpy(oiram_0_buffer_right, oiram_0_small, OIRAM_BIG_SPRITE_SIZE);
                 memcpy(oiram_1_buffer_right, oiram_1_small, OIRAM_BIG_SPRITE_SIZE);
                 set_left_oiram_sprites();
-                
+
                 if (!oiram.crouched) { oiram.y += 11; }
-                
+
                 oiram.hitbox.height = 15;
                 oiram.flags &= ~FLAG_OIRAM_BIG;
             } else {
@@ -143,7 +143,7 @@ bool shrink_oiram(void) {
         }
         oiram.hitbox_height_half = oiram.hitbox.height/2;
     }
-    
+
     return true;
 }
 
@@ -170,4 +170,3 @@ void show_blue_items(bool state) {
         }
     }
 }
-

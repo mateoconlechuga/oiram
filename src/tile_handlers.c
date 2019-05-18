@@ -61,7 +61,7 @@ static uint8_t brick_tile_handler(uint8_t *tile) {
             add_poof(x + 2, y + 2);
         }
     }
-    
+
     return 0;
 }
 
@@ -114,7 +114,7 @@ static uint8_t lavas_tile_handler(uint8_t *tile) {
     if (!handling_events) {
         if (move_side == TILE_TOP) {
             static uint8_t test_sides = 0;
-            
+
             if (testing_side == TEST_RIGHT && test_sides == 0) {
                 test_sides = 1;
             } else if (testing_side == TEST_LEFT && test_sides == 1) {
@@ -187,7 +187,7 @@ static uint8_t quest_tile_handler(uint8_t *tile) {
             goto handle_hit;
         }
         if (move_side == TILE_BOTTOM  && !oiram.on_vine) {
-handle_hit:     
+handle_hit:
             *tile = TILE_SOLID_BOX;
             add_bumped(tile, TILE_BOTTOM);
             *tile = TILE_SOLID_EMPTY;
@@ -324,18 +324,18 @@ bool in_quicksand;
 unsigned int quicksand_clip_y;
 
 static uint8_t quicksand_handler(uint8_t *tile) {
-    
+
     if (handling_events) {
         something_died = true;
     } else {
         unsigned int x, y;
-        
+
         tile_to_abs_xy_pos(tile, &x, &y);
-        
+
         if (move_side == TILE_TOP) {
             static uint8_t test_sides = 0;
             static uint8_t adder = 0;
-            
+
             if (testing_side == TEST_RIGHT && test_sides == 0) {
                 test_sides = 1;
             } else if (testing_side == TEST_LEFT && test_sides == 1) {
@@ -351,7 +351,7 @@ static uint8_t quicksand_handler(uint8_t *tile) {
                 test_sides = 0;
             }
         }
-        
+
         if (move_side == TILE_SOLID) {
             in_quicksand = true;
             pressed_right = false;
@@ -359,7 +359,7 @@ static uint8_t quicksand_handler(uint8_t *tile) {
             return 1;
         }
     }
-    
+
     return 0;
 }
 
@@ -369,7 +369,7 @@ bool on_ice;
 static uint8_t water_tile_handler(uint8_t *tile) {
     if (move_side == TILE_TOP) {
         static uint8_t test_sides = 0;
-        
+
         if (testing_side == TEST_RIGHT && test_sides == 0) {
             test_sides = 1;
         } else if (testing_side == TEST_LEFT && test_sides == 1) {
@@ -380,13 +380,13 @@ static uint8_t water_tile_handler(uint8_t *tile) {
             test_sides = 0;
         }
     }
-    
+
     return 1;
 }
 
 static uint8_t quicksandt_handler(const uint8_t *tile) {
     unsigned int x;
-    
+
     tile_to_abs_xy_pos(tile, &x, &quicksand_clip_y);
     return quicksand_handler(tile);
 }
@@ -396,7 +396,7 @@ static uint8_t handle_slope_tile(const uint8_t *heightmap, const uint8_t *tile, 
         if (oiram.vy < 0) { return 1; }
         if (oiram.vy > 2) oiram.vy = 2;
     }
-    
+
     if (test_side == TEST_LEFT) {
         if (testing_side == TEST_LEFT) {
             goto resolve_slope;
@@ -408,7 +408,7 @@ resolve_slope:
             on_slope = test_side;
         }
     }
-    
+
     if (move_side == TILE_LEFT || move_side == TILE_RIGHT) {
         return 1;
     }
@@ -456,7 +456,7 @@ static uint8_t jelly_tile_handler(uint8_t *tile) {
 
 static uint8_t end_pipe_handler(uint8_t *tile) {
     if (move_side == TILE_TEST_PIPE_DOWN) {
-        
+
         warp.style = PIPE_DOWN;
         warp.enter = true;
         warp.count = oiram.hitbox.height + 2;
@@ -487,25 +487,25 @@ uint8_t num_poofs = 0;
 void remove_poof(uint8_t i) {
     poof_t *free_me = poof[i];
     uint8_t num_poofs_less;
-    
+
     if (!num_poofs) { return; }
-    
+
     num_poofs_less = num_poofs--;
-    
+
     for(; i < num_poofs_less; i++) {
         poof[i] = poof[i+1];
     }
-    
+
     free(free_me);
 }
 
 void add_poof(int x, int y) {
     poof_t *fluff;
-    
+
    if (num_poofs >= MAX_POOFS - 1) {
         remove_poof(0);
     }
-    
+
     fluff = poof[num_poofs] = malloc(sizeof(poof_t));
     num_poofs++;
     fluff->x = x;
@@ -517,19 +517,19 @@ void add_poof(int x, int y) {
 void remove_fireball(uint8_t i) {
     fireball_t *free_me = fireball[i];
     uint8_t num_fireballs_less;
-    
+
     if (!num_fireballs) { return; }
-    
+
     num_fireballs_less = num_fireballs--;
-     
+
     if (free_me->mover->type == OIRAM_FIREBALL) {
         oiram.fireballs--;
     }
-    
+
     for(; i < num_fireballs_less; i++) {
         fireball[i] = fireball[i+1];
     }
-    
+
     free(free_me->mover);
     free(free_me);
 }
@@ -538,20 +538,20 @@ void remove_fireball(uint8_t i) {
 void add_fireball(int x, int y, uint8_t dir, uint8_t type) {
     fireball_t *ball;
     simple_move_t *mover;
-    
+
     if (num_fireballs >= MAX_FIREBALLS - 1) {
         return;
     }
-    
+
     ball = fireball[num_fireballs] = malloc(sizeof(fireball_t));
     mover = ball->mover = malloc(sizeof(simple_move_t));
     mover->x = x;
     mover->y = y;
-    
+
     // handle DOWN_RIGHT by default
     mover->vy = 3;
     mover->vx = 3;
-    
+
     switch(dir) {
         case UP_LEFT:
             mover->vx = -3;
@@ -775,9 +775,9 @@ uint8_t (*tile_handler[256])(uint8_t*) = {
     top_tile_handler,        // 192 box top
     empty_tile_handler,      // 193 box shadow
     empty_tile_handler,      // 194 landscape
-    empty_tile_handler,      // 195 landscape 
+    empty_tile_handler,      // 195 landscape
     empty_tile_handler,      // 196 landscape
-    empty_tile_handler,      // 197 landscape 
+    empty_tile_handler,      // 197 landscape
     empty_tile_handler,      // 198 landscape
     empty_tile_handler,      // 199 landscape
     empty_tile_handler,      // 200 landscape
@@ -845,14 +845,14 @@ bumped_tile_t *add_bumped(uint8_t *tile, uint8_t dir) {
     bumped_tile_t *bump;
     unsigned int x, y;
     uint8_t i;
-    
+
     if (num_bumped_tiles > MAX_TILE_BUMPS - 1) {
         remove_bumped_tile(0);
     }
-    
+
     tile_to_abs_xy_pos(tile, &x, &y);
     bump = bumped_tile[num_bumped_tiles] = malloc(sizeof(bumped_tile_t));
-    
+
     switch(dir) {
         case TILE_BOTTOM:
             bump->x = x;
@@ -865,12 +865,12 @@ bumped_tile_t *add_bumped(uint8_t *tile, uint8_t dir) {
         default:
             break;
     }
-    
+
     bump->dir = dir;
     bump->tile = *tile;
     bump->tile_ptr = tile;
     bump->count = 2;
-    
+
     for(i = 0; i < num_simple_movers; i++) {
         simple_move_t *cur = simple_mover[i];
 
@@ -880,22 +880,22 @@ bumped_tile_t *add_bumped(uint8_t *tile, uint8_t dir) {
             cur->bumped = true;
         }
     }
-    
+
     num_bumped_tiles++;
-    
+
     return bump;
 }
 
 void remove_bumped_tile(uint8_t i) {
     bumped_tile_t *free_me = bumped_tile[i];
     uint8_t num_bumped_tiles_less;
-    
+
     if (!num_bumped_tiles) {
         return;
     }
-    
+
     num_bumped_tiles_less = num_bumped_tiles--;
-    
+
     if (free_me->tile_ptr) {
         if (free_me->tile == TILE_VANISH) {
             *free_me->tile_ptr = TILE_EMPTY;
@@ -903,11 +903,11 @@ void remove_bumped_tile(uint8_t i) {
             *free_me->tile_ptr = free_me->tile;
         }
     }
-    
+
     for(; i < num_bumped_tiles_less; i++) {
         bumped_tile[i] = bumped_tile[i+1];
     }
-    
+
     free(free_me);
 }
 
@@ -933,12 +933,12 @@ uint8_t warp_tile_handler(uint8_t *tile) {
     if (handling_events || warp.style || oiram.vy > 0) {
         return 0;
     }
-    
+
     tile_to_abs_xy_pos(tile, &x, &y);
-    
+
     offset = tile - tilemap.map;
     warp.enter = false;
-    
+
     for(i = 0; i < warp_num; i += 2) {
         unsigned int warp_enter = warp_info[i];
         unsigned int warp_enter_masked = warp_enter & ~MASK_PIPE_DOOR;
@@ -994,11 +994,11 @@ uint8_t warp_tile_handler(uint8_t *tile) {
                     break;
             }
         }
-        
+
         if (warp.enter) {
             unsigned int not_masked = warp_info[i+1];
             warp.exit_loc = not_masked & ~MASK_PIPE_DOOR;
-            
+
             if (not_masked & MASK_PIPE_UP) {
                 warp.exit_style = PIPE_UP;
             } else
@@ -1025,19 +1025,19 @@ uint8_t warp_tile_handler(uint8_t *tile) {
             break;
         }
     }
-    
+
     return 0;
 }
 
 /**
  * Functions rewritten in common.asm for speedz
  */
- 
+
 /*
 bool moveable_tile(int x, int y) {
     uint8_t *tile;
     testing_side = 2;
-    
+
     if (x < 0) { return false; }
     if (y < 0) { return true; }
     tile = gfx_TilePtr(&tilemap, test_x = x, test_y = y);
@@ -1064,4 +1064,3 @@ void tile_to_abs_xy_pos(uint8_t *tile, unsigned int *x, unsigned int *y) {
     *x = (offset % tilemap.width) * TILE_WIDTH;
 }
 */
-

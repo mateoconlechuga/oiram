@@ -23,7 +23,7 @@ bool something_died = false;
 // only handle if somewhat within view; otherwise we can just ignore it
 bool in_viewport(int x, int y) {
     int t_x, t_y;
-    
+
     if (oiram.failed) {
         t_x = oiram.fail_x;
         t_y = oiram.fail_y;
@@ -53,30 +53,30 @@ void handle_pending_events(void) {
     uint8_t i;
     int x, y;
     int rel_x, rel_y;
-    
+
     handling_events = true;
-    
+
     oiram.rel_x = oiram.x - oiram.scrollx;
     oiram.rel_y = oiram.y - oiram.scrolly;
-    
+
     if (num_thwomps) {
         for(i = 0; i < num_thwomps; i++) {
             thwomp_t *cur = thwomp[i];
             int8_t tmp_vy;
-            
+
             x = cur->x;
             y = cur->y;
-            
+
             if (!in_viewport(x, y)) {
                 continue;
             }
-            
+
             tmp_vy = cur->vy;
             rel_x = x - oiram.scrollx;
             rel_y = y - oiram.scrolly;
-            
+
             gfx_TransparentSprite(thwomp_0, rel_x, rel_y);
-            
+
             if (y == cur->start_y) {
                 if (oiram.x >= x - 20 && oiram.x <= x + 20 + OIRAM_HITBOX_WIDTH) {
                     tmp_vy = 4;
@@ -85,39 +85,39 @@ void handle_pending_events(void) {
                 }
             } else {
                 if (!tmp_vy) {
-                    if (cur->count) { 
+                    if (cur->count) {
                         cur->count--;
                     } else {
                         tmp_vy = -1;
                     }
                 }
             }
-            
+
             if (tmp_vy > 0) {
                 int tmp_y;
-                
+
                 if (tmp_vy < 9) { tmp_vy++; }
-                
+
                 // test against bottom
                 tmp_y = y + 31;
-                
+
                 // check bottom of tile
                 move_side = TILE_TOP;
-                
+
                 // binary test until we find the new thing
                 while(!(moveable_tile(x, tmp_y + tmp_vy) && moveable_tile(x + 23, tmp_y + tmp_vy))) {
                     if ((tmp_vy /= 2) <= 0) { break; }
                 }
-                
+
                 if (!tmp_vy) {
                     cur->count = 10;
                     add_poof(x + 12, y + 25);
                     add_poof(x, y + 25);
                 }
             }
-            
+
             y += tmp_vy;
-            
+
             if (oiram_collision(x, y, 23, 31)) {
                 if (!shrink_oiram()) {
                     add_poof(oiram.x, oiram.y + 2);
@@ -125,24 +125,24 @@ void handle_pending_events(void) {
                     continue;
                 }
             }
-            
+
             cur->vy = tmp_vy;
             cur->y = y;
         }
     }
-    
+
     if (num_simple_movers) {
         for(i = 0; i < num_simple_movers; i++) {
             simple_move_t *cur = simple_mover[i];
             uint8_t type;
-            
+
             x = cur->x;
             y = cur->y;
-            
+
             if (!in_viewport(x, y)) {
                 continue;
             }
-            
+
             if (y > level_map.max_y) {
                if (cur->type == RESWOB_TYPE) {
                    unsigned int chk, max = tilemap.width * tilemap.height;
@@ -156,25 +156,25 @@ HANDLE_LOOP_FAIL:
                remove_simple_mover(i--);
                continue;
             }
-            
+
             simple_move_handler(cur);
-            
+
             x = cur->x;
             y = cur->y;
-            
+
             if (something_died) {
                 something_died = false;
                 add_poof(x + 4, y + 4);
                 goto HANDLE_LOOP_FAIL;
             }
-            
+
             rel_x = x - oiram.scrollx;
             rel_y = y - oiram.scrolly;
             type = cur->type;
 
             if (cur->bumped) {
                 bumped_tile_t *bump;
-                
+
                 switch(type) {
                     case GOOMBA_TYPE:
                         add_poof(x + 4, y + 4);
@@ -191,7 +191,7 @@ HANDLE_LOOP_FAIL:
                         break;
                 }
             }
-            
+
             if (!oiram_collision(x, y, cur->hitbox.width, cur->hitbox.height)) {
                 gfx_sprite_t *img;
                 gfx_rletsprite_t *rletimg;
@@ -330,11 +330,11 @@ HANDLE_DRAW_SHELL:
                         if (cur->vx) {
                             uint8_t j;
                             cur->sprite = img;
-                            
+
                             for(j = 0; j < num_simple_movers; j++) {
                                 simple_move_t *hit = simple_mover[j];
                                 uint8_t hit_type = hit->type;
-                                
+
                                 if (hit_type > HITABLE_TYPES) {
                                     int hit_x = hit->x;
                                     int hit_y = hit->y;
@@ -350,10 +350,10 @@ HANDLE_DRAW_SHELL:
                                     }
                                 }
                             }
-                            
+
                             for(j = 0; j < num_chompers; j++) {
                                 chomper_t *hit = chomper[j];
-                                
+
                                 if (hit->y < hit->start_y) {
                                     if (gfx_CheckRectangleHotspot(hit->x, hit->y, 15, 30, x, y, 15, 15)) {
                                         remove_chomper(j);
@@ -364,11 +364,11 @@ HANDLE_DRAW_SHELL:
                                     }
                                 }
                             }
-                            
+
                         } else {
                             if (cur->counter < 20) { if (cur->counter & 1) { goto HANDLE_SKIP_DRAW; } }
                         }
-                        
+
                         break;
                     default:
                         goto HANDLE_SKIP_DRAW;
@@ -538,7 +538,7 @@ HANDLE_SKIP_DRAW:
                     cur->smart = true;
                     cur->hitbox.height = 26;
                     y -= 11;
-                    
+
                     if (type == KOOPA_GREEN_SHELL_TYPE) {
                         cur->smart = false;
                         type = KOOPA_GREEN_TYPE;
@@ -573,14 +573,14 @@ HANDLE_SKIP_DRAW:
         for(i = 0; i < num_bumped_tiles; i++) {
             bumped_tile_t *cur = bumped_tile[i];
             uint8_t tile_img = cur->tile;
-            
+
             x = cur->x;
             y = cur->y;
-            
+
             if (!in_viewport(x, y)) {
                 continue;
             }
-            
+
             switch(cur->dir) {
                 case TILE_BOTTOM:
                     y += 2;
@@ -591,9 +591,9 @@ HANDLE_SKIP_DRAW:
                 default:
                     break;
             }
-            
+
             cur->count--;
-            
+
             if (tile_img == TILE_VANISH) {
                 if (cur->count > 8) {
                     goto HANDLE_SKIP_BUMP;
@@ -605,11 +605,11 @@ HANDLE_SKIP_DRAW:
                     }
                 }
             }
-            
+
             cur->y = y;
-            
+
 HANDLE_SKIP_BUMP:
-    
+
             // draw the tile
             gfx_TransparentSprite(tileset_tiles[tile_img], x - oiram.scrollx, y - oiram.scrolly);
 
@@ -618,31 +618,31 @@ HANDLE_SKIP_BUMP:
             }
         }
     }
-    
+
     if (num_chompers && !easter_egg4) {
         uint8_t dir = 0;
-        
+
         for(i = 0; i < num_chompers; i++) {
             chomper_t *cur = chomper[i];
             int start_y;
-            
+
             x = cur->x;
             y = cur->y;
-            
+
             if (!in_viewport(x, y)) {
                 continue;
             }
-            
+
             rel_x = x - oiram.scrollx;
             rel_y = y - oiram.scrolly;
             start_y = cur->start_y;
-            
+
             if (y < start_y) {
                 int ymax = start_y - oiram.scrolly;
                 if (ymax <= 0) { goto HANDLE_CHOMER_NO_DRAW; }
                 if (ymax > Y_PXL_MAX) { ymax = Y_PXL_MAX; }
                 gfx_SetClipRegion(0, 0, X_PXL_MAX, ymax);
-                
+
                 if (cur->throws_fire) {
                     gfx_sprite_t *img;
                     if (x > oiram.x) {
@@ -670,21 +670,21 @@ HANDLE_SKIP_BUMP:
             }
 HANDLE_CHOMER_NO_DRAW:
             if (!cur->count) {
-                
+
                 y += cur->vy;
-                
+
                 if (y + 30 == start_y || y - 10 == start_y) {
                     cur->count = 40;
                     cur->vy = -cur->vy;
                 }
-                
+
             } else {
                 cur->count--;
                 if (cur->vy > 0 && cur->throws_fire && (cur->count == 36 || cur->count == 5)) {
                     add_fireball(x + 4, y + 4, dir, CHOMPER_FIREBALL);
                 }
             }
-            
+
             if (oiram_collision(x, y, 15, 30)) {
                 if (!warp.style && !shrink_oiram()) {
                     add_score(1, x, y);
@@ -693,27 +693,27 @@ HANDLE_CHOMER_NO_DRAW:
                     continue;
                 }
             }
-            
+
             cur->y = y;
         }
         gfx_SetClipRegion(0, 0, X_PXL_MAX, Y_PXL_MAX);
     }
-    
+
     if (num_simple_enemies) {
         for(i = 0; i < num_simple_enemies; i++) {
             enemy_t *cur = simple_enemy[i];
             gfx_sprite_t *img;
             uint8_t *tile;
             int tmp_add;
-            
+
             x = cur->x;
             y = cur->y;
-            
+
             rel_x = x - oiram.scrollx;
             rel_y = y - oiram.scrolly;
-            
+
             tile = gfx_TilePtr(&tilemap, x, y);
-            
+
             switch(cur->type) {
                 case SCORE_TYPE:
                     cur->counter--;
@@ -753,7 +753,7 @@ HANDLE_CHOMER_NO_DRAW:
                     if (!in_viewport(x, y)) {
                         continue;
                     }
-            
+
                     if (!cur->counter) {
                         enemy_t *bullet = add_simple_enemy(tile, BULLET_TYPE);
                         add_poof(x, y + 2);
@@ -795,7 +795,7 @@ HANDLE_CHOMER_NO_DRAW:
                         remove_simple_enemy(i--);
                         continue;
                     }
-                    
+
                     gfx_TransparentSprite(cur->sprite, rel_x, rel_y);
                     cur->x += cur->vx;
                     cur->y += cur->vy;
@@ -817,24 +817,24 @@ HANDLE_CHOMER_NO_DRAW:
                         remove_simple_enemy(i--);
                         continue;
                     }
-                    
+
                     if (cur->vx < 0) {
                         img = leaf_left;
                     } else {
                         img = leaf_right;
                     }
-                    
+
                     gfx_TransparentSprite(img, rel_x, rel_y);
                     cur->x += cur->vx;
                     cur->y++;
-                
+
                     cur->counter--;
-                
+
                     if (!cur->counter) {
                         cur->vx = -cur->vx;
                         cur->counter = 32;
                     }
-                
+
                     if (oiram_collision(x, y, 16, 11)) {
                         eat_leaf();
                         add_score_no_sprite(4);
@@ -847,23 +847,23 @@ HANDLE_CHOMER_NO_DRAW:
             }
         }
     }
-    
+
     start_boo_check:
-    
+
     if (num_boos) {
         for(i = 0; i < num_boos; i++) {
             boo_t *cur = boo[i];
             gfx_sprite_t *img;
             int prev_x = x = cur->x;
             y = cur->y;
-            
+
             if (!in_viewport(x, y)) {
                 continue;
             }
-            
+
             rel_x = x - oiram.scrollx;
             rel_y = y - oiram.scrolly;
-            
+
             if (oiram.x < x) {
                 if (oiram.direction == FACE_RIGHT) {
                     img = boo_left_hide;
@@ -879,7 +879,7 @@ HANDLE_CHOMER_NO_DRAW:
                     x++;
                 }
             }
-            
+
             if (prev_x != x) {
                 if (cur->count < 6) {
                     cur->count++;
@@ -899,10 +899,10 @@ HANDLE_CHOMER_NO_DRAW:
                 }
                 y += cur->vy;
             }
-            
-                    
+
+
             gfx_TransparentSprite(img, rel_x, rel_y);
-            
+
             if (oiram_collision(x, y, 15, 15)) {
                 if (!shrink_oiram()) {
                     add_score(1, x, y);
@@ -911,45 +911,45 @@ HANDLE_CHOMER_NO_DRAW:
                     continue;
                 }
             }
-            
+
             cur->x = x;
             cur->y = y;
         }
     }
-    
+
     if (num_flames) {
-        
+
         for(i = 0; i < num_flames; i++) {
             int8_t tmp_vy;
             flame_t *cur = flame[i];
-            
+
             x = cur->x;
             y = cur->y;
-            
+
             if (!in_viewport(x, y)) {
                 continue;
             }
-            
+
             tmp_vy = cur->vy;
-            
+
             if (y < cur->start_y) {
                 gfx_sprite_t *img;
                 if (tmp_vy < 0) { img = flame_sprite_up; } else { img = flame_sprite_down; }
                 gfx_TransparentSprite(img, x - oiram.scrollx, y - oiram.scrolly);
             }
-            
+
             if (cur->count) {
                 cur->count--;
             } else {
                 if (tmp_vy < 9) { tmp_vy++; }
                 y += tmp_vy;
-                
+
                 if (y >= cur->start_y) {
                     cur->count = 60;
                     tmp_vy = -15;
                 }
             }
-            
+
             if (oiram_collision(x, y, 14, 16)) {
                 if (!shrink_oiram()) {
                     add_score(1, x, y);
@@ -958,16 +958,16 @@ HANDLE_CHOMER_NO_DRAW:
                     continue;
                 }
             }
-            
+
             cur->y = y;
             cur->vy = tmp_vy;
         }
     }
-    
+
     if (num_poofs) {
         for(i = 0; i < num_poofs; i++) {
             poof_t *cur = poof[i];
-            
+
             cur->count--;
             if (!cur->count) {
                 if (cur->second) {
@@ -978,20 +978,20 @@ HANDLE_CHOMER_NO_DRAW:
                     cur->count = 3;
                 }
             }
-            
+
             gfx_TransparentSprite((cur->second) ? poof_1 : poof_0, cur->x - oiram.scrollx, cur->y - oiram.scrolly);
         }
     }
-    
+
     if (num_fireballs) {
         int8_t tmp_vx;
         uint8_t j;
-        
+
         for(i = 0; i < num_fireballs; i++) {
             fireball_t *cur = fireball[i];
             uint8_t cur_type = cur->mover->type;
             tmp_vx = cur->mover->vx;
-            
+
             if (cur_type == OIRAM_FIREBALL) {
                 cur->mover->type = FIREBALL_TYPE;
                 simple_move_handler(cur->mover);
@@ -1005,24 +1005,24 @@ HANDLE_CHOMER_NO_DRAW:
                 cur->mover->x += tmp_vx;
                 cur->mover->y += cur->mover->vy;
             }
-            
+
             x = cur->mover->x;
             y = cur->mover->y;
-            
+
             rel_x = x - oiram.scrollx;
             rel_y = y - oiram.scrolly;
-            
+
             if (tmp_vx != cur->mover->vx || !cur->count-- || rel_x < -20 || rel_x > 350) {
                 add_poof(x + 2, y + 2);
 HANDLE_REMOVE_FIREBALL:
                 remove_fireball(i--);
                 continue;
             }
-            
+
             if (cur_type == OIRAM_FIREBALL) {
                 for(j = 0; j < num_simple_movers; j++) {
                     simple_move_t *hit = simple_mover[j];
-                    
+
                     if (hit->type > HITABLE_TYPES) {
                         if (gfx_CheckRectangleHotspot(hit->x, hit->y, hit->hitbox.width, hit->hitbox.height, x, y, 7, 7)) {
                             add_score(1, x,y );
@@ -1032,10 +1032,10 @@ HANDLE_REMOVE_FIREBALL:
                         }
                     }
                 }
-                
+
                 for(j = 0; j < num_chompers; j++) {
                     chomper_t *hit = chomper[j];
-                    
+
                     if (gfx_CheckRectangleHotspot(hit->x, hit->y, 15, 29, x, y, 7, 7)) {
                         add_score(1, x, y);
                         add_poof(hit->x + 4, y);
@@ -1043,7 +1043,7 @@ HANDLE_REMOVE_FIREBALL:
                         goto HANDLE_REMOVE_FIREBALL;
                     }
                 }
-                
+
             // the type that can hit oiram
             } else {
                 if (oiram_collision(x, y, 7, 7)) {
@@ -1118,7 +1118,7 @@ HANDLE_REMOVE_FIREBALL:
 HANDLE_DRAW_OIRAM:
         gfx_TransparentSprite(oiram.sprite, oiram.rel_x, oiram.rel_y);
     }
-    
+
     if (oiram.has_shell) {
         gfx_sprite_t *shell;
         int shell_x, shell_y;
@@ -1139,7 +1139,7 @@ HANDLE_DRAW_OIRAM:
         }
         gfx_TransparentSprite(shell, shell_x, shell_y);
     }
-    
+
     if ((oiram.flags & FLAG_OIRAM_RACOON) && !oiram.on_vine) {
         gfx_sprite_t *tail_img;
         int tail_x, tail_y = oiram.rel_y + 17;
@@ -1172,9 +1172,8 @@ HANDLE_DRAW_OIRAM:
             gfx_TransparentSprite(tail_img, tail_x, tail_y);
         }
     }
-    
+
     gfx_SetClipRegion(0, 0, X_PXL_MAX, Y_PXL_MAX);
-    
+
     handling_events = false;
 }
-

@@ -1,5 +1,5 @@
 	.assume adl=1
-	
+
 ; tile_handlers.h
 	.def _animate
 	.def _moveable_tile
@@ -33,19 +33,19 @@ _test_against:
 	sbc	hl,bc
 	ret	nc                       ; if (x > width) { return false; }
 	add	hl,bc
-	
+
 	ex	de,hl
 	ld	a,1
 	bit	7,h
 	ret	nz                       ; if (y < 0) { return true; }
-	
+
 	ld	bc,(_level_map+11)
 	or	a,a
 	sbc	hl,bc
 	ld	a,1
 	ret	nc
 	add	hl,bc
-	
+
 	ld	iy,_tilemap
 	ld	(_test_x),de
 	ld	(_test_y),hl
@@ -249,7 +249,7 @@ a_16:	ld	(_spike_right_sprite),bc
 
 	ld	bc,258                      ; TILE_DATA_SIZE
 	ld	hl,_tiles+2
-	
+
 	ld	a,(hl)
 	cp	a,3
 	ld	bc,258
@@ -259,7 +259,7 @@ a_16:	ld	(_spike_right_sprite),bc
 l_192:
 	inc	a
 	ld	(hl),a
-	
+
 	ld	hl,(_tileset_tiles)
 	add	hl,bc
 	ld	(_tileset_tiles),hl
@@ -269,31 +269,31 @@ l_192:
 	ld	(_tileset_tiles+684),hl
 	ld	(_tileset_tiles+687),hl
 	ld	(_tileset_tiles+690),hl
-	
+
 	ld	hl,(_tileset_tiles+12)
 	add	hl,bc
 	ld	(_tileset_tiles+12),hl
-	
+
 	ld	hl,(_tileset_tiles+378)
 	add	hl,bc
 	ld	(_tileset_tiles+378),hl
-	
+
 	ld	hl,(_tileset_tiles+354)
 	add	hl,bc
 	ld	(_tileset_tiles+354),hl
-	
+
 	ld	hl,(_tileset_tiles+366)
 	add	hl,bc
 	ld	(_tileset_tiles+366),hl
-	
+
 	ld	hl,(_tileset_tiles+396)
 	add	hl,bc
 	ld	(_tileset_tiles+396),hl
-	
+
 	ld	hl,(_tileset_tiles+450)
 	add	hl,bc
 	ld	(_tileset_tiles+450),hl
-	
+
 	ld	hl,(_tileset_tiles+438)
 	add	hl,bc
 	ld	(_tileset_tiles+438),hl
@@ -301,15 +301,15 @@ l_192:
 	ld	hl,(_tileset_tiles+672)
 	add	hl,bc
 	ld	(_tileset_tiles+672),hl
-	
+
 	ld	hl,(_tileset_tiles+699)
 	add	hl,bc
 	ld	(_tileset_tiles+699),hl
-	
+
 	ld	hl,(_tileset_tiles+702)
 	add	hl,bc
 	ld	(_tileset_tiles+702),hl
-	
+
 	ld	hl,_tiles+1
 	ld	a,(hl)
 	cp	a,2
@@ -320,25 +320,25 @@ l_192:
 l_194:
 	inc	a
 	ld	(hl),a
-	
+
 	ld	hl,(_tileset_tiles+24)
 	add	hl,bc
 	ld	(_tileset_tiles+24),hl
-	
+
 	ld	hl,(_tileset_tiles+282)
 	add	hl,bc
 	ld	(_tileset_tiles+282),hl
-	
+
 	ld	hl,(_tileset_tiles+324)
 	add	hl,bc
 	ld	(_tileset_tiles+324),hl
-	
+
 	xor	a,a
 	ld	(_tiles),a
-	
+
 l_199:
 	ret
-	
+
 	.ref _fish_right_sprite
 	.ref _fish_left_sprite
 	.ref _flame_sprite_down

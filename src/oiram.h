@@ -56,4 +56,3 @@ typedef struct {
 extern oiram_t oiram;
 
 #endif
-

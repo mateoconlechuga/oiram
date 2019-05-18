@@ -28,7 +28,7 @@ static enum { KOOPA_GREEN, KOOPA_RED, KOOPA_GREEN_FLY, KOOPA_RED_FLY, KOOPA_BONE
 
 void add_goomba(uint8_t *tile) {
     simple_move_t *e = add_simple_mover(tile);
-    
+
     e->hitbox.width = GOOMBA_WIDTH;
     e->hitbox.height = GOOMBA_HEIGHT;
     e->vx = -1;
@@ -37,7 +37,7 @@ void add_goomba(uint8_t *tile) {
 
 void add_reswob(uint8_t *tile) {
     simple_move_t *e = add_simple_mover(tile);
-    
+
     e->hitbox.width = RESWOB_WIDTH;
     e->hitbox.height = RESWOB_HEIGHT;
     e->vx = -1;
@@ -47,15 +47,15 @@ void add_reswob(uint8_t *tile) {
 void add_boo(uint8_t *tile) {
     boo_t *e;
     unsigned int x, y;
-    
+
     if (num_boos > MAX_BOOS - 1) {
         return;
     }
-    
+
     tile_to_abs_xy_pos(tile, &x, &y);
-    
+
     boo[num_boos] = e = malloc(sizeof(boo_t));
-    
+
     e->x = x;
     e->y = y;
     e->vy = -1;
@@ -67,24 +67,24 @@ void add_boo(uint8_t *tile) {
 void remove_boo(uint8_t i) {
     boo_t *e;
     uint8_t num_boos_less;
-    
+
     if (!num_boos) {
         return;
     }
-    
+
     e = boo[i];
     num_boos_less = num_boos--;
-    
+
     for(; i < num_boos_less; i++) {
         boo[i] = boo[i+1];
     }
-    
+
     free(e);
 }
 
 void add_shell_enemy(uint8_t *tile, uint8_t type) {
     simple_move_t *e = add_simple_mover(tile);
-    
+
     e->hitbox.width = 15;
     e->hitbox.height = 26;
     e->vx = -1;
@@ -123,14 +123,14 @@ void add_shell_enemy(uint8_t *tile, uint8_t type) {
 void add_chomper(uint8_t *tile, bool throws_fire) {
     chomper_t *e;
     unsigned int x, y;
-    
+
     if (num_chompers > MAX_CHOMPERS - 1) {
         return;
     }
-    
+
     tile_to_abs_xy_pos(tile, &x, &y);
     chomper[num_chompers] = e = malloc(sizeof(chomper_t));
-    
+
     e->x = x + TILE_WIDTH/2;
     e->y = y;
     e->start_y = y;
@@ -143,33 +143,33 @@ void add_chomper(uint8_t *tile, bool throws_fire) {
 void remove_chomper(uint8_t i) {
     chomper_t *e;
     uint8_t num_chompers_less;
-    
+
     if (!num_chompers) {
         return;
     }
-    
+
     e = chomper[i];
     num_chompers_less = num_chompers--;
-    
+
     for(; i < num_chompers_less; i++) {
         chomper[i] = chomper[i+1];
     }
-    
+
     free(e);
 }
 
 void add_flame(uint8_t *tile) {
     flame_t *e;
     unsigned int x, y;
-    
+
     if (num_flames > MAX_FLAMES - 1) {
         return;
     }
-    
+
     tile_to_abs_xy_pos(tile, &x, &y);
-    
+
     flame[num_flames] = e = malloc(sizeof(flame_t));
-    
+
     e->x = x;
     e->y = y;
     e->start_y = y;
@@ -181,33 +181,33 @@ void add_flame(uint8_t *tile) {
 void remove_flame(uint8_t i) {
     flame_t *e;
     uint8_t num_flames_less;
-    
+
     if (!num_flames) {
         return;
     }
-    
+
     e = flame[i];
     num_flames_less = num_flames--;
-    
+
     for(; i < num_flames_less; i++) {
         flame[i] = flame[i+1];
     }
-    
+
     free(e);
 }
 
 void add_thwomp(uint8_t *tile) {
     thwomp_t *e;
     unsigned int x, y;
-    
+
     if (num_thwomps > MAX_THWOMPS - 1) {
         return;
     }
-    
+
     tile_to_abs_xy_pos(tile, &x, &y);
-    
+
     thwomp[num_thwomps] = e = malloc(sizeof(thwomp_t));
-    
+
     e->x = x + 4;
     e->y = y;
     e->start_y = y;
@@ -219,39 +219,39 @@ void add_thwomp(uint8_t *tile) {
 void remove_thwomp(uint8_t i) {
     thwomp_t *e;
     uint8_t num_thowmps_less;
-    
+
     if (!num_thwomps) {
         return;
     }
-    
+
     e = thwomp[i];
     num_thowmps_less = num_thwomps--;
-    
+
     for(; i < num_thowmps_less; i++) {
         thwomp[i] = thwomp[i+1];
     }
-    
+
     free(e);
 }
 
 enemy_t *add_simple_enemy(uint8_t *tile, uint8_t type) {
     enemy_t *enemy;
     unsigned int x, y;
-    
+
     if (num_simple_enemies > MAX_SIMPLE_ENEMY - 1) {
         remove_simple_enemy(0);
     }
-    
+
     tile_to_abs_xy_pos(tile, &x, &y);
-    
+
     enemy = simple_enemy[num_simple_enemies] = malloc(sizeof(enemy_t));
-    
+
     enemy->vx = 0;
     enemy->vy = 0;
     enemy->counter = 100;
     enemy->y = y;
     enemy->x = x;
-        
+
     switch(type) {
         case BULLET_TYPE:
             enemy->vx = -3;
@@ -275,7 +275,7 @@ enemy_t *add_simple_enemy(uint8_t *tile, uint8_t type) {
         default:
             break;
     }
-    
+
     enemy->type = type;
     num_simple_enemies++;
     return enemy;
@@ -284,18 +284,18 @@ enemy_t *add_simple_enemy(uint8_t *tile, uint8_t type) {
 void remove_simple_enemy(uint8_t i) {
     enemy_t *e;
     uint8_t num_simple_enemies_less;
-    
+
     if (!num_simple_enemies) {
         return;
     }
-    
+
     e = simple_enemy[i];
     num_simple_enemies_less = num_simple_enemies--;
-    
+
     for(; i < num_simple_enemies_less; i++) {
         simple_enemy[i] = simple_enemy[i+1];
     }
-    
+
     free(e);
 }
 
@@ -304,12 +304,12 @@ void get_enemies(void) {
     uint8_t height = tilemap.height;
     unsigned int j, delay;
     unsigned int loop = width * height;
-    
+
     for(j = 0; j < loop; j++) {
         uint8_t *this = tilemap.map + j;
         uint8_t tile = *this;
         int8_t tmp1, tmp2;
-        
+
         switch(tile) {
             // this case is just to avoid another function that converts coins in water to water coins
             case TILE_COIN:

@@ -24,4 +24,3 @@ void show_blue_items(bool);
 bool shrink_oiram(void);
 
 #endif
-
