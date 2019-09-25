@@ -38,11 +38,12 @@ void missing_appvars(void) {
 
 // this handles the timer
 void handler_timer(void) {
-    game.seconds--;
 
     // if no more time, fail -- only need to trigger keypad interrupt now
     if (!game.seconds) {
         oiram.failed = true;
+    } else {
+        game.seconds--;
     }
 
     if (game.blue_item_count) {
