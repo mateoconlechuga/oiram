@@ -226,7 +226,7 @@ void main(void) {
     }
 
     // easter egg setup
-    if(!ti_RclVar(TI_REAL_TYPE, ti_Ans, &real_in)) {
+    if (!ti_RclVar(TI_REAL_TYPE, ti_Ans, (void**)&real_in)) {
         int in = os_RealToInt24(real_in);
         if (in == 1337) { easter_egg1 = true; }
         if (in == 1202) { easter_egg2 = true; }

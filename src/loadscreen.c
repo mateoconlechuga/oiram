@@ -62,7 +62,7 @@ void load_progress(void) {
     uint8_t num_packs_in_var = 0;
     unsigned int j;
     size_t size;
-    uint8_t *search_pos;
+    void *search_pos;
     const char *search_str;
     uint8_t search_current = 1;
 
@@ -231,14 +231,14 @@ void set_load_screen(void) {
     int y;
 
     uint8_t search_current;
+    void *search_pos;
     const char *search_str;
-    uint8_t *search_pos;
     const char *str_2nd = "[2nd]";
     const char *str_up = "[up]";
     const char *str_alpha = "[alpha]";
-    char *str_1;
-    char *str_2;
-    char *str_3;
+    const char *str_1;
+    const char *str_2;
+    const char *str_3;
 
     gfx_sprite_t *tile_208 = tileset_tiles[208];
     gfx_sprite_t *tile_145 = tileset_tiles[145];

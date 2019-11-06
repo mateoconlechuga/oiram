@@ -24,7 +24,7 @@ uint8_t num_flames = 0;
 uint8_t num_simple_enemies = 0;
 
 // types of shell enemies
-static enum { KOOPA_GREEN, KOOPA_RED, KOOPA_GREEN_FLY, KOOPA_RED_FLY, KOOPA_BONES, SPIKE };
+enum { KOOPA_GREEN, KOOPA_RED, KOOPA_GREEN_FLY, KOOPA_RED_FLY, KOOPA_BONES, SPIKE };
 
 void add_goomba(uint8_t *tile) {
     simple_move_t *e = add_simple_mover(tile);

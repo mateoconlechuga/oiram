@@ -384,7 +384,7 @@ static uint8_t water_tile_handler(uint8_t *tile) {
     return 1;
 }
 
-static uint8_t quicksandt_handler(const uint8_t *tile) {
+static uint8_t quicksandt_handler(uint8_t *tile) {
     unsigned int x;
 
     tile_to_abs_xy_pos(tile, &x, &quicksand_clip_y);
