@@ -61,7 +61,6 @@ void load_progress(void) {
     pack_info_t **pack_info_in_var = NULL;
     uint8_t num_packs_in_var = 0;
     unsigned int j;
-    size_t size;
     void *search_pos;
     const char *search_str;
     uint8_t search_current = 1;
@@ -154,7 +153,6 @@ static void decode(uint8_t *in, uint8_t *out) {
 }
 
 void set_level(char *name, uint8_t level) {
-    uint8_t *tilemap_data = NULL;
     uint8_t level_width = 0;
     uint8_t level_height = 0;
     uint16_t color = 0;
@@ -246,7 +244,6 @@ void set_load_screen(void) {
     gfx_sprite_t *tile_195 = tileset_tiles[195];
 
     uint8_t *pack_data;
-    uint8_t key;
     static uint8_t selected_pack = 0;
     uint8_t selected_level = 0;
     static uint8_t scroll_amt = 0;

@@ -66,6 +66,7 @@ static uint8_t brick_tile_handler(uint8_t *tile) {
 }
 
 static uint8_t upspk_tile_handler(uint8_t *tile) {
+    (void)tile;
     if (!handling_events) {
         if (move_side == TILE_TOP) {
             static uint8_t test_sides = 0;
@@ -83,6 +84,7 @@ static uint8_t upspk_tile_handler(uint8_t *tile) {
 }
 
 static uint8_t plant_tile_handler(uint8_t *tile) {
+    (void)tile;
     if (!handling_events) {
         if (move_side == TILE_TOP) {
             shrink_oiram();
@@ -111,6 +113,7 @@ static uint8_t ice_block_handler(uint8_t *tile) {
 }
 
 static uint8_t lavas_tile_handler(uint8_t *tile) {
+    (void)tile;
     if (!handling_events) {
         if (move_side == TILE_TOP) {
             static uint8_t test_sides = 0;
@@ -143,6 +146,7 @@ static uint8_t p_block_handler(uint8_t *tile) {
 }
 
 static uint8_t lava_tile_handler(uint8_t *tile) {
+    (void)tile;
     if (handling_events) {
         something_died = true;
     }
@@ -150,6 +154,7 @@ static uint8_t lava_tile_handler(uint8_t *tile) {
 }
 
 static uint8_t dnspk_tile_handler(uint8_t *tile) {
+    (void)tile;
     if (move_side == TILE_BOTTOM) {
         if (!handling_events) {
             shrink_oiram();
@@ -275,6 +280,7 @@ static uint8_t coin_tile_handler(uint8_t *tile) {
 
 static uint8_t top_tile_handler(uint8_t *tile) {
     bool m = (test_y & 15) < 8;
+    (void)tile;
     if (!handling_events) {
         if ((move_side == TILE_TOP) && m) {
             return 0;
@@ -288,6 +294,7 @@ static uint8_t top_tile_handler(uint8_t *tile) {
 }
 
 static uint8_t vine_tile_handler(uint8_t *tile) {
+    (void)tile;
     if (!handling_events) {
         if (pressed_up) {
             if (!oiram.on_vine) {
@@ -367,6 +374,7 @@ bool in_water;
 bool on_ice;
 
 static uint8_t water_tile_handler(uint8_t *tile) {
+    (void)tile;
     if (move_side == TILE_TOP) {
         static uint8_t test_sides = 0;
 

@@ -302,7 +302,7 @@ void remove_simple_enemy(uint8_t i) {
 void get_enemies(void) {
     uint8_t width = tilemap.width;
     uint8_t height = tilemap.height;
-    unsigned int j, delay;
+    unsigned int j;
     unsigned int loop = width * height;
 
     for(j = 0; j < loop; j++) {

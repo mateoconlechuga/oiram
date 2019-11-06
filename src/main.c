@@ -209,7 +209,6 @@ void main(void) {
     size_t pack_author_len;
     char end_str[100];
     pack_info_t *pack;
-    bool cntr;
     int x;
 
     // initialize the 8bpp graphics

@@ -173,8 +173,6 @@ HANDLE_LOOP_FAIL:
             type = cur->type;
 
             if (cur->bumped) {
-                bumped_tile_t *bump;
-
                 switch(type) {
                     case GOOMBA_TYPE:
                         add_poof(x + 4, y + 4);
@@ -195,7 +193,6 @@ HANDLE_LOOP_FAIL:
             if (!oiram_collision(x, y, cur->hitbox.width, cur->hitbox.height)) {
                 gfx_sprite_t *img;
                 gfx_rletsprite_t *rletimg;
-                uint8_t cur_counter;
                 static uint8_t reswob_sprite_count = 0;
                 static gfx_rletsprite_t *reswob_sprite;
                 static bool reswob_is_jumping = false;
@@ -755,7 +752,7 @@ HANDLE_CHOMER_NO_DRAW:
                     }
 
                     if (!cur->counter) {
-                        enemy_t *bullet = add_simple_enemy(tile, BULLET_TYPE);
+                        add_simple_enemy(tile, BULLET_TYPE);
                         add_poof(x, y + 2);
                         cur->counter = 100;
                     } else {
