@@ -309,6 +309,7 @@ void get_enemies(void) {
         uint8_t *this = tilemap.map + j;
         uint8_t tile = *this;
         int8_t tmp1, tmp2;
+        uint8_t *tile_pntr;
 
         switch(tile) {
             // this case is just to avoid another function that converts coins in water to water coins
@@ -317,8 +318,11 @@ void get_enemies(void) {
                     int off = tmp2 * width;
                     bool at_neg_1 = tmp2 == -1;
                     for (tmp1=-1; tmp1<2; tmp1++) {
-                        tile = *(this+tmp1+off);
+                        tile_pntr = (this+tmp1+off);
+                        tile = *tile_pntr;
                         if (tile == TILE_WATER || tile == TILE_WATER_COIN || (at_neg_1 && tile == TILE_WATER_TOP)) {
+                            if ((tile_pntr < tilemap.map) || (tile_pntr > tilemap.map + loop)) continue; // prevents checking outside tilemap
+                            if (abs((j % width) - ((tile_pntr - tilemap.map) % width)) > 1) continue; // prevents checking other side
                             *this = TILE_WATER_COIN;
                             goto end_loops;
                         }
