@@ -1,20 +1,16 @@
-	.assume adl=1
+	assume adl=1
 
-; tile_handlers.h
-	.def _animate
-	.def _moveable_tile
-	.def _moveable_tile_left_bottom
-	.def _moveable_tile_right_bottom
-	.def _solid_tile_handler
-	.def _empty_tile_handler
-	.def _tile_to_abs_xy_pos
-
+	public _moveable_tile_right_bottom
 _moveable_tile_right_bottom:
 	xor	a,a                      ; TEST_RIGHT
 	jr	_test_against
+
+	public _moveable_tile_left_bottom
 _moveable_tile_left_bottom:
 	ld	a,1                      ; TEST_LEFT
 	jr	_test_against
+
+	public _moveable_tile
 _moveable_tile:
 	ld	a,2                      ; TEST_NONE
 _test_against:
@@ -79,14 +75,17 @@ divloop2:
 __jump_iy:
 	jp	(iy)
 
+	public _solid_tile_handler
 _solid_tile_handler:
 	xor	a,a
 	ret
 
+	public _empty_tile_handler
 _empty_tile_handler:
 	ld	a,1
 	ret
 
+	public _tile_to_abs_xy_pos
 _tile_to_abs_xy_pos:
 	call	__frameset0
 	ld	a,(_tilemap+13)
@@ -117,6 +116,7 @@ _tile_to_abs_xy_pos:
 	pop	ix
 	ret
 
+	public _animate
 _animate:
 	ld	a,(_tiles+0)
 	inc	a
@@ -339,66 +339,66 @@ l_194:
 l_199:
 	ret
 
-	.ref _fish_right_sprite
-	.ref _fish_left_sprite
-	.ref _flame_sprite_down
-	.ref _flame_sprite_up
-	.ref _spike_right_sprite
-	.ref _spike_left_sprite
-	.ref _koopa_bones_right_sprite
-	.ref _koopa_bones_left_sprite
-	.ref _koopa_green_right_sprite
-	.ref _koopa_green_left_sprite
-	.ref _koopa_red_right_sprite
-	.ref _koopa_red_left_sprite
-	.ref _wing_right_sprite
-	.ref _wing_left_sprite
-	.ref _chomper_sprite
-	.ref _goomba_sprite
-	.ref _fireball_sprite
-	.ref _spike_right_1
-	.ref _spike_right_0
-	.ref _spike_left_1
-	.ref _spike_left_0
-	.ref _fish_right_1
-	.ref _fish_right_0
-	.ref _fish_left_1
-	.ref _fish_left_0
-	.ref _wing_right_1
-	.ref _wing_right_0
-	.ref _wing_left_1
-	.ref _wing_left_0
-	.ref _flame_fire_down_1
-	.ref _flame_fire_down_0
-	.ref _flame_fire_up_1
-	.ref _flame_fire_up_0
-	.ref _fire_1
-	.ref _fire_0
-	.ref _chomper_1
-	.ref _chomper_0
-	.ref _koopa_bones_left_1
-	.ref _koopa_bones_left_0
-	.ref _koopa_bones_right_1
-	.ref _koopa_bones_right_0
-	.ref _koopa_green_left_1
-	.ref _koopa_green_left_0
-	.ref _koopa_green_right_1
-	.ref _koopa_green_right_0
-	.ref _koopa_red_left_1
-	.ref _koopa_red_left_0
-	.ref _koopa_red_right_1
-	.ref _koopa_red_right_0
-	.ref _goomba_1
-	.ref _goomba_0
-	.ref _oiram
-	.ref _level_map
-	.ref _tilemap
-	.ref _tiles
-	.ref _tileset_tiles
-	.ref _test_x
-	.ref _test_y
-	.ref _testing_side
-	.ref _tile_handler
-	.ref __indcall
-	.ref __idvrmu
-	.ref __frameset0
+	extern _fish_right_sprite
+	extern _fish_left_sprite
+	extern _flame_sprite_down
+	extern _flame_sprite_up
+	extern _spike_right_sprite
+	extern _spike_left_sprite
+	extern _koopa_bones_right_sprite
+	extern _koopa_bones_left_sprite
+	extern _koopa_green_right_sprite
+	extern _koopa_green_left_sprite
+	extern _koopa_red_right_sprite
+	extern _koopa_red_left_sprite
+	extern _wing_right_sprite
+	extern _wing_left_sprite
+	extern _chomper_sprite
+	extern _goomba_sprite
+	extern _fireball_sprite
+	extern _spike_right_1
+	extern _spike_right_0
+	extern _spike_left_1
+	extern _spike_left_0
+	extern _fish_right_1
+	extern _fish_right_0
+	extern _fish_left_1
+	extern _fish_left_0
+	extern _wing_right_1
+	extern _wing_right_0
+	extern _wing_left_1
+	extern _wing_left_0
+	extern _flame_fire_down_1
+	extern _flame_fire_down_0
+	extern _flame_fire_up_1
+	extern _flame_fire_up_0
+	extern _fire_1
+	extern _fire_0
+	extern _chomper_1
+	extern _chomper_0
+	extern _koopa_bones_left_1
+	extern _koopa_bones_left_0
+	extern _koopa_bones_right_1
+	extern _koopa_bones_right_0
+	extern _koopa_green_left_1
+	extern _koopa_green_left_0
+	extern _koopa_green_right_1
+	extern _koopa_green_right_0
+	extern _koopa_red_left_1
+	extern _koopa_red_left_0
+	extern _koopa_red_right_1
+	extern _koopa_red_right_0
+	extern _goomba_1
+	extern _goomba_0
+	extern _oiram
+	extern _level_map
+	extern _tilemap
+	extern _tiles
+	extern _tileset_tiles
+	extern _test_x
+	extern _test_y
+	extern _testing_side
+	extern _tile_handler
+	extern __indcall
+	extern __idvrmu
+	extern __frameset0

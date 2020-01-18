@@ -322,7 +322,7 @@ void get_enemies(void) {
                         tile = *tile_pntr;
                         if (tile == TILE_WATER || tile == TILE_WATER_COIN || (at_neg_1 && tile == TILE_WATER_TOP)) {
                             if ((tile_pntr < tilemap.map) || (tile_pntr > tilemap.map + loop)) continue; // prevents checking outside tilemap
-                            if (abs((j % width) - ((tile_pntr - tilemap.map) % width)) > 1) continue; // prevents checking other side
+                            if (((j % width) - ((tile_pntr - tilemap.map) % width)) > 1) continue; // prevents checking other side
                             *this = TILE_WATER_COIN;
                             goto end_loops;
                         }
