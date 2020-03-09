@@ -19,6 +19,8 @@ Your screen should look like this (press Enter when it does):
 
     Asm(prgmOIRAM
 
+Note: Since CE OS 5.3, the use of Asm( isn't necessary.
+
 ### Story
 
 Oiram is a platformer.
