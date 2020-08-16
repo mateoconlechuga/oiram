@@ -1,0 +1,155 @@
+palettes:
+  - name: palette
+    fixed-entries:
+      - color: { index: 0, r: 255, g: 0, b: 128 }
+    images: automatic
+
+converts:
+  - name: tileset
+    palette: palette
+    tilesets:
+      tile-width: 16
+      tile-height: 16
+      pointer-table: false
+      images:
+        - orig_tileset
+  
+  - name: gfx
+    palette: palette
+    transparent-color-index: 0
+    images:
+      - oiram_0_small
+      - oiram_1_small
+      - oiram_0_big
+      - oiram_1_big
+      - oiram_0_fire
+      - oiram_1_fire
+      - oiram_crouch_big
+      - oiram_crouch_fire
+      - oiram_fail
+      - mushroom
+      - fire_flower
+      - goomba_0
+      - goomba_1
+      - goomba_flat
+      - koopa_red_right_0
+      - koopa_red_right_1
+      - koopa_red_left_0
+      - koopa_red_left_1
+      - koopa_red_shell_0
+      - koopa_red_shell_1
+      - koopa_green_right_0
+      - koopa_green_right_1
+      - koopa_green_left_0
+      - koopa_green_left_1
+      - koopa_green_shell_0
+      - koopa_green_shell_1
+      - koopa_bones_right_0
+      - koopa_bones_right_1
+      - koopa_bones_left_0
+      - koopa_bones_left_1
+      - koopa_bones_dead_left
+      - koopa_bones_dead_right
+      - chomper_0
+      - chomper_1
+      - chomper_fire_down_left
+      - chomper_fire_down_right
+      - chomper_fire_up_left
+      - chomper_fire_up_right
+      - chomper_body
+      - fire_0
+      - fire_1
+      - poof_0
+      - poof_1
+      - flame_fire_up_0
+      - flame_fire_up_1
+      - flame_fire_down_0
+      - flame_fire_down_1
+      - thwomp
+      - boo_left_hide
+      - boo_right_hide
+      - boo_left
+      - boo_right
+      - bullet_left
+      - cannonball_0
+      - wing_left_0
+      - wing_left_1
+      - wing_right_0
+      - wing_right_1
+      - star_0
+      - easter_egg_0
+      - easter_egg_1
+      - oiram_lives
+      - clock
+      - one_up
+      - oiram_up_small_0
+      - oiram_up_small_1
+      - oiram_up_big_0
+      - oiram_up_big_1
+      - oiram_up_fire_0
+      - oiram_up_fire_1
+      - fish_left_0
+      - fish_left_1
+      - fish_right_0
+      - fish_right_1
+      - mushroom_1up
+      - spike_left_0
+      - spike_left_1
+      - spike_right_0
+      - spike_right_1
+      - spike_shell_0
+      - spike_shell_1
+      - oiram_logo
+      - score_100
+      - score_200
+      - score_400
+      - score_800
+      - score_1000
+      - score_2000
+      - score_4000
+      - score_8000
+      - leaf_left
+      - leaf_right
+      - oiram_0_racoon
+      - oiram_1_racoon
+      - oiram_crouch_racoon
+      - oiram_up_racoon_0
+      - oiram_up_racoon_1
+      - tail_left_0
+      - tail_right_0
+
+  - name: gfxrlet
+    palette: palette
+    transparent-color-index: 0
+    style: rlet
+    images:
+      - reswob_left_0
+      - reswob_left_1
+      - reswob_right_0
+      - reswob_right_1
+      - reswob_down
+
+  - name: gfxoiram
+    palette: palette
+    transparent-color-index: 0
+    images:
+      - oiram_start
+
+outputs:
+  - type: appvar
+    name: OiramS
+    source-format: none
+    converts:
+      - gfx
+      - gfxrlet
+      - gfxoiram
+
+  - type: appvar
+    name: OiramT
+    source-format: none
+    output-first: palettes
+    prepend-palette-sizes: true
+    converts:
+      - tileset
+    palettes:
+      - palette

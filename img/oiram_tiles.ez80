@@ -1,8 +1,0 @@
-include 'ez80.inc'
-include 'tiformat.inc'
-format ti archived appvar 'OiramT'
-
-	dw _orig_tileset_gfx_pal_size
-
-include 'orig_tileset_gfx.asm'
-include 'orig_tileset.asm'
