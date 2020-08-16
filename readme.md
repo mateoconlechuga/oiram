@@ -4,9 +4,10 @@ Oiram is a mario-style platformer programmed from scratch in C and assembly usin
 You can find the complete readme [here](https://github.com/mateoconlechuga/oiram/blob/master/packs/readme.md).
 There's also a handy level editor [here](https://github.com/mateoconlechuga/oiram-editor/releases/latest).
 
-Animated Screenshot:
+Animated Screenshots:
 
-![screenshot](https://www.cemetech.net/img/ss/003200.gif)
+![screenshot0](https://raw.githubusercontent.com/mateoconlechuga/oiram/master/extra/screen0.png)
+![screenshot1](https://raw.githubusercontent.com/mateoconlechuga/oiram/master/extra/screen1.gif)
 
 ## Building
 If you would like to build oiram, be sure you have the latest LLVM [CE C Toolchain](https://github.com/CE-Programming/toolchain/releases/latest) installed.
@@ -18,8 +19,12 @@ Then simply clone or download the repository from above, and run the following c
 
 The following files make up the built project, which should be sent to the calculator:
 
-    `src/gfx/OiramS.8xv`: Oriam sprites
-    `src/gfx/OiramT.8xv`: Oriam tileset
-    `extra/OiramPK.8xv`: Oriam default level pack
-    `bin/Oiram.8xp`: Oriam program
+   `src/gfx/OiramS.8xv`: Oriam sprites
+
+   `src/gfx/OiramT.8xv`: Oriam tileset
+
+   `extra/OiramPK.8xv`: Oriam default level pack
+
+   `bin/Oiram.8xp`: Oriam program
+
 
