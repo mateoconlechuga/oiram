@@ -1,24 +1,20 @@
 # ----------------------------
-# Program Options
+# Makefile Options
 # ----------------------------
 
-NAME         ?= OIRAM
-ICON         ?= iconc.png
-DESCRIPTION  ?= "Oiram"
-COMPRESSED   ?= NO
-ARCHIVED     ?= NO
+NAME ?= OIRAM
+ICON ?= iconc.png
+DESCRIPTION ?= "Oiram"
+COMPRESSED ?= NO
+ARCHIVED ?= NO
+
+CFLAGS ?= -Wall -Wextra -Oz
+CXXFLAGS ?= -Wall -Wextra -Oz
 
 # ----------------------------
-# Compile Options
-# ----------------------------
 
-OPT_MODE     ?= -Oz
-EXTRA_CFLAGS ?= -Wall -Wextra
+ifndef CEDEV
+$(error CEDEV environment path variable is not set)
+endif
 
-# ----------------------------
-# Debug Options
-# ----------------------------
-
-OUTPUT_MAP   ?= NO
-
-include $(CEDEV)/include/.makefile
+include $(CEDEV)/meta/makefile.mk
