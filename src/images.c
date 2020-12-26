@@ -81,7 +81,7 @@ gfx_sprite_t *star_0;
 gfx_sprite_t *easter_egg_0;
 gfx_sprite_t *easter_egg_1;
 gfx_sprite_t *oiram_lives;
-gfx_sprite_t *clock;
+gfx_sprite_t *timer;
 gfx_sprite_t *one_up;
 gfx_sprite_t *oiram_up_small_0;
 gfx_sprite_t *oiram_up_small_1;
@@ -166,7 +166,7 @@ void extract_tiles(void) {
     uint16_t *pal_ptr;
     uint8_t *tmp_ptr;
     gfx_sprite_t **tiles = tileset_tiles;
-    
+
     ti_CloseAll();
     slot = ti_Open("OiramT", "r");
     if (!slot) {
@@ -176,33 +176,33 @@ void extract_tiles(void) {
     pal_ptr = (uint16_t*)ti_GetDataPtr(slot);
     pal_size = *pal_ptr;
     pal_ptr++;
-    
+
     // set up the palette
     gfx_SetPalette(pal_ptr, pal_size, 0);
     tmp_ptr = (uint8_t*)pal_ptr;
     tmp_ptr += pal_size;
-    
+
     // get the question block tile
     tile_question_box = (gfx_sprite_t*)tmp_ptr;
-    
+
     for(i = 0; i++;) {
         tiles[i] = tile_question_box;
     }
-    
+
     for(i = 0; i < 252; i++) {
         tiles[i] = (gfx_sprite_t*)tmp_ptr;
         tmp_ptr += TILE_DATA_SIZE;
     }
-    
+
     // close the open file
     ti_CloseAll();
-    
+
     // extract common sprite tiles
     empty       = tiles[TILE_EMPTY];
     coin_sprite = tiles[TILE_COIN];
     door_top    = tiles[228];
     door_bot    = tiles[229];
-    
+
 	// snow tiles fixup
     tiles[TILE_SNOW_TL] = tiles[239];
     tiles[TILE_SNOW_TM] = tiles[240];
@@ -210,20 +210,20 @@ void extract_tiles(void) {
     tiles[TILE_SNOW_BL] = tiles[242];
     tiles[TILE_SNOW_BM] = tiles[243];
     tiles[TILE_SNOW_BR] = tiles[244];
-	
+
     // handling ice/coins is rather odd...
     tiles[TILE_BLUE_COIN] = tiles[247];
     tiles[TILE_ICE_COIN]  = tiles[238];
     tiles[TILE_ICE]       = tiles[230];
-    
+
     // end pipe fixup
     tiles[TILE_END_PIPE_L] = tiles[245];
     tiles[TILE_END_PIPE_R] = tiles[246];
-    
+
     // blue stuffs
     tiles[TILE_BLUE_BRICK_X] = tiles[TILE_EMPTY];
     tiles[TILE_BLUE_COIN_X]  = tiles[TILE_EMPTY];
-    
+
     // handle the question boxes
     tiles[TILE_COIN_BOX]       = tile_question_box;
     tiles[TILE_1UP_BOX]        = tile_question_box;
@@ -235,12 +235,12 @@ void extract_tiles(void) {
 
 void extract_sprites(void) {
     uint8_t slot;
-    
+
     ti_CloseAll();
     slot = ti_Open("OiramS", "r");
     if (slot) {
         uint8_t *spr_ptr = ti_GetDataPtr(slot);
-        
+
         oiram_0_small = (gfx_sprite_t*)spr_ptr;
         spr_ptr += 258;
         oiram_1_small = (gfx_sprite_t*)spr_ptr;
@@ -365,7 +365,7 @@ void extract_sprites(void) {
         spr_ptr += 258;
         oiram_lives = (gfx_sprite_t*)spr_ptr;
         spr_ptr += 93;
-        clock = (gfx_sprite_t*)spr_ptr;
+        timer = (gfx_sprite_t*)spr_ptr;
         spr_ptr += 83;
         oiram_score_chain_sprites[8] = one_up = (gfx_sprite_t*)spr_ptr;
         spr_ptr += 380;
@@ -453,7 +453,6 @@ void extract_sprites(void) {
     } else {
         missing_appvars();
     }
-    
+
     ti_CloseAll();
 }
-

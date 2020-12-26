@@ -294,7 +294,7 @@ HANDLE_DRAW_LEVEL:
     double_rectangle(4, 194, 80, 33);
     gfx_TransparentSprite_NoClip(coin_sprite, 10, 140);
     gfx_TransparentSprite_NoClip(oiram_lives, 10, 164);
-    gfx_TransparentSprite_NoClip(clock, 270, 143);
+    gfx_TransparentSprite_NoClip(timer, 270, 143);
 
     gfx_Rectangle_NoClip(118, 145, 81, 4);
 

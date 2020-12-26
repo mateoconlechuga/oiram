@@ -13,7 +13,7 @@ converts:
       pointer-table: false
       images:
         - orig_tileset
-  
+
   - name: gfx
     palette: palette
     transparent-color-index: 0
@@ -80,7 +80,7 @@ converts:
       - easter_egg_0
       - easter_egg_1
       - oiram_lives
-      - clock
+      - timer
       - one_up
       - oiram_up_small_0
       - oiram_up_small_1

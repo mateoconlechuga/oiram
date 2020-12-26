@@ -9,7 +9,7 @@ extern gfx_sprite_t oiram_0_buffer_left[27*27 + 2];
 extern gfx_sprite_t oiram_1_buffer_left[27*27 + 2];
 extern gfx_sprite_t oiram_0_buffer_right[27*27 + 2];
 extern gfx_sprite_t oiram_1_buffer_right[27*27 + 2];
- 
+
 extern gfx_sprite_t *coin_sprite;
 extern gfx_sprite_t *oiram_0_small;
 extern gfx_sprite_t *oiram_1_small;
@@ -76,7 +76,7 @@ extern gfx_sprite_t *star_0;
 extern gfx_sprite_t *easter_egg_0;
 extern gfx_sprite_t *easter_egg_1;
 extern gfx_sprite_t *oiram_lives;
-extern gfx_sprite_t *clock;
+extern gfx_sprite_t *timer;
 extern gfx_sprite_t *one_up;
 extern gfx_sprite_t *oiram_up_small_0;
 extern gfx_sprite_t *oiram_up_small_1;
@@ -152,4 +152,3 @@ void extract_sprites(void);
 void extract_tiles(void);
 
 #endif
-
