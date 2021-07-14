@@ -69,7 +69,7 @@ enum autoscroll {
 typedef struct {
     bool enter;
     bool exit;
-    bool count;
+    uint8_t count;
     int clip_x;
     int clip_y;
     uint8_t style;
