@@ -167,7 +167,6 @@ void extract_tiles(void) {
     uint8_t *tmp_ptr;
     gfx_sprite_t **tiles = tileset_tiles;
 
-    ti_CloseAll();
     slot = ti_Open("OiramT", "r");
     if (!slot) {
         missing_appvars();
@@ -195,7 +194,7 @@ void extract_tiles(void) {
     }
 
     // close the open file
-    ti_CloseAll();
+    ti_Close(slot);
 
     // extract common sprite tiles
     empty       = tiles[TILE_EMPTY];
@@ -236,7 +235,6 @@ void extract_tiles(void) {
 void extract_sprites(void) {
     uint8_t slot;
 
-    ti_CloseAll();
     slot = ti_Open("OiramS", "r");
     if (slot) {
         uint8_t *spr_ptr = ti_GetDataPtr(slot);
@@ -450,9 +448,8 @@ void extract_sprites(void) {
         reswob_down = (gfx_rletsprite_t*)spr_ptr;
         spr_ptr += 1029;
         oiram_start = (gfx_sprite_t*)spr_ptr;
+        ti_Close(slot);
     } else {
         missing_appvars();
     }
-
-    ti_CloseAll();
 }

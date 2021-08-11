@@ -45,14 +45,13 @@ uint8_t *get_pack_pointer(ti_var_t slot) {
 // this routine should only be used right before an exit
 void save_progress(void) {
     ti_var_t variable;
-    ti_CloseAll();
     if ((variable = ti_Open(save_name, "w"))) {
         ti_PutC((char)num_packs, variable);
         ti_Write(&pack_info, sizeof(pack_info_t), num_packs, variable);
         ti_PutC((char)game.alternate_keypad, variable);
         ti_SetArchiveStatus(true, variable);
+        ti_Close(variable);
     }
-    ti_CloseAll();
     gfx_End();
 }
 
@@ -65,7 +64,6 @@ void load_progress(void) {
     const char *search_str;
     uint8_t search_current = 1;
 
-    ti_CloseAll();
     if ((variable = ti_Open(save_name, "r"))) {
         num_packs_in_var = (uint8_t)ti_GetC(variable);
         pack_info_in_var = ti_GetDataPtr(variable);
@@ -104,7 +102,7 @@ void load_progress(void) {
         search_str = search_string1;
     } while (search_current--);
 
-    ti_CloseAll();
+    ti_Close(variable);
 }
 
 static void init_level(uint8_t width, uint8_t height, uint8_t scroll) {
@@ -160,7 +158,6 @@ void set_level(char *name, uint8_t level) {
     ti_var_t slot;
 
     game.num_levels = 0;
-    ti_CloseAll();
 
     if ((slot = ti_Open(name, "r"))) {
         uint8_t *pack_data;
@@ -210,6 +207,8 @@ void set_level(char *name, uint8_t level) {
         // allocate and decompress the level
         tilemap.map = malloc(level_width * level_height);
         decode(pack_data, tilemap.map);
+
+        ti_Close(slot);
     }
 
     if (!level_width || !level_height) {
@@ -323,7 +322,6 @@ void set_load_screen(void) {
     search_str = search_string0;
     search_current = 1;
     do {
-        ti_CloseAll();
         search_pos = NULL;
         while((var_name = ti_Detect(&search_pos, search_str))) {
             if (scroll_amt <= num_packs && y < (103 + 10*MAX_SHOW)) {
@@ -357,7 +355,7 @@ void set_load_screen(void) {
                 y += 10;
                 tmp++;
 
-                ti_CloseAll();
+                ti_Close(slot);
             }
 
             num_packs++;

@@ -203,7 +203,7 @@ static void extract_images(void) {
     }
 }
 
-void main(void) {
+int main(void) {
     real_t *real_in;
     unsigned int wait;
     size_t pack_author_len;
@@ -473,4 +473,6 @@ HANDLE_PACK_FINISH:
 HANDLE_EXIT:
     // save the pack states
     save_progress();
+
+    return 0;
 }
