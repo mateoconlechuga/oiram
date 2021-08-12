@@ -161,7 +161,6 @@ gfx_sprite_t *oiram_left[] = {
 void extract_tiles(void) {
     uint8_t slot, i;
     gfx_sprite_t *tile_question_box;
-    gfx_sprite_t *empty;
     uint16_t pal_size;
     uint16_t *pal_ptr;
     uint8_t *tmp_ptr;
@@ -197,7 +196,6 @@ void extract_tiles(void) {
     ti_Close(slot);
 
     // extract common sprite tiles
-    empty       = tiles[TILE_EMPTY];
     coin_sprite = tiles[TILE_COIN];
     door_top    = tiles[228];
     door_bot    = tiles[229];
