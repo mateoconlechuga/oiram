@@ -310,9 +310,8 @@ HANDLE_DRAW_LEVEL:
     delay(400);
 
     // set up the timer
-    timer_Control = TIMER1_DISABLE;
     timer_1_ReloadValue = timer_1_Counter = 32768;
-    timer_Control = TIMER1_ENABLE | TIMER1_32K | TIMER1_0INT | TIMER1_DOWN;
+    timer_Enable(1, TIMER_32K, TIMER_0INT, TIMER_DOWN);
 
     // setup keypad handlers
     if (game.alternate_keypad) {
@@ -363,7 +362,7 @@ HANDLE_DRAW_LEVEL:
         }
     }
 
-    timer_Control = TIMER1_DISABLE;
+    timer_Disable(1);
 
     // deallocate
     while(num_simple_enemies) { remove_simple_enemy(0); }
