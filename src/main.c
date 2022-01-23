@@ -60,7 +60,7 @@ void handler_clock(void) {
 
 // checks if a full second has elapsed and calls the clock handler if so
 void handle_clock(void) {
-    if (clock() >= clock_next) {
+    if ((int)clock() - (int)clock_next >= 0) {
         handler_clock();
         clock_next += CLOCKS_PER_SEC;
     }
