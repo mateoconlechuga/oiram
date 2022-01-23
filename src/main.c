@@ -54,23 +54,16 @@ void handler_clock(void) {
             show_blue_items(false);
         }
     }
-}
-
-// handles however many seconds have elapsed since last called
-void handle_clock(void) {
-    unsigned int clock_now;
-
-    clock_now = clock();
-    if (clock_now < clock_next) {
-        return;
-    }
-
-    do {
-        handler_clock();
-        clock_next += CLOCKS_PER_SEC;
-    } while (clock_now >= clock_next);
 
     draw_time();
+}
+
+// checks if a full second has elapsed and calls the clock handler if so
+void handle_clock(void) {
+    if (clock() >= clock_next) {
+        handler_clock();
+        clock_next += CLOCKS_PER_SEC;
+    }
 }
 
 // called when user presses or releases a key
