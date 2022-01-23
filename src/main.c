@@ -13,6 +13,7 @@
 #include <stdint.h>
 
 #include <tice.h>
+#include <time.h>
 #include <graphx.h>
 #include <keypadc.h>
 #include <fileioc.h>
@@ -22,6 +23,8 @@ tiles_struct_t tiles;
 gfx_tilemap_t tilemap;
 oiram_t oiram;
 game_t game;
+
+unsigned int clock_next;
 
 bool easter_egg1;
 bool easter_egg2;
@@ -36,9 +39,8 @@ void missing_appvars(void) {
     exit(0);
 }
 
-// this handles the timer
-void handler_timer(void) {
-
+// called every second
+void handler_clock(void) {
     // if no more time, fail -- only need to trigger keypad interrupt now
     if (!game.seconds) {
         oiram.failed = true;
@@ -52,6 +54,21 @@ void handler_timer(void) {
             show_blue_items(false);
         }
     }
+}
+
+// handles however many seconds have elapsed since last called
+void handle_clock(void) {
+    unsigned int clock_now;
+
+    clock_now = clock();
+    if (clock_now < clock_next) {
+        return;
+    }
+
+    do {
+        handler_clock();
+        clock_next += CLOCKS_PER_SEC;
+    } while (clock_now >= clock_next);
 
     draw_time();
 }
@@ -309,10 +326,6 @@ HANDLE_DRAW_LEVEL:
     // show the start screen for a bit
     delay(400);
 
-    // set up the timer
-    timer_1_ReloadValue = timer_1_Counter = 32768;
-    timer_Enable(1, TIMER_32K, TIMER_0INT, TIMER_DOWN);
-
     // setup keypad handlers
     if (game.alternate_keypad) {
         handle_keypad = handler_keypad_alternate;
@@ -332,6 +345,9 @@ HANDLE_DRAW_LEVEL:
         animate();
     }
 
+    // set up the clock
+    clock_next = clock() + CLOCKS_PER_SEC;
+
     // wait until the clear key is pressed
     while(!game.exit) {
 
@@ -347,11 +363,8 @@ HANDLE_DRAW_LEVEL:
         // handle outstanding events, such as showing number of coins
         handle_pending_events();
 
-        // handle timer every second
-        if (timer_IntStatus & TIMER1_RELOADED) {
-            handler_timer();
-            timer_IntAcknowledge = TIMER1_RELOADED;
-        }
+        // handle clock events
+        handle_clock();
 
         // blit the draw buffer
         gfx_BlitLines(gfx_buffer, 0, 146);
@@ -361,8 +374,6 @@ HANDLE_DRAW_LEVEL:
             animate();
         }
     }
-
-    timer_Disable(1);
 
     // deallocate
     while(num_simple_enemies) { remove_simple_enemy(0); }
