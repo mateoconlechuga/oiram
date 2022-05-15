@@ -1,5 +1,7 @@
 	assume adl=1
 
+	section	.text
+
 	public _moveable_tile_right_bottom
 _moveable_tile_right_bottom:
 	xor	a,a                      ; TEST_RIGHT

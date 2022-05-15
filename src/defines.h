@@ -5,9 +5,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-void interrupt isr_keyboard_alternate(void);
-void interrupt isr_keyboard(void);
-
 extern bool handling_events;
 extern bool something_died;
 
