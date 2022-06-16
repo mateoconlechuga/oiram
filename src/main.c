@@ -219,10 +219,11 @@ int main(void) {
     size_t pack_author_len;
     char end_str[100];
     pack_info_t *pack;
+    uint8_t type;
     int x;
 
     // initialize the 8bpp graphics
-    gfx_Begin( gfx_8bpp );
+    gfx_Begin();
     gfx_SetDrawBuffer();
 
     // init the state of the levels
@@ -235,7 +236,8 @@ int main(void) {
     }
 
     // easter egg setup
-    if (!ti_RclVar(TI_REAL_TYPE, ti_Ans, (void**)&real_in)) {
+    real_in = os_GetAnsData(&type);
+    if (real_in && type == OS_TYPE_REAL) {
         int in = os_RealToInt24(real_in);
         if (in == 1337) { easter_egg1 = true; }
         if (in == 1202) { easter_egg2 = true; }
