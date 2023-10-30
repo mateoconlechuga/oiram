@@ -2,11 +2,11 @@
 # Makefile Options
 # ----------------------------
 
-NAME ?= OIRAM
-ICON ?= iconc.png
-DESCRIPTION ?= "Oiram"
-COMPRESSED ?= YES
-ARCHIVED ?= NO
+NAME = OIRAM
+ICON = iconc.png
+DESCRIPTION = "Oiram"
+COMPRESSED = YES
+ARCHIVED = NO
 
 CFLAGS ?= -Wall -Wextra -Oz
 CXXFLAGS ?= -Wall -Wextra -Oz
