@@ -8,8 +8,8 @@ DESCRIPTION = "Oiram"
 COMPRESSED = YES
 ARCHIVED = NO
 
-CFLAGS ?= -Wall -Wextra -Oz
-CXXFLAGS ?= -Wall -Wextra -Oz
+CFLAGS = -Wall -Wextra -Oz
+CXXFLAGS = -Wall -Wextra -Oz
 
 # ----------------------------
 
