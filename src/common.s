@@ -1,18 +1,18 @@
-	assume adl=1
+	.assume adl=1
 
-	section	.text
+	.section	.text
 
-	public _moveable_tile_right_bottom
+	.global _moveable_tile_right_bottom
 _moveable_tile_right_bottom:
 	xor	a,a                      ; TEST_RIGHT
 	jr	_test_against
 
-	public _moveable_tile_left_bottom
+	.global _moveable_tile_left_bottom
 _moveable_tile_left_bottom:
 	ld	a,1                      ; TEST_LEFT
 	jr	_test_against
 
-	public _moveable_tile
+	.global _moveable_tile
 _moveable_tile:
 	ld	a,2                      ; TEST_NONE
 _test_against:
@@ -48,18 +48,18 @@ _test_against:
 	ld	(_test_x),de
 	ld	(_test_y),hl
 	ld	b,(iy+11)
-divloop1:
+.L.divloop1:
 	srl	h
 	rr	l
-	djnz	divloop1
+	djnz	.L.divloop1
 	ld	h,(iy+13)
 	mlt	hl
 	ex	de,hl
 	ld	b,(iy+11)
-divloop2:
+.L.divloop2:
 	srl	h
 	rr	l
-	djnz	divloop2
+	djnz	.L.divloop2
 	add	hl,de
 	ld	de,(iy+0)
 	add	hl,de
@@ -77,17 +77,17 @@ divloop2:
 __jump_iy:
 	jp	(iy)
 
-	public _solid_tile_handler
+	.global _solid_tile_handler
 _solid_tile_handler:
 	xor	a,a
 	ret
 
-	public _empty_tile_handler
+	.global _empty_tile_handler
 _empty_tile_handler:
 	ld	a,1
 	ret
 
-	public _tile_to_abs_xy_pos
+	.global _tile_to_abs_xy_pos
 _tile_to_abs_xy_pos:
 	call	__frameset0
 	ld	a,(_tilemap+13)
@@ -118,7 +118,7 @@ _tile_to_abs_xy_pos:
 	pop	ix
 	ret
 
-	public _animate
+	.global _animate
 _animate:
 	ld	a,(_tiles+0)
 	inc	a
@@ -255,10 +255,10 @@ a_16:	ld	(_spike_right_sprite),bc
 	ld	a,(hl)
 	cp	a,3
 	ld	bc,258
-	jr	nz,l_192
+	jr	nz,.L.192
 	ld	a,255
 	ld	bc,-1032+258
-l_192:
+.L.192:
 	inc	a
 	ld	(hl),a
 
@@ -316,10 +316,10 @@ l_192:
 	ld	a,(hl)
 	cp	a,2
 	ld	bc,258
-	jr	nz,l_194
+	jr	nz,.L.194
 	ld	a,255
 	ld	bc,-774+258
-l_194:
+.L.194:
 	inc	a
 	ld	(hl),a
 
@@ -338,69 +338,68 @@ l_194:
 	xor	a,a
 	ld	(_tiles),a
 
-l_199:
 	ret
 
-	extern _fish_right_sprite
-	extern _fish_left_sprite
-	extern _flame_sprite_down
-	extern _flame_sprite_up
-	extern _spike_right_sprite
-	extern _spike_left_sprite
-	extern _koopa_bones_right_sprite
-	extern _koopa_bones_left_sprite
-	extern _koopa_green_right_sprite
-	extern _koopa_green_left_sprite
-	extern _koopa_red_right_sprite
-	extern _koopa_red_left_sprite
-	extern _wing_right_sprite
-	extern _wing_left_sprite
-	extern _chomper_sprite
-	extern _goomba_sprite
-	extern _fireball_sprite
-	extern _spike_right_1
-	extern _spike_right_0
-	extern _spike_left_1
-	extern _spike_left_0
-	extern _fish_right_1
-	extern _fish_right_0
-	extern _fish_left_1
-	extern _fish_left_0
-	extern _wing_right_1
-	extern _wing_right_0
-	extern _wing_left_1
-	extern _wing_left_0
-	extern _flame_fire_down_1
-	extern _flame_fire_down_0
-	extern _flame_fire_up_1
-	extern _flame_fire_up_0
-	extern _fire_1
-	extern _fire_0
-	extern _chomper_1
-	extern _chomper_0
-	extern _koopa_bones_left_1
-	extern _koopa_bones_left_0
-	extern _koopa_bones_right_1
-	extern _koopa_bones_right_0
-	extern _koopa_green_left_1
-	extern _koopa_green_left_0
-	extern _koopa_green_right_1
-	extern _koopa_green_right_0
-	extern _koopa_red_left_1
-	extern _koopa_red_left_0
-	extern _koopa_red_right_1
-	extern _koopa_red_right_0
-	extern _goomba_1
-	extern _goomba_0
-	extern _oiram
-	extern _level_map
-	extern _tilemap
-	extern _tiles
-	extern _tileset_tiles
-	extern _test_x
-	extern _test_y
-	extern _testing_side
-	extern _tile_handler
-	extern __indcall
-	extern __idvrmu
-	extern __frameset0
+	.extern _fish_right_sprite
+	.extern _fish_left_sprite
+	.extern _flame_sprite_down
+	.extern _flame_sprite_up
+	.extern _spike_right_sprite
+	.extern _spike_left_sprite
+	.extern _koopa_bones_right_sprite
+	.extern _koopa_bones_left_sprite
+	.extern _koopa_green_right_sprite
+	.extern _koopa_green_left_sprite
+	.extern _koopa_red_right_sprite
+	.extern _koopa_red_left_sprite
+	.extern _wing_right_sprite
+	.extern _wing_left_sprite
+	.extern _chomper_sprite
+	.extern _goomba_sprite
+	.extern _fireball_sprite
+	.extern _spike_right_1
+	.extern _spike_right_0
+	.extern _spike_left_1
+	.extern _spike_left_0
+	.extern _fish_right_1
+	.extern _fish_right_0
+	.extern _fish_left_1
+	.extern _fish_left_0
+	.extern _wing_right_1
+	.extern _wing_right_0
+	.extern _wing_left_1
+	.extern _wing_left_0
+	.extern _flame_fire_down_1
+	.extern _flame_fire_down_0
+	.extern _flame_fire_up_1
+	.extern _flame_fire_up_0
+	.extern _fire_1
+	.extern _fire_0
+	.extern _chomper_1
+	.extern _chomper_0
+	.extern _koopa_bones_left_1
+	.extern _koopa_bones_left_0
+	.extern _koopa_bones_right_1
+	.extern _koopa_bones_right_0
+	.extern _koopa_green_left_1
+	.extern _koopa_green_left_0
+	.extern _koopa_green_right_1
+	.extern _koopa_green_right_0
+	.extern _koopa_red_left_1
+	.extern _koopa_red_left_0
+	.extern _koopa_red_right_1
+	.extern _koopa_red_right_0
+	.extern _goomba_1
+	.extern _goomba_0
+	.extern _oiram
+	.extern _level_map
+	.extern _tilemap
+	.extern _tiles
+	.extern _tileset_tiles
+	.extern _test_x
+	.extern _test_y
+	.extern _testing_side
+	.extern _tile_handler
+	.extern __indcall
+	.extern __idvrmu
+	.extern __frameset0
