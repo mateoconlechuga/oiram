@@ -9,6 +9,13 @@
 #include "simple_mover.h"
 #include "tile_handlers.h"
 
+/* Optional wired DualShock 3 support: DS3 input merged as an ADDITIONAL
+ * source. No hooks, no interrupt vectors, no writes to TI-OS keyboard
+ * state, no runtime patching. Gameplay, physics, graphics, maps, saves
+ * and timing are untouched. */
+#include "oiram_ds3.h"
+#include "ds3_common.h"
+
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -72,21 +79,29 @@ void handler_keypad_alternate(void) {
     kb_key_t g1_key, g2_key, g7_key;
     static bool pressed_special = false;
 
+    /* DS3 read is additive only -- the physical keypad reads below are
+     * completely unchanged. ds3->active is false whenever the controller
+     * is absent, released into neutral, or disconnected, so every OR term
+     * collapses to the original expression in those cases. */
+    const oiram_ds3_state_t *ds3;
+
     kb_Scan();
+    oiram_ds3_update();
+    ds3 = oiram_ds3_state();
 
     // read keypad data
     g1_key = kb_Data[1];
     g2_key = kb_Data[2];
     g7_key = kb_Data[7];
 
-    pressed_s       = (g2_key & kb_Alpha);
-    pressed_2nd     = (g1_key & kb_2nd);
+    pressed_s       = (g2_key & kb_Alpha) || (ds3->active && ds3->special);
+    pressed_2nd     = (g1_key & kb_2nd)   || (ds3->active && ds3->run);
 
-    pressed_down    = (g7_key & kb_Down);
-    pressed_left    = (g7_key & kb_Left);
-    pressed_right   = (g7_key & kb_Right);
+    pressed_down    = (g7_key & kb_Down)  || (ds3->active && ds3->down);
+    pressed_left    = (g7_key & kb_Left)  || (ds3->active && ds3->left);
+    pressed_right   = (g7_key & kb_Right) || (ds3->active && ds3->right);
 
-    press_up        = (g7_key & kb_Up);
+    press_up        = (g7_key & kb_Up)    || (ds3->active && ds3->jump);
 
     if (allow_up_press) {
         pressed_up = press_up;
@@ -118,22 +133,30 @@ void handler_keypad(void) {
     kb_key_t g1_key, g2_key, g7_key;
     static bool pressed_special = false;
 
+    /* Same additive-only merge as the alternate handler above; the DS3
+     * semantic actions (jump/run/special) land on whichever physical key
+     * this mode assigns them to, so both keypad modes keep their own
+     * distinct physical layout exactly as clean Oiram defines it. */
+    const oiram_ds3_state_t *ds3;
+
     kb_Scan();
+    oiram_ds3_update();
+    ds3 = oiram_ds3_state();
 
     // read keypad data
     g1_key = kb_Data[1];
     g2_key = kb_Data[2];
     g7_key = kb_Data[7];
 
-    pressed_2nd     = (g2_key & kb_Alpha);
+    pressed_2nd     = (g2_key & kb_Alpha) || (ds3->active && ds3->run);
 
-    pressed_down    = (g7_key & kb_Down);
-    pressed_left    = (g7_key & kb_Left);
-    pressed_right   = (g7_key & kb_Right);
+    pressed_down    = (g7_key & kb_Down)  || (ds3->active && ds3->down);
+    pressed_left    = (g7_key & kb_Left)  || (ds3->active && ds3->left);
+    pressed_right   = (g7_key & kb_Right) || (ds3->active && ds3->right);
 
-    pressed_s       = (g7_key & kb_Up);
+    pressed_s       = (g7_key & kb_Up)    || (ds3->active && ds3->special);
 
-    press_up        = (g1_key & kb_2nd);
+    press_up        = (g1_key & kb_2nd)   || (ds3->active && ds3->jump);
 
     if (allow_up_press) {
         pressed_up = press_up;
@@ -247,6 +270,16 @@ int main(void) {
 
     // extract palette and tiles/sprites just to make sure they exist
     extract_images();
+
+    /* Bounded DS3 init, exactly once per run. Placed after the
+     * missing_appvars() check above so that the only exit(0) path that can
+     * run before this point has no USB state to clean up; from here on,
+     * HANDLE_EXIT is the sole route out of main(), which is what makes the
+     * matching cleanup exactly-once. Failure is non-fatal by design: the
+     * driver's own bounded init returns false (having already cleaned up
+     * internally) and every merge term above stays false, leaving stock
+     * keypad-only gameplay. */
+    oiram_ds3_init_bounded();
 
 HANDLE_MAIN_START:
 
@@ -476,6 +509,12 @@ HANDLE_PACK_FINISH:
     goto HANDLE_MAIN_START;
 
 HANDLE_EXIT:
+    /* Exactly-once cleanup: this is the only path out of main() after
+     * oiram_ds3_init_bounded() ran. Safe and a no-op even if init failed
+     * (the driver's own g_usb_init_attempted gate handles that). Placed
+     * before save_progress() so USB is released even if saving misbehaves. */
+    oiram_ds3_cleanup();
+
     // save the pack states
     save_progress();
 
